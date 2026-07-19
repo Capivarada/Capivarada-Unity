@@ -1,0 +1,267 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                  ARENA DAS ALMAS - MVP GETTING STARTED                    ║
+║                                                                            ║
+║                        🎮 Play in 5 Minutes! 🚀                          ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STEP 1: CONFIGURE PROJECT (1 minute)                                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Open Unity Editor
+│
+├─ Menu: ArenadasAlmas → Setup → Configure Project
+│  └─ Creates "Enemy" layer
+│     Creates "Player" and "Enemy" tags
+│
+└─ ✓ Done! Project configured
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STEP 2: CREATE PREFABS (1 minute)                                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Menu: ArenadasAlmas → Create Prefabs → All
+│
+├─ Player.prefab (Blue capsule + all components)
+├─ EnemyDummy.prefab (Red capsule + dummy AI)
+├─ Shield.prefab (Cyan sphere visual)
+└─ SoulTrail.prefab (Yellow line effect)
+
+✓ All prefabs created!
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STEP 3: SETUP TEST SCENE (2 minutes)                                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+1. Open: Assets/Scenes/MVPTestScene.unity
+2. Menu: ArenadasAlmas → Setup → Create Test Scene Instances
+3. Press Ctrl+S to save
+
+Scene now contains:
+├─ Ground (large plane)
+├─ Camera (positioned to see arena)
+├─ Directional Light
+├─ Player (blue capsule at position -5, 1, 0)
+└─ EnemyDummy (red capsule at position 5, 1, 0)
+
+✓ Scene ready!
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STEP 4: PLAY! (Press Play Button)                                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Now test the MVP:
+
+  TEST 1: MOVEMENT
+  ├─ Press W - Move forward
+  ├─ Press A - Strafe left
+  ├─ Press S - Move backward
+  ├─ Press D - Strafe right
+  └─ ✓ Player capsule moves smoothly
+
+  TEST 2: DASH
+  ├─ Press Space - Quick forward boost
+  ├─ Wait ~1 second
+  ├─ Press Space again (should work after cooldown)
+  └─ ✓ Dash has ~1 second cooldown
+
+  TEST 3: ATTACK
+  ├─ Move close to red enemy (within ~15 units)
+  ├─ Press Left Mouse Button
+  ├─ Yellow line appears connecting to enemy
+  ├─ Wait ~2 seconds for extraction
+  ├─ Red capsule (enemy) loses 1 soul
+  └─ ✓ Attack works!
+
+  TEST 4: SHIELD
+  ├─ Press Right Mouse Button
+  ├─ Cyan sphere appears around player
+  ├─ Wait ~3 seconds
+  ├─ Shield disappears
+  ├─ Wait ~5 seconds for cooldown
+  ├─ Press Right Mouse Button again
+  └─ ✓ Shield works!
+
+  TEST 5: DESTROY ENEMY
+  ├─ Attack enemy 3 more times (4 total)
+  ├─ Enemy disappears after losing all souls
+  └─ ✓ Enemy destruction works!
+
+🎉 CONGRATULATIONS! MVP WORKS!
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                             CONTROLS REFERENCE                             ║
+╠════════════════════════════════════════════════════════════════════════════╣
+║                                                                            ║
+║  MOVEMENT       │ W/A/S/D                                                 ║
+║  DASH           │ SPACE                                                   ║
+║  ATTACK         │ LEFT MOUSE BUTTON                                       ║
+║  SHIELD         │ RIGHT MOUSE BUTTON                                      ║
+║  SOUL FUNNEL    │ Q (Placeholder - does nothing yet)                     ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                         CUSTOMIZE GAMEPLAY                                 ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+All values are tunable! Edit Player prefab:
+
+Select Player in scene → Inspector → Player Config component:
+
+  ├─ Move Speed           5.0      (units per second)
+  ├─ Dash Force          20.0      (acceleration)
+  ├─ Dash Cooldown        1.0      (seconds between dashes)
+  ├─ Claw Range          15.0      (max attack distance)
+  ├─ Claw Cooldown        0.5      (seconds between attacks)
+  ├─ Defense Duration     3.0      (how long shield lasts)
+  └─ Defense Cooldown     5.0      (seconds between shields)
+
+Change any value and see immediate effect!
+(Values persist even after closing Unity)
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                           WHAT YOU CREATED                                ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+📁 Organized File Structure
+├─ 16 C# Scripts (~2000 lines of clean, commented code)
+├─ Event-Driven Architecture (perfect for multiplayer)
+├─ Generic Buff System (expandable without code changes)
+├─ Centralized Configuration (all values tunable)
+└─ Comprehensive Documentation (~1000 lines)
+
+🎮 Fully Functional MVP
+├─ Player movement system
+├─ Combat system with soul extraction
+├─ Defense system with shields
+├─ Enemy AI placeholder for testing
+├─ Buff/debuff system
+└─ Event broadcasting for state changes
+
+📖 Complete Documentation
+├─ README.md (Overview)
+├─ SETUP_GUIDE.md (Step-by-step)
+├─ ARCHITECTURE.md (Design patterns)
+├─ CHANGELOG.md (Features & roadmap)
+└─ Inline code comments
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                          NEXT STEPS (v0.2+)                               ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+After validating the MVP:
+
+1. ADD AI SYSTEM (v0.2)
+   - Replace EnemyDummy with pathfinding
+   - Implement combat behaviors
+   - Multiple enemy types
+
+2. IMPLEMENT SOULS (v0.3)
+   - Curupira (speed boost)
+   - Iara (defense)
+   - Boto (special abilities)
+
+3. VISUAL POLISH (v0.4)
+   - Health bars
+   - UI elements
+   - VFX & sound
+
+4. PROGRESSION (v0.5)
+   - Levels
+   - Items
+   - Upgrades
+
+5. MULTIPLAYER (v1.0)
+   - Network layer
+   - Player lobbies
+   - Ranked matches
+
+See CHANGELOG.md for detailed roadmap
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                          TROUBLESHOOTING                                   ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+Problem: Can't move character
+Solution: Check PlayerMovement & CharacterController exist on Player
+
+Problem: Enemy doesn't appear
+Solution: Verify Enemy layer exists, check EnemyDummy.prefab in Prefabs folder
+
+Problem: Attack doesn't hit enemy
+Solution: Enemy must be within 15 units, Enemy layer must be set correctly
+
+Problem: Compilation errors
+Solution: Go to Assets → Reimport All, then restart Unity
+
+Problem: Prefabs won't create
+Solution: Check Assets/Prefabs folder exists, look at Console for errors
+
+👉 For more help, see: Assets/SETUP_GUIDE.md
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                        FEATURE CHECKLIST                                   ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+PLAYER SYSTEM
+ [✓] WASD movement
+ [✓] Rotation towards movement
+ [✓] Gravity and ground detection
+ [✓] Dash with configurable force, cooldown, duration
+
+COMBAT
+ [✓] Garra Espiritual attack (Left Click)
+ [✓] Visual connection (yellow line) to target
+ [✓] Soul extraction (2 second duration)
+ [✓] Defesa Espiritual shield (Right Click)
+ [✓] Funil Espiritual placeholder (Q)
+
+STATS & PROGRESSION
+ [✓] Player health system
+ [✓] Player soul system
+ [✓] Player states (Normal, Attacking, Defending, etc.)
+ [✓] Enemy health system
+ [✓] Enemy soul system
+
+SYSTEMS
+ [✓] Generic buff system
+ [✓] Buff stacking
+ [✓] Buff duration
+ [✓] Event broadcasting
+ [✓] Centralized configuration
+
+EDITOR TOOLS
+ [✓] Auto prefab generation
+ [✓] Layer/tag creation
+ [✓] Scene setup automation
+ [✓] Example asset generation
+
+DOCUMENTATION
+ [✓] Quick start guide
+ [✓] Step-by-step setup
+ [✓] Architecture reference
+ [✓] Troubleshooting guide
+ [✓] Changelog & roadmap
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    🎮 YOU'RE READY TO PLAY! 🚀                           ║
+║                                                                            ║
+║               Open Unity → Configure → Create Prefabs → Play!             ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+Questions? See SETUP_GUIDE.md for detailed instructions and troubleshooting.
+
+Ready to extend? See ARCHITECTURE.md for design patterns and extension points.
+
+Let's build Rivals Arena! ⚔️👾
