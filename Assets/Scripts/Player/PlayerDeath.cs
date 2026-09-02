@@ -4,18 +4,44 @@ using UnityEngine;
 public class PlayerDeath : MonoBehaviour
 {
     [Header("Death")]
-    [SerializeField] private float deathHeight = -5f;
+    [SerializeField]
+    private float deathHeight = -5f;
 
     private bool isDead;
 
+    private GameObject lastAttacker;
+
     public event Action<PlayerDeath> OnPlayerDeath;
+
+    public bool IsDead()
+    {
+        return isDead;
+    }
+
+    public void SetLastAttacker(
+        GameObject attacker
+    )
+    {
+        if (
+            attacker == null ||
+            attacker == gameObject
+        )
+        {
+            return;
+        }
+
+        lastAttacker = attacker;
+    }
 
     private void Update()
     {
         if (isDead)
             return;
 
-        if (transform.position.y <= deathHeight)
+        if (
+            transform.position.y <=
+            deathHeight
+        )
         {
             Die();
         }
@@ -23,17 +49,40 @@ public class PlayerDeath : MonoBehaviour
 
     private void Die()
     {
+        if (isDead)
+            return;
+
         isDead = true;
 
-        Debug.Log($"{gameObject.name} foi eliminado!");
+        RegisterKill();
+
+        Debug.Log(
+            $"{gameObject.name} foi eliminado!"
+        );
 
         OnPlayerDeath?.Invoke(this);
 
         gameObject.SetActive(false);
     }
 
-    public bool IsDead()
+    private void RegisterKill()
     {
-        return isDead;
+        if (lastAttacker == null)
+            return;
+
+        PlayerMatchData attackerData =
+            lastAttacker.GetComponent<
+                PlayerMatchData
+            >();
+
+        if (attackerData == null)
+            return;
+
+        attackerData.AddKill();
+
+        Debug.Log(
+            $"[KILL] {lastAttacker.name} " +
+            $"eliminou {gameObject.name}"
+        );
     }
 }

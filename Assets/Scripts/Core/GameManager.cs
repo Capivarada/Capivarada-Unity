@@ -165,6 +165,7 @@ public class GameManager : MonoBehaviour
         matchManager.RegisterPlayer(humanPlayer);
         matchManager.SetHumanPlayer(humanPlayer);
         matchUI.SetHumanPlayer(humanPlayer);
+        matchUI.SetPlayer(humanPlayer);
 
         if (cameraController != null)
         {

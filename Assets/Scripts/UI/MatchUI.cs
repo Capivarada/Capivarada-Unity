@@ -28,6 +28,14 @@ public class MatchUI : MonoBehaviour
 
     [SerializeField]
     private PlayerController humanPlayer;
+    
+    [Header("Player Data")]
+    [SerializeField]
+    private PlayerMatchData playerData;
+
+    [Header("UI")]
+    [SerializeField]
+    private TMP_Text killsText;
 
     private void Start()
     {
@@ -56,7 +64,29 @@ public class MatchUI : MonoBehaviour
 
     private void Update()
     {
+        if (playerData == null)
+            return;
+
+        UpdateKills();
         UpdatePower();
+    }
+    
+    private void UpdateKills()
+    {
+        killsText.text =
+            $"Eliminações: {playerData.Kills}";
+    }
+
+    public void SetPlayer(
+        GameObject player
+    )
+    {
+        playerData =
+            player.GetComponent<
+                PlayerMatchData
+            >();
+
+        UpdateKills();
     }
 
     public void SetHumanPlayer(

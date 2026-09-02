@@ -74,6 +74,44 @@ public class RoundManager : MonoBehaviour
                 HandleMatchStateChanged;
         }
     }
+    
+    private void RegisterRoundSurvival()
+    {
+        foreach (
+            GameObject player
+            in matchManager.AllPlayers
+        )
+        {
+            if (
+                player == null ||
+                !player.activeInHierarchy
+            )
+            {
+                continue;
+            }
+
+            PlayerDeath death =
+                player.GetComponent<PlayerDeath>();
+
+            if (
+                death != null &&
+                death.IsDead()
+            )
+            {
+                continue;
+            }
+
+            PlayerMatchData data =
+                player.GetComponent<
+                    PlayerMatchData
+                >();
+
+            if (data != null)
+            {
+                data.AddRoundSurvived();
+            }
+        }
+    }
 
     private void HandleMatchStateChanged(
         MatchState state
@@ -154,6 +192,20 @@ public class RoundManager : MonoBehaviour
             yield return StartCoroutine(
                 WaitForPlayersToStop()
             );
+            
+            RegisterRoundSurvival();
+            
+            if (
+                matchManager != null &&
+                matchManager.AlivePlayers > 1
+            )
+            {
+                Debug.Log(
+                    "[ROUND] Limite máximo de rounds atingido!"
+                );
+
+                matchManager.FinishWithRemainingPlayers();
+            }
         }
 
         FinishRounds();

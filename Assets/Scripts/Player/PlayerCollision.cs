@@ -45,7 +45,13 @@ public class PlayerCollision : MonoBehaviour
     {
         if (Time.time - lastCollisionTime < collisionCooldown)
             return;
+        
+        PlayerDeath deathA =
+            rb.GetComponent<PlayerDeath>();
 
+        PlayerDeath deathB =
+            otherRb.GetComponent<PlayerDeath>();
+        
         lastCollisionTime = Time.time;
         
         Vector3 direction =
@@ -71,6 +77,12 @@ public class PlayerCollision : MonoBehaviour
         float speedB =
             Vector3.Dot(velocityB, direction);
 
+        
+        RegisterAttacker(
+            otherRb.gameObject,
+            speedA,
+            speedB
+        );
         // Velocidade relativa.
         float relativeSpeed =
             speedA - speedB;
@@ -120,7 +132,7 @@ public class PlayerCollision : MonoBehaviour
             direction,
             knockbackB
         );
-
+        
         Debug.Log(
             $"IMPACTO\n" +
             $"A: {speedA:F2}\n" +
@@ -154,5 +166,40 @@ public class PlayerCollision : MonoBehaviour
             direction * force,
             ForceMode.VelocityChange
         );
+    }
+    
+    private void RegisterAttacker(
+        GameObject otherPlayer,
+        float speedA,
+        float speedB
+    )
+    {
+        // Eu estava indo em direção ao outro.
+        if (speedA > 0f)
+        {
+            PlayerDeath otherDeath =
+                otherPlayer.GetComponent<PlayerDeath>();
+
+            if (otherDeath != null)
+            {
+                otherDeath.SetLastAttacker(
+                    gameObject
+                );
+            }
+        }
+
+        // O outro estava indo em minha direção.
+        if (speedB < 0f)
+        {
+            PlayerDeath myDeath =
+                GetComponent<PlayerDeath>();
+
+            if (myDeath != null)
+            {
+                myDeath.SetLastAttacker(
+                    otherPlayer
+                );
+            }
+        }
     }
 }
