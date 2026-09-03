@@ -1,7 +1,7 @@
 {
     "Version": 1,
     "TypeId": "NetworkProjectConfig",
-    "HubMode": 1,
+    "HubMode": 0,
     "PeerMode": 0,
     "LagCompensation": {
         "Enabled": false,
@@ -14,7 +14,7 @@
     "InvokeRenderMode": 1,
     "NetworkIdIsObjectName": false,
     "HideNetworkObjectInactivityGuard": false,
-    "AllowClientServerModesInWebGL": true,
+    "AllowClientServerModesInWebGL": false,
     "AllowMasterClientReassignRequest": false,
     "MasterClientRequestReassignThreshold": 2.0,
     "ClientsRecordFrameAndPacketTimingTraces": false,
