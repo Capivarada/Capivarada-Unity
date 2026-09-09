@@ -1,115 +1,167 @@
 using System.Collections;
 using UnityEngine;
 
+/// <summary>
+/// Central manager for the game.
+/// Orchestrates game initialization, player spawning, and manager configuration.
+/// </summary>
 public class GameManager : MonoBehaviour
 {
+    #region Singleton
+
+    public static GameManager Instance { get; private set; }
+
+    private void OnEnable()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else if (Instance != this)
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    #endregion
+
+    #region Configuration
+
+    [Header("Configuration")]
+    [SerializeField] private PlayerConfig playerConfig;
+    [SerializeField] private MatchConfig matchConfig;
+
+    #endregion
+
+    #region Managers
+
     [Header("Managers")]
-    [SerializeField] private MatchmakingManager matchmakingManager;
     [SerializeField] private SpawnManager spawnManager;
     [SerializeField] private MatchManager matchManager;
+    [SerializeField] private RoundManager roundManager;
     [SerializeField] private PlayerCameraController cameraController;
+    [SerializeField] private MatchUI matchUI;
+
     private ArenaBounds arenaBounds;
+
+    #endregion
+
+    #region Prefabs
+
     [Header("Prefabs")]
     [SerializeField] private GameObject playerPrefab;
     [SerializeField] private GameObject botPrefab;
 
-    [Header("Match Configuration")]
+    #endregion
+
+    #region Player Setup
+
+    [Header("Player Setup")]
     [SerializeField] private int maxPlayers = 8;
-    
-    [SerializeField]
-    private MatchUI matchUI;
 
     private GameObject humanPlayer;
 
+    #endregion
+
+    #region Properties
+
+    public PlayerConfig PlayerConfig => playerConfig;
+    public MatchConfig MatchConfig => matchConfig;
+    public int MaxPlayers => maxPlayers;
+
+    #endregion
+
+    #region Initialization
+
     private void Awake()
     {
+        ValidateConfiguration();
         ValidateManagers();
     }
 
     private void Start()
     {
-        arenaBounds =
-            FindObjectOfType<ArenaBounds>();
+        arenaBounds = FindObjectOfType<ArenaBounds>();
 
         if (arenaBounds == null)
         {
-            Debug.LogError(
-                "[GameManager] ArenaBounds não encontrado na arena!"
-            );
+            Debug.LogError("[GameManager] ArenaBounds not found in the scene!");
         }
-        
-        StartMatchFlow();
+
+        InitializeGame();
+    }
+
+    #endregion
+
+    #region Validation
+
+    private void ValidateConfiguration()
+    {
+        if (playerConfig == null)
+        {
+            Debug.LogError("[GameManager] PlayerConfig not assigned!");
+        }
+
+        if (matchConfig == null)
+        {
+            Debug.LogError("[GameManager] MatchConfig not assigned!");
+        }
     }
 
     private void ValidateManagers()
     {
-        if (matchUI == null)
-        {
-            matchUI =
-                FindObjectOfType<MatchUI>();
-        }
-        if (matchmakingManager == null)
-        {
-            matchmakingManager = GetComponent<MatchmakingManager>();
-
-            if (matchmakingManager == null)
-            {
-                Debug.LogError("[GameManager] MatchmakingManager não encontrado!");
-            }
-        }
-
         if (spawnManager == null)
         {
             spawnManager = GetComponent<SpawnManager>();
-
             if (spawnManager == null)
-            {
-                Debug.LogError("[GameManager] SpawnManager não encontrado!");
-            }
+                Debug.LogError("[GameManager] SpawnManager not found!");
         }
 
         if (matchManager == null)
         {
             matchManager = GetComponent<MatchManager>();
-
             if (matchManager == null)
-            {
-                Debug.LogError("[GameManager] MatchManager não encontrado!");
-            }
+                Debug.LogError("[GameManager] MatchManager not found!");
+        }
+
+        if (roundManager == null)
+        {
+            roundManager = GetComponent<RoundManager>();
+            if (roundManager == null)
+                Debug.LogError("[GameManager] RoundManager not found!");
         }
 
         if (cameraController == null)
         {
             cameraController = FindObjectOfType<PlayerCameraController>();
-
             if (cameraController == null)
-            {
-                Debug.LogWarning("[GameManager] PlayerCameraController não encontrado!");
-            }
+                Debug.LogWarning("[GameManager] PlayerCameraController not found!");
+        }
+
+        if (matchUI == null)
+        {
+            matchUI = FindObjectOfType<MatchUI>();
+            if (matchUI == null)
+                Debug.LogError("[GameManager] MatchUI not found!");
         }
     }
 
-    private void StartMatchFlow()
+    #endregion
+
+    #region Initialization Flow
+
+    private void InitializeGame()
     {
-        if (matchmakingManager == null)
+        if (spawnManager == null || matchManager == null || roundManager == null || playerConfig == null || matchConfig == null)
         {
-            Debug.LogError("[GameManager] Não posso iniciar fluxo de partida sem MatchmakingManager.");
+            Debug.LogError("[GameManager] Cannot initialize game without required managers.");
             return;
         }
 
         spawnManager.ResetSpawns();
         matchManager.Reset();
 
-        matchmakingManager.OnStateChanged += HandleMatchmakingStateChanged;
-        matchmakingManager.StartSearching();
-    }
-
-    private void HandleMatchmakingStateChanged(MatchmakingState state)
-    {
-        if (state == MatchmakingState.Ready)
-        {
-            StartCoroutine(SpawnPlayersCoroutine());
-        }
+        StartCoroutine(SpawnPlayersCoroutine());
     }
 
     private IEnumerator SpawnPlayersCoroutine()
@@ -122,21 +174,34 @@ public class GameManager : MonoBehaviour
 
         yield return new WaitForSeconds(0.3f);
 
-        int botCount = maxPlayers - 1;
+        int botCount = Mathf.Max(0, maxPlayers - 1);
         SpawnBots(botCount);
 
         yield return new WaitForSeconds(0.5f);
 
-        Debug.Log($"[MATCH] {matchManager.AllPlayers.Count} participantes criados.");
+        Debug.Log($"[GameManager] {matchManager.AllPlayers.Count} players spawned.");
 
-        matchManager.StartCountdown();
+        if (matchUI != null)
+        {
+            matchUI.SetTotalPlayers(matchManager.AllPlayers.Count);
+        }
+
+        // Start match flow via MatchManager
+        if (matchManager != null)
+        {
+            matchManager.StartMatch();
+        }
     }
+
+    #endregion
+
+    #region Player Spawning
 
     private void SpawnHumanPlayer()
     {
         if (playerPrefab == null)
         {
-            Debug.LogError("[GameManager] Player Prefab não configurado.");
+            Debug.LogError("[GameManager] Player Prefab not assigned.");
             return;
         }
 
@@ -144,7 +209,7 @@ public class GameManager : MonoBehaviour
 
         if (spawnPoint == null)
         {
-            Debug.LogError("[GameManager] Nenhum spawn point disponível para o jogador humano.");
+            Debug.LogError("[GameManager] No spawn point available for human player.");
             return;
         }
 
@@ -156,24 +221,51 @@ public class GameManager : MonoBehaviour
 
         humanPlayer.name = "Player";
 
+        // Set nickname
         PlayerNickname nickname = humanPlayer.GetComponent<PlayerNickname>();
         if (nickname != null)
         {
             nickname.SetNickname("Você");
         }
 
+        // Ensure PlayerController has config reference (if needed)
+        PlayerController playerController = humanPlayer.GetComponent<PlayerController>();
+        if (playerController != null && playerConfig != null)
+        {
+            // PlayerController can now access via GameManager if needed
+            // Or we can add a method to set config
+        }
+
+        // Ensure PlayerMatchData exists
+        PlayerMatchData matchData = humanPlayer.GetComponent<PlayerMatchData>();
+        if (matchData == null)
+        {
+            matchData = humanPlayer.AddComponent<PlayerMatchData>();
+        }
+
+        // Register with match manager
         matchManager.RegisterPlayer(humanPlayer);
         matchManager.SetHumanPlayer(humanPlayer);
-        matchUI.SetHumanPlayer(humanPlayer);
-        matchUI.SetPlayer(humanPlayer);
 
+        // Setup UI references
+        if (matchUI != null)
+        {
+            matchUI.SetHumanPlayer(humanPlayer);
+            matchUI.SetPlayer(humanPlayer);
+        }
+
+        // Setup camera
         if (cameraController != null)
         {
             Transform cameraTarget = humanPlayer.transform.Find("CameraTarget");
 
             if (cameraTarget == null)
             {
-                cameraTarget = humanPlayer.GetComponentInChildren<PlayerCameraLook>()?.transform;
+                PlayerCameraLook cameraLook = humanPlayer.GetComponentInChildren<PlayerCameraLook>();
+                if (cameraLook != null)
+                {
+                    cameraTarget = cameraLook.transform;
+                }
             }
 
             if (cameraTarget != null)
@@ -182,14 +274,14 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        Debug.Log($"[GameManager] Jogador humano spawned em {spawnPoint.name}");
+        Debug.Log($"[GameManager] Human player spawned at {spawnPoint.name}");
     }
 
     private void SpawnBots(int count)
     {
         if (botPrefab == null)
         {
-            Debug.LogError("[GameManager] Bot Prefab não configurado.");
+            Debug.LogError("[GameManager] Bot Prefab not assigned.");
             return;
         }
 
@@ -199,7 +291,7 @@ public class GameManager : MonoBehaviour
 
             if (spawnPoint == null)
             {
-                Debug.LogWarning("[GameManager] Sem spawn points disponíveis para bot " + (i + 1));
+                Debug.LogWarning($"[GameManager] No spawn point available for bot {i + 1}");
                 break;
             }
 
@@ -211,12 +303,14 @@ public class GameManager : MonoBehaviour
 
             bot.name = $"Bot {i + 1:D2}";
 
+            // Set nickname
             PlayerNickname nickname = bot.GetComponent<PlayerNickname>();
             if (nickname != null)
             {
                 nickname.SetNickname(bot.name);
             }
 
+            // Remove human player components
             HumanPlayerController humanController = bot.GetComponent<HumanPlayerController>();
             if (humanController != null)
             {
@@ -229,30 +323,41 @@ public class GameManager : MonoBehaviour
                 Destroy(playerInput);
             }
 
+            // Ensure BotController exists
             BotController botController = bot.GetComponent<BotController>();
             if (botController == null)
             {
                 botController = bot.AddComponent<BotController>();
             }
-            
+
+            // Pass references
             if (arenaBounds != null)
             {
-                botController.SetArenaBounds(
-                    arenaBounds
-                );
+                botController.SetArenaBounds(arenaBounds);
             }
 
+            // Ensure PlayerMatchData exists
+            PlayerMatchData matchData = bot.GetComponent<PlayerMatchData>();
+            if (matchData == null)
+            {
+                matchData = bot.AddComponent<PlayerMatchData>();
+            }
+
+            // Register with match manager
             matchManager.RegisterPlayer(bot);
 
-            Debug.Log($"[GameManager] Bot {i + 1} spawned em {spawnPoint.name}");
+            Debug.Log($"[GameManager] Bot {i + 1} spawned at {spawnPoint.name}");
         }
     }
+
+    #endregion
+
+    #region Cleanup
 
     private void OnDestroy()
     {
-        if (matchmakingManager != null)
-        {
-            matchmakingManager.OnStateChanged -= HandleMatchmakingStateChanged;
-        }
+        // Cleanup if needed
     }
+
+    #endregion
 }

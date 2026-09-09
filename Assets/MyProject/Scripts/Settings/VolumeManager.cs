@@ -8,10 +8,6 @@ public class VolumeManager : MonoBehaviour
 
     public static event Action OnVolumesChanged;
 
-    const string KEY_MASTER = "audio_master";
-    const string KEY_MUSIC = "audio_music";
-    const string KEY_SFX = "audio_sfx";
-
     public float masterVolume = 1f;
     public float musicVolume = 1f;
     public float sfxVolume = 1f;
@@ -28,23 +24,17 @@ public class VolumeManager : MonoBehaviour
 
         Instance = this;
         
-        Load();
         ApplyVolumes();
     }
 
     public void Load()
     {
-        masterVolume = PlayerPrefs.GetFloat(KEY_MASTER, 1f);
-        musicVolume = PlayerPrefs.GetFloat(KEY_MUSIC, 1f);
-        sfxVolume = PlayerPrefs.GetFloat(KEY_SFX, 1f);
+        // Volume settings intentionally live only for this execution.
     }
 
     public void Save()
     {
-        PlayerPrefs.SetFloat(KEY_MASTER, masterVolume);
-        PlayerPrefs.SetFloat(KEY_MUSIC, musicVolume);
-        PlayerPrefs.SetFloat(KEY_SFX, sfxVolume);
-        PlayerPrefs.Save();
+        // Kept as an API-compatible no-op: the project has no local persistence.
     }
 
     public void SetMasterVolume(float v)
