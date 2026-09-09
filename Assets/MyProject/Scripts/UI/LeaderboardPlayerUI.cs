@@ -12,7 +12,7 @@ public class LeaderboardPlayerUI : MonoBehaviour
         string playerName,
         int value)
     {
-        positionText.text = position.ToString();
+        positionText.text =$"{position + 1}º";
 
         nameText.text = playerName;
 

@@ -12,33 +12,58 @@ public class LobbyPlayerProgress : MonoBehaviour
     public int Level { get; private set; }
 
     public void LoadProgress()
+{
+    if (PlayFabAuthManager.Instance == null)
     {
-        if (PlayFabAuthManager.Instance == null ||
-            !PlayFabAuthManager.Instance.IsLoggedIn)
-        {
-            Debug.LogError(
-                "[LobbyPlayerProgress] PlayFab não conectado."
-            );
-
-            return;
-        }
-
-        var request = new GetUserDataRequest
-        {
-            Keys = new List<string>
-            {
-                "CurrentXP",
-                "Level"
-            }
-        };
-
-        PlayFabClientAPI.GetUserReadOnlyData(
-            request,
-            OnProgressLoadedFromPlayFab,
-            OnProgressError
+        Debug.LogWarning(
+            "[LobbyPlayerProgress] AuthManager não encontrado."
         );
+
+        return;
     }
 
+    if (PlayFabAuthManager.Instance.IsGuest)
+    {
+        Debug.Log(
+            "[LobbyPlayerProgress] Visitante: " +
+            "sem progresso."
+        );
+
+        CurrentXP = 0;
+        Level = 1;
+
+        OnProgressLoaded?.Invoke(
+            CurrentXP,
+            Level
+        );
+
+        return;
+    }
+
+    if (!PlayFabAuthManager.Instance.IsLoggedIn)
+    {
+        Debug.LogWarning(
+            "[LobbyPlayerProgress] Jogador não conectado."
+        );
+
+        return;
+    }
+
+    var request = new GetUserDataRequest
+    {
+        Keys = new List<string>
+        {
+            "CurrentXP",
+            "Level"
+        }
+    };
+
+    PlayFabClientAPI.GetUserReadOnlyData(
+        request,
+        OnProgressLoadedFromPlayFab,
+        OnProgressError
+    );
+}
     private void OnProgressLoadedFromPlayFab(
         GetUserDataResult result)
     {

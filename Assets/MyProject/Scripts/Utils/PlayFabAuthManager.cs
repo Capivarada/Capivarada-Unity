@@ -13,13 +13,14 @@ public class PlayFabAuthManager : MonoBehaviour
     public event Action<string> OnNicknameChanged;
 
     public bool IsLoggedIn { get; private set; }
+    public bool IsGuest { get; private set; }
+    public bool IsOnline { get; private set; }
 
     public string PlayFabId { get; private set; }
     public string Nickname { get; private set; }
 
     private const string DEVICE_ID = "PLAYFAB_DEVICE_ID";
-
-    #region UNITY
+    private const string GUEST_NICKNAME = "GUEST_NICKNAME";
 
     private void Awake()
     {
@@ -38,9 +39,9 @@ public class PlayFabAuthManager : MonoBehaviour
         LoginAnonymously();
     }
 
-    #endregion
-
-    #region LOGIN
+    // =====================================================
+    // LOGIN
+    // =====================================================
 
     public void LoginAnonymously()
     {
@@ -55,13 +56,16 @@ public class PlayFabAuthManager : MonoBehaviour
         PlayFabClientAPI.LoginWithCustomID(
             request,
             OnLogin,
-            OnError
+            OnPlayFabLoginError
         );
     }
 
     private void OnLogin(LoginResult result)
     {
         IsLoggedIn = true;
+        IsGuest = false;
+        IsOnline = true;
+
         PlayFabId = result.PlayFabId;
 
         Debug.Log(
@@ -82,18 +86,64 @@ public class PlayFabAuthManager : MonoBehaviour
         }
     }
 
-    #endregion
+    // =====================================================
+    // GUEST / OFFLINE
+    // =====================================================
 
-    #region DEVICE
+    private void EnterGuestMode()
+    {
+        IsLoggedIn = false;
+        IsGuest = true;
+        IsOnline = false;
+
+        PlayFabId = null;
+
+        Nickname = GetOrCreateGuestNickname();
+
+        Debug.Log(
+            $"Modo visitante offline: {Nickname}"
+        );
+
+        OnLoginSuccess?.Invoke();
+    }
+
+    private string GetOrCreateGuestNickname()
+    {
+        if (PlayerPrefs.HasKey(GUEST_NICKNAME))
+        {
+            return PlayerPrefs.GetString(GUEST_NICKNAME);
+        }
+
+        string nickname =
+            $"Visitante{Random.Range(1000, 10000)}";
+
+        PlayerPrefs.SetString(
+            GUEST_NICKNAME,
+            nickname
+        );
+
+        PlayerPrefs.Save();
+
+        return nickname;
+    }
+
+    public void LoginAsGuest()
+    {
+        EnterGuestMode();
+    }
+
+    // =====================================================
+    // DEVICE
+    // =====================================================
 
     private string GetDeviceId()
     {
         return SystemInfo.deviceUniqueIdentifier;
     }
 
-    #endregion
-
-    #region NICKNAME
+    // =====================================================
+    // NICKNAME
+    // =====================================================
 
     private void GenerateInitialNickname()
     {
@@ -154,15 +204,6 @@ public class PlayFabAuthManager : MonoBehaviour
 
     public void ChangeNickname(string newNickname)
     {
-        if (!IsLoggedIn)
-        {
-            OnLoginError?.Invoke(
-                "Você ainda não está conectado."
-            );
-
-            return;
-        }
-
         if (string.IsNullOrWhiteSpace(newNickname))
         {
             OnLoginError?.Invoke(
@@ -173,6 +214,45 @@ public class PlayFabAuthManager : MonoBehaviour
         }
 
         newNickname = newNickname.Trim();
+
+        // =================================================
+        // VISITANTE
+        // =================================================
+
+        if (IsGuest)
+        {
+            Nickname = newNickname;
+
+            PlayerPrefs.SetString(
+                GUEST_NICKNAME,
+                Nickname
+            );
+
+            PlayerPrefs.Save();
+
+            Debug.Log(
+                $"Nickname do visitante alterado: {Nickname}"
+            );
+
+            OnNicknameChanged?.Invoke(
+                Nickname
+            );
+
+            return;
+        }
+
+        // =================================================
+        // PLAYFAB
+        // =================================================
+
+        if (!IsLoggedIn)
+        {
+            OnLoginError?.Invoke(
+                "Você ainda não está conectado."
+            );
+
+            return;
+        }
 
         var request =
             new UpdateUserTitleDisplayNameRequest
@@ -198,9 +278,23 @@ public class PlayFabAuthManager : MonoBehaviour
         );
     }
 
-    #endregion
+    // =====================================================
+    // ERRORS
+    // =====================================================
 
-    #region ERRORS
+    private void OnPlayFabLoginError(PlayFabError error)
+    {
+        Debug.LogWarning(
+            "[PlayFab] Não foi possível conectar. " +
+            "Entrando como visitante."
+        );
+
+        Debug.LogWarning(
+            error.ErrorMessage
+        );
+
+        EnterGuestMode();
+    }
 
     private void OnError(PlayFabError error)
     {
@@ -211,6 +305,4 @@ public class PlayFabAuthManager : MonoBehaviour
 
         OnLoginError?.Invoke(message);
     }
-
-    #endregion
 }

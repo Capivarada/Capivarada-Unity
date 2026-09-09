@@ -44,6 +44,11 @@ public class LobbyMatchResultUI : MonoBehaviour
             return;
         }
 
+        if (PlayFabAuthManager.Instance.IsGuest)
+{
+    return;
+}
+
         MatchProcessResult result =
             PlayFabMatchManager.Instance.LastMatchResult;
 

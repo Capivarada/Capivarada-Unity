@@ -30,58 +30,78 @@ public class PlayFabMatchManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    public void SendMatchResult(
-        int placement,
-        int kills,
-        int roundsSurvived,
-        bool won)
+   public void SendMatchResult(
+    int placement,
+    int kills,
+    int roundsSurvived,
+    bool won)
+{
+    if (PlayFabAuthManager.Instance != null &&
+        PlayFabAuthManager.Instance.IsGuest)
     {
-        if (processingMatch)
-        {
-            Debug.LogWarning(
-                "[PlayFabMatchManager] Partida já está sendo processada."
-            );
-
-            return;
-        }
-
-        if (PlayFabAuthManager.Instance == null ||
-            !PlayFabAuthManager.Instance.IsLoggedIn)
-        {
-            Debug.LogError(
-                "[PlayFabMatchManager] PlayFab não está conectado."
-            );
-
-            OnMatchProcessError?.Invoke(
-                "PlayFab não está conectado."
-            );
-
-            return;
-        }
-
-        processingMatch = true;
-
-        var request = new ExecuteCloudScriptRequest
-        {
-            FunctionName = "ProcessMatchResult",
-
-            FunctionParameter = new
-            {
-                placement = placement,
-                kills = kills,
-                roundsSurvived = roundsSurvived,
-                won = won
-            },
-
-            GeneratePlayStreamEvent = true
-        };
-
-        PlayFabClientAPI.ExecuteCloudScript(
-            request,
-            OnCloudScriptSuccess,
-            OnCloudScriptError
+        Debug.Log(
+            "[PlayFabMatchManager] " +
+            "Visitante: resultado descartado. Nenhum dado foi salvo."
         );
+
+    OnMatchProcessed.Invoke(null);
+        return;
     }
+
+    if (PlayFabAuthManager.Instance == null ||
+        !PlayFabAuthManager.Instance.IsLoggedIn)
+    {
+        Debug.LogError(
+            "[PlayFabMatchManager] PlayFab não está conectado."
+        );
+
+        OnMatchProcessError?.Invoke(
+            "PlayFab não está conectado."
+        );
+
+        return;
+    }
+
+    // ================================================
+    // PLAYFAB
+    // ================================================
+
+    if (!PlayFabAuthManager.Instance.IsLoggedIn)
+    {
+        Debug.LogError(
+            "[PlayFabMatchManager] PlayFab não está conectado."
+        );
+
+        OnMatchProcessError?.Invoke(
+            "PlayFab não está conectado."
+        );
+
+        return;
+    }
+
+    processingMatch = true;
+
+    var request = new ExecuteCloudScriptRequest
+    {
+        FunctionName = "ProcessMatchResult",
+
+        FunctionParameter = new
+        {
+            placement = placement,
+            kills = kills,
+            roundsSurvived = roundsSurvived,
+            won = won
+        },
+
+        GeneratePlayStreamEvent = true
+    };
+
+    PlayFabClientAPI.ExecuteCloudScript(
+        request,
+        OnCloudScriptSuccess,
+        OnCloudScriptError
+    );
+}
 
 
     private void OnCloudScriptSuccess(
