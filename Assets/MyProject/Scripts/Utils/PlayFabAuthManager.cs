@@ -36,13 +36,31 @@ public class PlayFabAuthManager : MonoBehaviour
 
     private void Start()
     {
-        LoginAnonymously();
     }
 
     // =====================================================
     // LOGIN
     // =====================================================
+    public void CompleteGoogleLogin(
+        string playFabId,
+        bool newlyCreated
+    )
+    {
+        IsLoggedIn = true;
+        IsGuest = false;
+        IsOnline = true;
 
+        PlayFabId = playFabId;
+
+        Debug.Log(
+            $"[PlayFab] Google conectado: {PlayFabId}"
+        );
+
+        if (newlyCreated)
+            GenerateInitialNickname();
+        else
+            GetNickname();
+    }
     public void LoginAnonymously()
     {
         string deviceId = GetDeviceId();
