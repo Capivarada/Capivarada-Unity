@@ -15,6 +15,7 @@ MonoBehaviour:
   initialCountdownDuration: 10
   choosingDuration: 8
   nextRoundCountdown: 3
+  revealDuration: 1.5
   maxRounds: 10
   stopVelocityThreshold: 0.15
   stopCheckDelay: 0.75

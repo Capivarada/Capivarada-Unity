@@ -8,6 +8,7 @@ public enum RoundState { Waiting, Countdown, Choosing, Revealing, Moving, NextRo
 public class RoundManager : MonoBehaviour
 {
     [SerializeField] private MatchManager matchManager;
+    [SerializeField] private GameManager gameManager;
     private MatchConfig matchConfig;
     private Coroutine flow;
     private RoundState currentState = RoundState.Waiting;
@@ -20,7 +21,7 @@ public class RoundManager : MonoBehaviour
     public int CurrentRound => currentRound;
     public float RemainingTime { get; private set; }
 
-    private void Awake() { if (matchManager == null) matchManager = GetComponent<MatchManager>(); matchConfig = GameManager.Instance != null ? GameManager.Instance.MatchConfig : null; }
+    private void Awake() { if (matchManager == null) matchManager = GetComponent<MatchManager>(); if (gameManager == null) gameManager = GetComponent<GameManager>(); matchConfig = gameManager.MatchConfig; }
     private void OnEnable() { if (matchManager != null) matchManager.OnStateChanged += HandleMatchState; }
     private void OnDisable() { if (matchManager != null) matchManager.OnStateChanged -= HandleMatchState; }
     private void HandleMatchState(MatchState state) { if (state == MatchState.Playing) StartMatchRounds(); else if (state == MatchState.Finished) StopRounds(); }

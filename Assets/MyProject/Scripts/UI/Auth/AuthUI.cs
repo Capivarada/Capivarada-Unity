@@ -10,11 +10,6 @@ public class AuthUI : MonoBehaviour
     [Header("Login")]
     [SerializeField] private TMP_InputField emailInput;
     [SerializeField] private TMP_InputField passwordInput;
-    [SerializeField] private Button loginButton;
-    [SerializeField] private Button registerButton;
-
-    [Header("Navegação")]
-    [SerializeField] private Button guestButton;
 
     [Header("Mensagens")]
     [SerializeField] private TMP_Text messageText;
@@ -26,15 +21,6 @@ public class AuthUI : MonoBehaviour
     {
         messageText?.SetText("");
         emailInput?.Select();
-        
-        if (loginButton != null)
-            loginButton.onClick.AddListener(Login);
-
-        if (registerButton != null)
-            registerButton.onClick.AddListener(Register);
-
-        if (guestButton != null)
-            guestButton.onClick.AddListener(LoginAsGuest);
 
         if (PlayFabAuthManager.Instance != null)
         {
@@ -45,17 +31,6 @@ public class AuthUI : MonoBehaviour
 
     private void OnDestroy()
     {
-
-
-        if (loginButton != null)
-            loginButton.onClick.RemoveListener(Login);
-
-        if (registerButton != null)
-            registerButton.onClick.RemoveListener(Register);
-
-        if (guestButton != null)
-            guestButton.onClick.RemoveListener(LoginAsGuest);
-
         if (PlayFabAuthManager.Instance != null)
         {
             PlayFabAuthManager.Instance.OnLoginSuccess -= OnAuthenticationSuccess;
@@ -68,7 +43,7 @@ public class AuthUI : MonoBehaviour
     // ENTRAR
     // =====================================================
 
-    private void Login()
+    public void Login()
     {
         ClearMessage();
 
@@ -87,8 +62,6 @@ public class AuthUI : MonoBehaviour
             return;
         }
 
-        SetButtonsInteractable(false);
-
         PlayFabAuthManager.Instance.LoginWithEmail(
             email,
             password
@@ -99,7 +72,7 @@ public class AuthUI : MonoBehaviour
     // CRIAR CONTA
     // =====================================================
 
-    private void Register()
+    public void Register()
     {
         ClearMessage();
 
@@ -118,8 +91,6 @@ public class AuthUI : MonoBehaviour
             return;
         }
 
-        SetButtonsInteractable(false);
-
         PlayFabAuthManager.Instance.RegisterWithEmail(
             email,
             password
@@ -130,11 +101,9 @@ public class AuthUI : MonoBehaviour
     // VISITANTE
     // =====================================================
 
-    private void LoginAsGuest()
+    public void LoginAsGuest()
     {
         ClearMessage();
-
-        SetButtonsInteractable(false);
 
         PlayFabAuthManager.Instance.LoginAsGuest();
     }
@@ -154,26 +123,7 @@ public class AuthUI : MonoBehaviour
 
     private void OnAuthenticationError(string error)
     {
-        SetButtonsInteractable(true);
-
         ShowMessage(error);
-    }
-
-    // =====================================================
-    // UI
-    // =====================================================
-
-    private void SetButtonsInteractable(bool interactable)
-    {
-
-        if (loginButton != null)
-            loginButton.interactable = interactable;
-
-        if (registerButton != null)
-            registerButton.interactable = interactable;
-
-        if (guestButton != null)
-            guestButton.interactable = interactable;
     }
 
     private void ShowMessage(string message)
