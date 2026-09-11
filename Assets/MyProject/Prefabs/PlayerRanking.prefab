@@ -67,8 +67,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: AlyShow
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: bf70ee63da015657bba39268c680b0db, type: 2}
-  m_sharedMaterial: {fileID: -1923822606187191238, guid: bf70ee63da015657bba39268c680b0db, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: ddbc21d99b541284bbbc2788cdc1d2d1, type: 2}
+  m_sharedMaterial: {fileID: 4627105454337099053, guid: ddbc21d99b541284bbbc2788cdc1d2d1, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -92,11 +92,11 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 25
+  m_fontSize: 23
   m_fontSizeBase: 20
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 22
+  m_fontSizeMin: 18
   m_fontSizeMax: 25
   m_fontStyle: 0
   m_HorizontalAlignment: 1
@@ -204,8 +204,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "1\xB0"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: bf70ee63da015657bba39268c680b0db, type: 2}
-  m_sharedMaterial: {fileID: -1923822606187191238, guid: bf70ee63da015657bba39268c680b0db, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: ddbc21d99b541284bbbc2788cdc1d2d1, type: 2}
+  m_sharedMaterial: {fileID: 4627105454337099053, guid: ddbc21d99b541284bbbc2788cdc1d2d1, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -229,8 +229,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 28
-  m_fontSizeBase: 28
+  m_fontSize: 24
+  m_fontSizeBase: 24
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -286,7 +286,7 @@ GameObject:
   - component: {fileID: 6358752742723233675}
   - component: {fileID: 2592838076488548043}
   - component: {fileID: 1421979952166546872}
-  - component: {fileID: 8789418408478388779}
+  - component: {fileID: 3791028766237530079}
   m_Layer: 5
   m_Name: PlayerRanking
   m_TagString: Untagged
@@ -338,13 +338,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
+  m_Maskable: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 428360279, guid: 97da7925033a6783891c36b2d9367136, type: 3}
+  m_Sprite: {fileID: -1831774887, guid: a24aa8a8aa2973e4d8bb1d69ea0800f3, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -370,7 +370,7 @@ MonoBehaviour:
     m_Left: 0
     m_Right: 0
     m_Top: 0
-    m_Bottom: 0
+    m_Bottom: 5
   m_ChildAlignment: 3
   m_Spacing: 0
   m_ChildForceExpandWidth: 1
@@ -380,7 +380,7 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
---- !u!114 &8789418408478388779
+--- !u!114 &3791028766237530079
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -389,7 +389,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 6416966603565773323}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 801b56566dbc4331ab644bee7d3546a1, type: 3}
+  m_Script: {fileID: 11500000, guid: 282fcb706299ead489ca829b794eeadc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LeaderboardPlayerUI
   positionText: {fileID: 2995764481505466604}
@@ -462,8 +462,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 100
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: bf70ee63da015657bba39268c680b0db, type: 2}
-  m_sharedMaterial: {fileID: -1923822606187191238, guid: bf70ee63da015657bba39268c680b0db, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: ddbc21d99b541284bbbc2788cdc1d2d1, type: 2}
+  m_sharedMaterial: {fileID: 4627105454337099053, guid: ddbc21d99b541284bbbc2788cdc1d2d1, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -487,8 +487,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 28
-  m_fontSizeBase: 28
+  m_fontSize: 24
+  m_fontSizeBase: 24
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
