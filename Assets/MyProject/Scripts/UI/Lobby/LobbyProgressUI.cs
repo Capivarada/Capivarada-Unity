@@ -8,6 +8,7 @@
         [SerializeField] private Slider xpSlider;
         [SerializeField] private TMP_Text levelText;
         [SerializeField] private TMP_Text xpText;
+        [SerializeField] private TMP_Text nicknameText;
 
         [Header("Manager")]
         [SerializeField] private LobbyPlayerProgress playerProgress;
@@ -39,7 +40,7 @@
             }
 
             PlayFabAuthManager.Instance.OnLoginSuccess += OnLoginSuccess;
-
+            nicknameText.text = PlayFabAuthManager.Instance.Nickname;
             // Caso o login já tenha terminado antes deste objeto ser inicializado.
             if (PlayFabAuthManager.Instance.IsLoggedIn)
             {

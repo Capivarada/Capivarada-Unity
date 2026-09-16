@@ -4,32 +4,27 @@ using UnityEngine;
 using PlayFab;
 using PlayFab.ClientModels;
 
-public class LobbyLeaderboardManager : MonoBehaviour
+public class LeaderboardManager : MonoBehaviour
 {
-    [System.Serializable]
-    public class LeaderboardUI
-    {
-        public Transform content;
-    }
 
     [Header("Prefabs")]
 
     [SerializeField]
     private GameObject playerEntryPrefab;
 
-    [Header("Leaderboards")]
+    [Header("Leaderboards Contents")]
+    
+    [SerializeField] 
+    private Transform matchesLeaderboard;
 
     [SerializeField]
-    private LeaderboardUI matchesLeaderboard;
+    private Transform eliminationsLeaderboard;
 
     [SerializeField]
-    private LeaderboardUI eliminationsLeaderboard;
+    private Transform levelLeaderboard;
 
     [SerializeField]
-    private LeaderboardUI levelLeaderboard;
-
-    [SerializeField]
-    private LeaderboardUI winsLeaderboard;
+    private Transform winsLeaderboard;
 
     [Header("Config")]
 
@@ -45,29 +40,6 @@ public class LobbyLeaderboardManager : MonoBehaviour
             Debug.LogError(
                 "[Leaderboard] PlayFabAuthManager não encontrado."
             );
-
-            return;
-        }
-
-        PlayFabAuthManager.Instance.OnLoginSuccess += OnLoginSuccess;
-
-        // Caso já esteja logado.
-        if (PlayFabAuthManager.Instance.IsLoggedIn)
-        {
-            OnLoginSuccess();
-        }
-    }
-    
-    private void OnLoginSuccess()
-    {
-        LoadAllLeaderboards();
-    }
-    
-    private void OnDestroy()
-    {
-        if (PlayFabAuthManager.Instance != null)
-        {
-            PlayFabAuthManager.Instance.OnLoginSuccess -= OnLoginSuccess;
         }
     }
 
@@ -104,10 +76,10 @@ public class LobbyLeaderboardManager : MonoBehaviour
 
     private void GetLeaderboard(
         string statisticName,
-        LeaderboardUI leaderboardUI)
+        Transform leaderboardUI)
     {
         if (leaderboardUI == null ||
-            leaderboardUI.content == null)
+            leaderboardUI == null)
         {
             Debug.LogError(
                 $"[Leaderboard] Content não configurado: {statisticName}"
@@ -116,7 +88,7 @@ public class LobbyLeaderboardManager : MonoBehaviour
             return;
         }
 
-        ClearLeaderboard(leaderboardUI.content);
+        ClearLeaderboard(leaderboardUI);
 
         var request = new GetLeaderboardRequest
         {
@@ -131,7 +103,7 @@ public class LobbyLeaderboardManager : MonoBehaviour
             {
                 PopulateLeaderboard(
                     result.Leaderboard,
-                    leaderboardUI.content
+                    leaderboardUI
                 );
             },
             error =>

@@ -52,12 +52,10 @@ public class PlayerDeath : MonoBehaviour
     {
         if (isDead)
             return;
-
+        
         isDead = true;
         
-        PlayerController player = gameObject.GetComponent<PlayerController>();
         
-        //player.animator.SetTrigger("Die");
         
         RegisterKill();
 

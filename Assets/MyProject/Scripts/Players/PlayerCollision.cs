@@ -38,7 +38,7 @@ public class PlayerCollision : MonoBehaviour
         PlayerConfig config = GameManager.Instance.PlayerConfig;
         PlayerController player = gameObject.GetComponent<PlayerController>();
         
-       // player.animator.SetTrigger("Attack");
+        player.animator.SetTrigger("Attack");
         
         if (config == null)
             return;

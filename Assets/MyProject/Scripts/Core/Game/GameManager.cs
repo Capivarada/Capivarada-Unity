@@ -41,6 +41,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private RoundManager roundManager;
     [SerializeField] private PlayerCameraController cameraController;
     [SerializeField] private MatchUI matchUI;
+    [SerializeField] private WardrobeManager wardrobeManager;
 
     private ArenaBounds arenaBounds;
 
@@ -77,6 +78,9 @@ public class GameManager : MonoBehaviour
     {
         ValidateConfiguration();
         ValidateManagers();
+
+        if (wardrobeManager == null)
+            wardrobeManager = WardrobeManager.Instance;
     }
 
     private void Start()
@@ -221,6 +225,8 @@ public class GameManager : MonoBehaviour
 
         humanPlayer.name = "Player";
 
+        ApplyCustomization(humanPlayer, wardrobeManager?.CurrentCustomization);
+
         // Set nickname
         PlayerNickname nickname = humanPlayer.GetComponent<PlayerNickname>();
         if (nickname != null)
@@ -303,6 +309,13 @@ public class GameManager : MonoBehaviour
 
             bot.name = $"Bot {i + 1:D2}";
 
+            ApplyCustomization(
+                bot,
+                wardrobeManager != null
+                    ? wardrobeManager.CreateRandomBotCustomization()
+                    : null
+            );
+
             // Set nickname
             PlayerNickname nickname = bot.GetComponent<PlayerNickname>();
             if (nickname != null)
@@ -351,6 +364,22 @@ public class GameManager : MonoBehaviour
     }
 
     #endregion
+
+    private static void ApplyCustomization(
+        GameObject player,
+        PlayerCustomization customization)
+    {
+        if (player == null || customization == null)
+            return;
+
+        PlayerCustomizationApplier applier =
+            player.GetComponent<PlayerCustomizationApplier>();
+
+        if (applier == null)
+            applier = player.AddComponent<PlayerCustomizationApplier>();
+
+        applier.Apply(customization);
+    }
 
     #region Cleanup
 

@@ -2,7 +2,16 @@ using System;
 using System.Collections;
 using UnityEngine;
 
-public enum RoundState { Waiting, Countdown, Choosing, Revealing, Moving, NextRound, Finished }
+public enum RoundState
+{
+    Waiting,
+    Countdown,
+    Choosing,
+    Revealing,
+    Moving,
+    NextRound,
+    Finished
+}
 
 /// <summary>Owns the timed round flow. Match completion remains in MatchManager.</summary>
 public class RoundManager : MonoBehaviour
@@ -21,20 +30,65 @@ public class RoundManager : MonoBehaviour
     public int CurrentRound => currentRound;
     public float RemainingTime { get; private set; }
 
-    private void Awake() { if (matchManager == null) matchManager = GetComponent<MatchManager>(); if (gameManager == null) gameManager = GetComponent<GameManager>(); matchConfig = gameManager.MatchConfig; }
-    private void OnEnable() { if (matchManager != null) matchManager.OnStateChanged += HandleMatchState; }
-    private void OnDisable() { if (matchManager != null) matchManager.OnStateChanged -= HandleMatchState; }
-    private void HandleMatchState(MatchState state) { if (state == MatchState.Playing) StartMatchRounds(); else if (state == MatchState.Finished) StopRounds(); }
-     public void StartMatchRounds() { if (matchConfig == null || matchManager == null) { Debug.LogError("[RoundManager] MatchConfig or MatchManager missing."); return; } if (flow != null) StopCoroutine(flow); currentRound = 0; flow = StartCoroutine(RoundFlow()); }
-    public void StopRounds() { if (flow != null) StopCoroutine(flow); flow = null; SetState(RoundState.Finished); }
+    private void Awake()
+    {
+        if (matchManager == null) matchManager = GetComponent<MatchManager>();
+        if (gameManager == null) gameManager = GetComponent<GameManager>();
+        matchConfig = gameManager.MatchConfig;
+    }
+
+    private void OnEnable()
+    {
+        if (matchManager != null) matchManager.OnStateChanged += HandleMatchState;
+    }
+
+    private void OnDisable()
+    {
+        if (matchManager != null) matchManager.OnStateChanged -= HandleMatchState;
+    }
+
+    private void HandleMatchState(MatchState state)
+    {
+        if (state == MatchState.Playing) StartMatchRounds();
+        else if (state == MatchState.Finished) StopRounds();
+    }
+
+    public void StartMatchRounds()
+    {
+        if (matchConfig == null || matchManager == null)
+        {
+            Debug.LogError("[RoundManager] MatchConfig or MatchManager missing.");
+            return;
+        }
+
+        if (flow != null) StopCoroutine(flow);
+        currentRound = 0;
+        flow = StartCoroutine(RoundFlow());
+    }
+
+    public void StopRounds()
+    {
+        if (flow != null) StopCoroutine(flow);
+        flow = null;
+        SetState(RoundState.Finished);
+    }
 
     private IEnumerator RoundFlow()
     {
-        SetState(RoundState.Countdown); OnTitleChanged?.Invoke("A partida vai começar em..."); yield return Countdown(matchConfig.InitialCountdownDuration);
-        while (matchManager.CurrentState == MatchState.Playing && matchManager.AlivePlayers > 1 && currentRound < matchConfig.MaxRounds)
+        SetState(RoundState.Countdown);
+        OnTitleChanged?.Invoke("A partida vai começar em...");
+        yield return Countdown(matchConfig.InitialCountdownDuration);
+        while (matchManager.CurrentState == MatchState.Playing && matchManager.AlivePlayers > 1 &&
+               currentRound < matchConfig.MaxRounds)
         {
-            currentRound++; OnRoundChanged?.Invoke(currentRound); ResetLivingPlayers(); HideAllIndicators(); ShowHumanIndicator();
-            SetState(RoundState.Choosing); OnTitleChanged?.Invoke("Escolha a direção e a força"); yield return Countdown(matchConfig.ChoosingDuration);
+            currentRound++;
+            OnRoundChanged?.Invoke(currentRound);
+            ResetLivingPlayers();
+            HideAllIndicators();
+            ShowHumanIndicator();
+            SetState(RoundState.Choosing);
+            OnTitleChanged?.Invoke("Escolha a direção e a força");
+            yield return Countdown(matchConfig.ChoosingDuration);
             SetState(RoundState.Revealing);
             OnTitleChanged?.Invoke("Direções Reveladas!");
             HideTimer();
@@ -75,12 +129,30 @@ public class RoundManager : MonoBehaviour
                 matchManager.FinishMatch(true);
                 yield break;
             }
-            SetState(RoundState.NextRound); OnTitleChanged?.Invoke("Próxima rodada em..."); yield return Countdown(matchConfig.NextRoundCountdown);
+
+            SetState(RoundState.NextRound);
+            OnTitleChanged?.Invoke("Próxima rodada em...");
+            yield return Countdown(matchConfig.NextRoundCountdown);
         }
-        if (matchManager.CurrentState == MatchState.Playing) matchManager.FinishMatch(currentRound >= matchConfig.MaxRounds && matchManager.AlivePlayers > 1);
+
+        if (matchManager.CurrentState == MatchState.Playing)
+            matchManager.FinishMatch(currentRound >= matchConfig.MaxRounds && matchManager.AlivePlayers > 1);
     }
 
-    private IEnumerator Countdown(float duration) { float remaining = duration; while (remaining > 0f) { RemainingTime = remaining; OnTimerChanged?.Invoke(remaining); yield return new WaitForSeconds(1f); remaining -= 1f; } HideTimer(); }
+    private IEnumerator Countdown(float duration)
+    {
+        float remaining = duration;
+        while (remaining > 0f)
+        {
+            RemainingTime = remaining;
+            OnTimerChanged?.Invoke(remaining);
+            yield return new WaitForSeconds(1f);
+            remaining -= 1f;
+        }
+
+        HideTimer();
+    }
+
     private IEnumerator WaitForPlayersToStop()
     {
         yield return new WaitForSeconds(
@@ -114,33 +186,75 @@ public class RoundManager : MonoBehaviour
                     matchConfig.StopVelocityThreshold)
                 {
                     stopped = false;
+
                     break;
                 }
+
+                PlayerController p = player.GetComponent<PlayerController>();
+                p.animator.SetBool("Walk", false);
+                p.animator.SetBool("Run", false);
+                p.animator.SetBool("Trot", false);
             }
 
             if (stopped)
                 yield break;
 
+
             yield return null;
         }
     }
-    private void RegisterRoundSurvival() { foreach (GameObject player in matchManager.GetAlivePlayers()) player.GetComponent<PlayerMatchData>()?.AddRoundSurvived(); }
-    private void ResetLivingPlayers() { foreach (GameObject p in matchManager.GetAlivePlayers()) p.GetComponent<PlayerController>()?.ResetRound(); }
+
+    private void RegisterRoundSurvival()
+    {
+        foreach (GameObject player in matchManager.GetAlivePlayers())
+            player.GetComponent<PlayerMatchData>()?.AddRoundSurvived();
+    }
+
+    private void ResetLivingPlayers()
+    {
+        foreach (GameObject p in matchManager.GetAlivePlayers()) p.GetComponent<PlayerController>()?.ResetRound();
+    }
 
     private void LaunchLivingPlayers()
     {
         foreach (GameObject p in matchManager.GetAlivePlayers())
         {
             p.GetComponent<PlayerController>()?.Launch();
-
-            PlayerController animator = p.GetComponent<PlayerController>();
-            //animator.animator.SetBool("Run", true);
         }
     }
 
-    private void ShowAllIndicators() { foreach (GameObject p in matchManager.GetAlivePlayers()) p.GetComponent<PlayerController>()?.ShowIndicator(); }
-    private void HideAllIndicators() { foreach (GameObject p in matchManager.AllPlayers) if (p != null) p.GetComponent<PlayerController>()?.HideIndicator(); }
-    private void ShowHumanIndicator() { foreach (GameObject p in matchManager.GetAlivePlayers()) if (p.GetComponent<HumanPlayerController>() != null) { p.GetComponent<PlayerController>()?.ShowIndicator(); return; } }
-    private void HideTimer() { RemainingTime = 0f; OnTimerChanged?.Invoke(0f); }
-    private void SetState(RoundState state) { if (currentState == state) return; currentState = state; OnStateChanged?.Invoke(state); }
+    private void ShowAllIndicators()
+    {
+        foreach (GameObject p in matchManager.GetAlivePlayers()) p.GetComponent<PlayerController>()?.ShowIndicator();
+    }
+
+    private void HideAllIndicators()
+    {
+        foreach (GameObject p in matchManager.AllPlayers)
+            if (p != null)
+                p.GetComponent<PlayerController>()?.HideIndicator();
+    }
+
+    private void ShowHumanIndicator()
+    {
+        foreach (GameObject p in matchManager.GetAlivePlayers())
+            if (p.GetComponent<HumanPlayerController>() != null)
+            {
+                p.GetComponent<PlayerController>()?.ShowIndicator();
+                return;
+            }
+    }
+
+    private void HideTimer()
+    {
+        RemainingTime = 0f;
+        OnTimerChanged?.Invoke(0f);
+    }
+
+    private void SetState(RoundState state)
+    {
+        if (currentState == state) return;
+        currentState = state;
+        OnStateChanged?.Invoke(state);
+    }
 }

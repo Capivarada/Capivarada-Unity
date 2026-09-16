@@ -6,7 +6,7 @@ public class PlayerController : MonoBehaviour
     [Header("References")]
     [SerializeField]
     private ImpulseIndicator impulseIndicator;
-    //[SerializeField] public Animator animator;
+    [SerializeField] public Animator animator;
 
     [SerializeField]
     private Rigidbody rb;
@@ -160,6 +160,14 @@ public class PlayerController : MonoBehaviour
         if (currentCharge <= 0)
             return;
 
+        if(currentCharge <= 2)
+            animator.SetBool("Walk", true);
+        if(currentCharge <= 4)
+            animator.SetBool("Run", true);
+        if(currentCharge >= 5)
+            animator.SetBool("Trot", true);
+            
+            
         hasLaunched = true;
 
         PlayerConfig config = GameManager.Instance.PlayerConfig;
@@ -174,7 +182,7 @@ public class PlayerController : MonoBehaviour
         direction.Normalize();
 
         float force =
-            config.ImpulseForce *
+            config.ImpulseForce * 
             currentCharge;
 
         rb.AddForce(
@@ -194,7 +202,6 @@ public class PlayerController : MonoBehaviour
         hasLaunched = false;
 
         currentCharge = 0;
-        //animator.SetBool("Run", false);
         ShowIndicator();
 
         UpdateIndicator();

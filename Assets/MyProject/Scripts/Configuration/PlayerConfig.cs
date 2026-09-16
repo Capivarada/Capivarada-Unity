@@ -11,7 +11,7 @@ public class PlayerConfig : ScriptableObject
 
     [Header("Charge")]
     [SerializeField, Tooltip("Minimum charge available to every player.")] [Range(0f, 10f)] private float minCharge = 0f;
-    [SerializeField, Tooltip("Maximum charge available to every player.")] [Range(1f, 10f)] private float maxCharge = 10f;
+    [SerializeField, Tooltip("Maximum charge available to every player.")] [Range(1f, 10f)] private float maxCharge = 5f;
 
     public float MinCharge => minCharge;
     public float MaxCharge => maxCharge;
@@ -21,7 +21,7 @@ public class PlayerConfig : ScriptableObject
     #region Impulse
 
     [Header("Impulse")]
-    [SerializeField, Tooltip("Impulse applied per charge point.")] [Range(0.1f, 10f)] private float impulseForce = 2.5f;
+    [SerializeField, Tooltip("Impulse applied per charge point.")] [Range(0.1f, 10f)] private float impulseForce = 5f;
 
     public float ImpulseForce => impulseForce;
 
@@ -40,14 +40,12 @@ public class PlayerConfig : ScriptableObject
 
     [Header("Collision")]
     [SerializeField, Tooltip("Minimum relative speed that produces a player impact.")] [Range(0.1f, 5f)] private float minimumImpactVelocity = 2f;
-    [SerializeField, Tooltip("Minimum time between processed impacts for a player.")] [Range(0.01f, 0.5f)] private float collisionCooldown = 0.1f;
-    [SerializeField, Tooltip("Multiplier for the collision response received from the opponent.")] [Range(0.1f, 3f)] private float knockbackMultiplier = 1f;
-    [SerializeField, Tooltip("Multiplier kept for balancing recoil response.")] [Range(0.1f, 3f)] private float recoilMultiplier = 1f;
+    [SerializeField, Tooltip("Minimum time between processed impacts for a player.")] [Range(0.001f, 0.5f)] private float collisionCooldown = 0.001f;
+    [SerializeField, Tooltip("Multiplier for the collision response received from the opponent.")] [Range(0.1f, 3f)] private float knockbackMultiplier = 1.2f;
 
     public float MinimumImpactVelocity => minimumImpactVelocity;
     public float CollisionCooldown => collisionCooldown;
     public float KnockbackMultiplier => knockbackMultiplier;
-    public float RecoilMultiplier => recoilMultiplier;
 
     #endregion
 }

@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using PlayFab;
 using PlayFab.ClientModels;
+using UnityEngine.SceneManagement;
 using Random = UnityEngine.Random;
 
 public class PlayFabAuthManager : MonoBehaviour
@@ -18,8 +19,13 @@ public class PlayFabAuthManager : MonoBehaviour
 
     public string PlayFabId { get; private set; }
     public string Nickname { get; private set; }
-
-    private const string GUEST_NICKNAME = "GUEST_NICKNAME";
+    
+    private string registeredEmail;
+    private string currentLoginPassword;
+    
+    private const string SavedEmailKey = "Capivarada_SavedEmail";
+    private const string SavedPasswordKey = "Capivarada_SavedPassword";
+    public event Action<float> OnAuthProgress;
 
     private void Awake()
     {
@@ -32,7 +38,58 @@ public class PlayFabAuthManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
+    
+    private void SetAuthProgress(float progress)
+    {
+        progress = Mathf.Clamp01(progress);
 
+        OnAuthProgress?.Invoke(progress);
+
+        Debug.Log(
+            $"[PlayFab] Progresso da autenticação: {progress * 100f:0}%"
+        );
+    }
+
+    public bool HasSavedLogin()
+    {
+        return
+            PlayerPrefs.HasKey(SavedEmailKey) &&
+            PlayerPrefs.HasKey(SavedPasswordKey) &&
+            !string.IsNullOrWhiteSpace(
+                PlayerPrefs.GetString(SavedEmailKey)
+            ) &&
+            !string.IsNullOrWhiteSpace(
+                PlayerPrefs.GetString(SavedPasswordKey)
+            );
+    }
+    
+    public void AutoLogin()
+    {
+        if (!HasSavedLogin())
+        {
+            OnLoginError?.Invoke(
+                "Nenhum login salvo."
+            );
+
+            return;
+        }
+
+        string email =
+            PlayerPrefs.GetString(SavedEmailKey);
+
+        string password =
+            PlayerPrefs.GetString(SavedPasswordKey);
+
+        Debug.Log(
+            $"[PlayFab] Tentando login automático: {email}"
+        );
+
+        LoginWithEmail(
+            email,
+            password
+        );
+    }
+    
     // =====================================================
     // VISITANTE
     // =====================================================
@@ -56,7 +113,7 @@ public class PlayFabAuthManager : MonoBehaviour
 
     private string GenerateGuestNickname()
     {
-        return $"Capivara{Random.Range(1000, 10000)}";
+        return $"Visitante {Random.Range(1000, 10000)}";
     }
 
     // =====================================================
@@ -87,6 +144,9 @@ public class PlayFabAuthManager : MonoBehaviour
         }
 
         email = email.Trim();
+        
+        registeredEmail = email;
+        currentLoginPassword = password;
 
         if (password.Length < 6)
         {
@@ -107,8 +167,7 @@ public class PlayFabAuthManager : MonoBehaviour
             Password = password,
 
             // PlayFab exige Username nesse método.
-            // Usaremos o e-mail como username inicialmente.
-            Username = GenerateUsername(email),
+            Username = GenerateUsername(),
 
             RequireBothUsernameAndEmail = false
         };
@@ -134,7 +193,38 @@ public class PlayFabAuthManager : MonoBehaviour
 
         PlayFabId = result.PlayFabId;
 
-        GenerateInitialNickname();
+        CompleteProfileInfos();
+    }
+    
+    private void AddContactEmail(string email)
+    {
+        var request = new AddOrUpdateContactEmailRequest
+        {
+            EmailAddress = email
+        };
+
+        PlayFabClientAPI.AddOrUpdateContactEmail(
+            request,
+            result =>
+            {
+                Debug.Log(
+                    "[PlayFab] Contact Email configurado com sucesso."
+                );
+
+                OnLoginSuccess?.Invoke();
+            },
+            error =>
+            {
+                Debug.LogError(
+                    "[PlayFab] Erro ao configurar Contact Email:\n" +
+                    error.GenerateErrorReport()
+                );
+
+                OnLoginError?.Invoke(
+                    "Não foi possível configurar o e-mail da conta."
+                );
+            }
+        );
     }
 
     // =====================================================
@@ -165,6 +255,11 @@ public class PlayFabAuthManager : MonoBehaviour
         }
 
         email = email.Trim();
+        
+        registeredEmail = email;
+        currentLoginPassword = password;
+        
+        SetAuthProgress(0.25f);
 
         Debug.Log(
             $"[PlayFab] Entrando com: {email}"
@@ -193,34 +288,56 @@ public class PlayFabAuthManager : MonoBehaviour
 
         PlayFabId = result.PlayFabId;
 
+        SaveLoginCredentials();
+        
+        SetAuthProgress(0.60f);
+
         Debug.Log(
             $"[PlayFab] Login realizado: {PlayFabId}"
         );
 
         GetNickname();
     }
+    
+    private void SaveLoginCredentials()
+    {
+        if (string.IsNullOrWhiteSpace(registeredEmail) ||
+            string.IsNullOrWhiteSpace(currentLoginPassword))
+        {
+            return;
+        }
+
+        PlayerPrefs.SetString(
+            SavedEmailKey,
+            registeredEmail
+        );
+
+        PlayerPrefs.SetString(
+            SavedPasswordKey,
+            currentLoginPassword
+        );
+
+        PlayerPrefs.Save();
+
+        Debug.Log(
+            "[PlayFab] Credenciais salvas para autologin."
+        );
+    }
 
     // =====================================================
     // USERNAME
     // =====================================================
 
-    private string GenerateUsername(string email)
+    private string GenerateUsername()
     {
-        string prefix = email
-            .Split('@')[0]
-            .Replace(" ", "");
-
-        string random =
-            Random.Range(1000, 10000).ToString();
-
-        return $"{prefix}{random}";
+        return $"Capivara{Random.Range(100000, 1000000)}";
     }
 
     // =====================================================
     // NICKNAME
     // =====================================================
 
-    private void GenerateInitialNickname()
+    private void CompleteProfileInfos()
     {
         string nickname =
             $"Capivara{Random.Range(1000, 10000)}";
@@ -245,7 +362,7 @@ public class PlayFabAuthManager : MonoBehaviour
                     $"[PlayFab] Nickname criado: {Nickname}"
                 );
 
-                OnLoginSuccess?.Invoke();
+                AddContactEmail(registeredEmail);
             },
             OnError
         );
@@ -253,6 +370,8 @@ public class PlayFabAuthManager : MonoBehaviour
 
     public void GetNickname()
     {
+        SetAuthProgress(0.80f);
+        
         var request =
             new GetAccountInfoRequest();
 
