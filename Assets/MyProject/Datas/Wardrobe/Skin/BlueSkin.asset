@@ -12,18 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32611b192117fa5f4a8b15aea1654029, type: 3}
   m_Name: BlueSkin
   m_EditorClassIdentifier: Assembly-CSharp::WardrobeSkin
-  skinId: 002
-  skinName: IceMan
-  rarity: Comum
+  contentId: 5ac214f6d186211e3955e6fd97df2901
+  contentName: 
+  rarity: 0
+  previewPrefab: {fileID: 0}
+  equippedPrefab: {fileID: 0}
   colors:
   - color: {r: 0.063545756, g: 0.7924528, b: 0.7470601, a: 1}
-    metallic: 0
+    metallic: 0.969
+    smoothness: 1
+  - color: {r: 0, g: 0, b: 0, a: 1}
+    metallic: 1
     smoothness: 0.5
   - color: {r: 0, g: 0, b: 0, a: 1}
-    metallic: 0
-    smoothness: 0.5
-  - color: {r: 0, g: 0, b: 0, a: 1}
-    metallic: 0
+    metallic: 1
     smoothness: 0.5
   - color: {r: 0.023495909, g: 0.40312776, b: 0.4528302, a: 1}
     metallic: 0

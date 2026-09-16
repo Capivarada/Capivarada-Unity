@@ -4,9 +4,9 @@ using System;
 public class PlayerCustomization
 {
     public WardrobeSkin Skin;
-    public WardrobeItem Head;
-    public WardrobeItem Accessory;
-    public WardrobeItem Clothing;
+    public WardrobeHead Head;
+    public WardrobeAccessory Accessory;
+    public WardrobeCloth Clothing;
 
     public PlayerCustomization Clone()
     {

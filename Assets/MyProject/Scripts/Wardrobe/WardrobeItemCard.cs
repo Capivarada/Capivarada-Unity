@@ -7,47 +7,51 @@ public class WardrobeItemCard : MonoBehaviour
     [SerializeField] private TMP_Text nameText;
     [SerializeField] private TMP_Text rarityText;
     [SerializeField] private TMP_Text buttonText;
+    [SerializeField] private RaritySettings raritySettings;
     [SerializeField] private Button equipButton;
     [SerializeField] private WardrobeItemPreview preview;
     [SerializeField] private Transform previewRoot;
 
     private WardrobeManager manager;
-    private WardrobeItem item;
+    private WardrobeEquipment item;
     private WardrobeSkin skin;
     private WardrobeCategory category;
 
     public void Initialize(
         WardrobeManager wardrobeManager,
-        WardrobeItem wardrobeItem,
-        WardrobeSkin wardrobeSkin,
+        WardrobeContent wardrobeContent,
         GameObject capybaraPreviewPrefab)
     {
         manager = wardrobeManager;
-        item = wardrobeItem;
-        skin = wardrobeSkin;
+        skin = wardrobeContent as WardrobeSkin;
+        item = wardrobeContent as WardrobeEquipment;
 
-        if (manager == null || (item == null && skin == null))
+        if (manager == null || wardrobeContent == null || (item == null && skin == null))
         {
             Debug.LogWarning($"[{nameof(WardrobeItemCard)}] Card data is incomplete on {name}.");
             return;
         }
 
-        category = wardrobeItem != null
-            ? wardrobeItem.Category
+        category = item != null
+            ? GetCategory(item)
             : WardrobeCategory.Cores;
 
         if (nameText != null)
-            nameText.text = wardrobeItem != null ? wardrobeItem.ItemName : wardrobeSkin.SkinName;
+            nameText.text = wardrobeContent.ContentName;
 
         if (rarityText != null)
-            rarityText.text = wardrobeItem != null ? wardrobeItem.Rarity : wardrobeSkin.Rarity;
+        {
+            rarityText.text = wardrobeContent.ContentRarity.ToString();
+            if (raritySettings != null)
+                rarityText.color = raritySettings.GetColor(wardrobeContent.ContentRarity);
+        }
 
         if (preview != null)
         {
-            if (wardrobeItem != null)
-                preview.ShowItem(wardrobeItem, previewRoot);
+            if (item != null)
+                preview.ShowContent(item, previewRoot);
             else
-                preview.ShowSkin(wardrobeSkin, capybaraPreviewPrefab, previewRoot);
+                preview.ShowSkin(skin, capybaraPreviewPrefab, previewRoot);
         }
 
         if (equipButton != null)
@@ -82,7 +86,7 @@ public class WardrobeItemCard : MonoBehaviour
             manager.EquipItem(item);
     }
 
-    private WardrobeItem GetEquippedItem()
+    private WardrobeEquipment GetEquippedItem()
     {
         PlayerCustomization customization = manager.CurrentCustomization;
         return category switch
@@ -91,6 +95,17 @@ public class WardrobeItemCard : MonoBehaviour
             WardrobeCategory.Acessorios => customization.Accessory,
             WardrobeCategory.Roupas => customization.Clothing,
             _ => null
+        };
+    }
+
+    private static WardrobeCategory GetCategory(WardrobeEquipment content)
+    {
+        return content switch
+        {
+            WardrobeHead => WardrobeCategory.Cabeca,
+            WardrobeAccessory => WardrobeCategory.Acessorios,
+            WardrobeCloth => WardrobeCategory.Roupas,
+            _ => WardrobeCategory.Todos
         };
     }
 

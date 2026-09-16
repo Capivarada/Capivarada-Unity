@@ -12,9 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32611b192117fa5f4a8b15aea1654029, type: 3}
   m_Name: DefaultSkin
   m_EditorClassIdentifier: Assembly-CSharp::WardrobeSkin
-  skinId: 001
-  skinName: Default
-  rarity: Comum
+  contentId: d83d26d61f704fb69b355a4c7724dc0e
+  contentName: 
+  rarity: 0
+  previewPrefab: {fileID: 0}
+  equippedPrefab: {fileID: 0}
   colors:
   - color: {r: 0.4245283, g: 0.22530882, b: 0.042052332, a: 1}
     metallic: 0

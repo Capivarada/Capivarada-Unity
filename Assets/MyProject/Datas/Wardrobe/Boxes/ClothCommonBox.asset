@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46b2c83a91b2315429d47e7b0f5ac418, type: 3}
+  m_Name: ClothCommonBox
+  m_EditorClassIdentifier: Assembly-CSharp::WardrobeBox
+  boxId: 9f5af2b3e38b4d2f8cddbe35c3bb1302
+  boxName: Caixa de Roupas Comum
+  type: 2
+  price: 100
+  prefab: {fileID: 0}
+  dropRates:
+  - rarity: Comum
+    chance: 100
+    items:
+    - {fileID: 11400000, guid: 5bebe0f808a5f17458e0558f2404d73f, type: 2}
+    - {fileID: 11400000, guid: ea5b113dfdb5f55549642f7d18b46658, type: 2}

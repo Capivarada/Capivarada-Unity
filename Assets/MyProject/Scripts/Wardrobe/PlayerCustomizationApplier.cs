@@ -102,7 +102,7 @@ public class PlayerCustomizationApplier : MonoBehaviour
 
     private void ApplyEquipment(
         WardrobeCategory category,
-        WardrobeItem item,
+        WardrobeEquipment item,
         Transform slot)
     {
         ClearEquipment(category);

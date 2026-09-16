@@ -79,25 +79,15 @@ public class WardrobeUI : MonoBehaviour
                     continue;
 
                 WardrobeItemCard card = Instantiate(itemCardPrefab, content);
-                card.Initialize(
-                    wardrobeManager,
-                    null,
-                    skin,
-                    capybaraPreviewPrefab
-                );
+                card.Initialize(wardrobeManager, skin, capybaraPreviewPrefab);
             }
         }
         else
         {
-            foreach (WardrobeItem item in wardrobeManager.GetItems(currentCategory))
+            foreach (WardrobeContent item in wardrobeManager.GetItems(currentCategory))
             {
                 WardrobeItemCard card = Instantiate(itemCardPrefab, content);
-                card.Initialize(
-                    wardrobeManager,
-                    item,
-                    null,
-                    capybaraPreviewPrefab
-                );
+                card.Initialize(wardrobeManager, item, capybaraPreviewPrefab);
             }
         }
     }

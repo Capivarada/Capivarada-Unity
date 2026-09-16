@@ -2103,7 +2103,6 @@ GameObject:
   m_Component:
   - component: {fileID: 288318566}
   - component: {fileID: 288318568}
-  - component: {fileID: 288318567}
   m_Layer: 5
   m_Name: RestroomUI
   m_TagString: Untagged
@@ -2131,40 +2130,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &288318567
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 288318565}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9430eddd80f420675be941bbaae885cb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WardrobeManager
-  defaultSkin: {fileID: 11400000, guid: d83d26d61f704fb69b355a4c7724dc0e, type: 2}
-  availableSkins:
-  - {fileID: 11400000, guid: d83d26d61f704fb69b355a4c7724dc0e, type: 2}
-  - {fileID: 11400000, guid: 5ac214f6d186211e3955e6fd97df2901, type: 2}
-  availableItems:
-  - {fileID: 11400000, guid: d2c614aefd85a39e3b448d18202fdfca, type: 2}
-  - {fileID: 11400000, guid: ea5b113dfdb5f55549642f7d18b46658, type: 2}
-  - {fileID: 11400000, guid: a43c95f7501bb76ab8b094477e01c63a, type: 2}
-  ownedSkins:
-  - {fileID: 11400000, guid: d83d26d61f704fb69b355a4c7724dc0e, type: 2}
-  - {fileID: 11400000, guid: 5ac214f6d186211e3955e6fd97df2901, type: 2}
-  ownedItems:
-  - {fileID: 11400000, guid: ea5b113dfdb5f55549642f7d18b46658, type: 2}
-  - {fileID: 11400000, guid: a43c95f7501bb76ab8b094477e01c63a, type: 2}
-  - {fileID: 11400000, guid: d2c614aefd85a39e3b448d18202fdfca, type: 2}
-  botSkins:
-  - {fileID: 11400000, guid: 5ac214f6d186211e3955e6fd97df2901, type: 2}
-  - {fileID: 11400000, guid: d83d26d61f704fb69b355a4c7724dc0e, type: 2}
-  botItems:
-  - {fileID: 11400000, guid: a43c95f7501bb76ab8b094477e01c63a, type: 2}
-  - {fileID: 11400000, guid: ea5b113dfdb5f55549642f7d18b46658, type: 2}
-  - {fileID: 11400000, guid: d2c614aefd85a39e3b448d18202fdfca, type: 2}
 --- !u!114 &288318568
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2177,7 +2142,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 77a4d1b87ed94b50da59342693ba742d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WardrobeUI
-  wardrobeManager: {fileID: 288318567}
+  wardrobeManager: {fileID: 2042969974}
   mainPreview: {fileID: 979586949}
   capybaraPreviewPrefab: {fileID: 4453846769052655643, guid: c7ad8399fe27c7612b681f70cce6dd26, type: 3}
   itemCardPrefab: {fileID: 5803055264012067003, guid: cc53f3807d7e2bcc692a6873f3cc6e48, type: 3}
@@ -5021,7 +4986,7 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 705467976}
   m_Enabled: 1
-  serializedVersion: 13
+  serializedVersion: 12
   m_Type: 1
   m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
   m_Intensity: 1
@@ -5073,7 +5038,7 @@ Light:
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
-  m_ShapeRadius: 0
+  m_ShadowRadius: 0
   m_ShadowAngle: 0
   m_LightUnit: 1
   m_LuxAtDistance: 1
@@ -9486,7 +9451,6 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
-  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -14729,6 +14693,70 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2036844819}
   m_CullTransparentMesh: 1
+--- !u!1 &2042969973
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2042969975}
+  - component: {fileID: 2042969974}
+  m_Layer: 0
+  m_Name: WardrobeManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2042969974
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2042969973}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9430eddd80f420675be941bbaae885cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WardrobeManager
+  defaultSkin: {fileID: 11400000, guid: d83d26d61f704fb69b355a4c7724dc0e, type: 2}
+  availableSkins:
+  - {fileID: 11400000, guid: d83d26d61f704fb69b355a4c7724dc0e, type: 2}
+  - {fileID: 11400000, guid: 5ac214f6d186211e3955e6fd97df2901, type: 2}
+  availableHeads: []
+  availableAccessories: []
+  availableClothes: []
+  ownedSkins:
+  - {fileID: 11400000, guid: d83d26d61f704fb69b355a4c7724dc0e, type: 2}
+  - {fileID: 11400000, guid: 5ac214f6d186211e3955e6fd97df2901, type: 2}
+  ownedHeads: []
+  ownedAccessories: []
+  ownedClothes: []
+  botSkins:
+  - {fileID: 11400000, guid: 5ac214f6d186211e3955e6fd97df2901, type: 2}
+  - {fileID: 11400000, guid: d83d26d61f704fb69b355a4c7724dc0e, type: 2}
+  botHeads: []
+  botAccessories: []
+  botClothes: []
+  inventoryManager: {fileID: 0}
+--- !u!4 &2042969975
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2042969973}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 874.1309, y: 1105.5164, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2074602053
 GameObject:
   m_ObjectHideFlags: 0
@@ -15191,3 +15219,4 @@ SceneRoots:
   - {fileID: 434078142}
   - {fileID: 1484702668}
   - {fileID: 2114080621}
+  - {fileID: 2042969975}

@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46b2c83a91b2315429d47e7b0f5ac418, type: 3}
+  m_Name: SkinCommonBox
+  m_EditorClassIdentifier: Assembly-CSharp::WardrobeBox
+  boxId: b8a63b729c8948d3a6e5f42c2d1f0b09
+  boxName: Caixa de Cores Comum
+  type: 0
+  price: 100
+  prefab: {fileID: 0}
+  dropRates:
+  - rarity: Comum
+    chance: 100
+    items:
+    - {fileID: 11400000, guid: d83d26d61f704fb69b355a4c7724dc0e, type: 2}
+    - {fileID: 11400000, guid: 5ac214f6d186211e3955e6fd97df2901, type: 2}

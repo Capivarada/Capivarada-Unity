@@ -11,23 +11,30 @@ public class SkinColorData
     [Range(0f, 1f)]
     public float smoothness = 0.5f;
 }
+public enum SkinColorSlot
+{
+    Skin,
+    Tail,
+    Paw,
+    Nose,
+    Ears,
+    Mouth,
+    Eyes
+}
 
 [CreateAssetMenu(
     fileName = "New Capybara Skin",
     menuName = "Capivarada/Wardrobe/Skin"
 )]
-public class WardrobeSkin : ScriptableObject
+public class WardrobeSkin : WardrobeContent
 {
     public const int MaterialSlotCount = 7;
 
-    [SerializeField] private string skinId;
-    [SerializeField] private string skinName;
-    [SerializeField] private string rarity;
     [SerializeField] private SkinColorData[] colors = new SkinColorData[MaterialSlotCount];
 
-    public string SkinId => skinId;
-    public string SkinName => skinName;
-    public string Rarity => rarity;
+    public string SkinId => ContentId;
+    public string SkinName => ContentName;
+    public Rarity Rarity => ContentRarity;
     public SkinColorData[] Colors => colors;
 
     private void OnEnable()
@@ -35,8 +42,9 @@ public class WardrobeSkin : ScriptableObject
         EnsureColorData();
     }
 
-    private void OnValidate()
+    protected override void OnValidate()
     {
+        EnsureStableId();
         EnsureColorData();
     }
 
@@ -44,6 +52,11 @@ public class WardrobeSkin : ScriptableObject
     {
         EnsureColorData();
         return colors[index];
+    }
+
+    public SkinColorData GetColorData(SkinColorSlot slot)
+    {
+        return GetColorData((int)slot);
     }
 
     private void EnsureColorData()

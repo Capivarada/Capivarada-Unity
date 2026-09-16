@@ -23,6 +23,23 @@ public class WardrobeItemPreview : MonoBehaviour
         ResetTransform();
     }
 
+    public void ShowContent(WardrobeEquipment item, Transform root)
+    {
+        Clear();
+
+        if (item == null || root == null)
+            return;
+
+        GameObject prefab = item.PreviewPrefab != null
+            ? item.PreviewPrefab
+            : item.EquippedPrefab;
+
+        if (prefab != null)
+            previewObject = Instantiate(prefab, root);
+
+        ResetTransform();
+    }
+
     public void ShowSkin(
         WardrobeSkin skin,
         GameObject capybaraPrefab,
@@ -72,6 +89,11 @@ public class WardrobeItemPreview : MonoBehaviour
             Destroy(previewObject);
 
         previewObject = null;
+    }
+
+    public void ClearPreview()
+    {
+        Clear();
     }
 
     private void OnDestroy()
