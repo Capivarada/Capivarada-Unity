@@ -9,13 +9,13 @@ public class WardrobeItemCard : MonoBehaviour
     [SerializeField] private TMP_Text buttonText;
     [SerializeField] private RaritySettings raritySettings;
     [SerializeField] private Button equipButton;
-    [SerializeField] private WardrobeItemPreview preview;
-    [SerializeField] private Transform previewRoot;
+    [SerializeField] private Preview3D preview3D;
 
     private WardrobeManager manager;
     private WardrobeEquipment item;
     private WardrobeSkin skin;
     private WardrobeCategory category;
+    private bool isNoneOption;
 
     public void Initialize(
         WardrobeManager wardrobeManager,
@@ -25,16 +25,14 @@ public class WardrobeItemCard : MonoBehaviour
         manager = wardrobeManager;
         skin = wardrobeContent as WardrobeSkin;
         item = wardrobeContent as WardrobeEquipment;
+        category = item != null ? GetCategory(item) : WardrobeCategory.Cores;
+        isNoneOption = false;
 
         if (manager == null || wardrobeContent == null || (item == null && skin == null))
         {
             Debug.LogWarning($"[{nameof(WardrobeItemCard)}] Card data is incomplete on {name}.");
             return;
         }
-
-        category = item != null
-            ? GetCategory(item)
-            : WardrobeCategory.Cores;
 
         if (nameText != null)
             nameText.text = wardrobeContent.ContentName;
@@ -46,13 +44,32 @@ public class WardrobeItemCard : MonoBehaviour
                 rarityText.color = raritySettings.GetColor(wardrobeContent.ContentRarity);
         }
 
-        if (preview != null)
+        ShowPreview(capybaraPreviewPrefab);
+
+        if (equipButton != null)
         {
-            if (item != null)
-                preview.ShowContent(item, previewRoot);
-            else
-                preview.ShowSkin(skin, capybaraPreviewPrefab, previewRoot);
+            equipButton.onClick.RemoveListener(HandleEquipClicked);
+            equipButton.onClick.AddListener(HandleEquipClicked);
         }
+
+        RefreshState();
+    }
+
+    public void InitializeNone(WardrobeManager wardrobeManager, WardrobeCategory targetCategory, GameObject capybaraPreviewPrefab)
+    {
+        manager = wardrobeManager;
+        skin = null;
+        item = null;
+        category = targetCategory;
+        isNoneOption = true;
+
+        if (nameText != null)
+            nameText.text = "NENHUM";
+
+        if (rarityText != null)
+            rarityText.text = string.Empty;
+
+        ShowPreview(capybaraPreviewPrefab);
 
         if (equipButton != null)
         {
@@ -68,10 +85,7 @@ public class WardrobeItemCard : MonoBehaviour
         if (buttonText == null || manager == null)
             return;
 
-        bool equipped = skin != null
-            ? manager.CurrentCustomization.Skin == skin
-            : GetEquippedItem() == item;
-
+        bool equipped = isNoneOption ? IsNoneEquipped() : (skin != null ? manager.CurrentCustomization.Skin == skin : GetEquippedItem() == item);
         buttonText.text = equipped ? "EQUIPADO" : "EQUIPAR";
     }
 
@@ -80,10 +94,133 @@ public class WardrobeItemCard : MonoBehaviour
         if (manager == null)
             return;
 
+        if (isNoneOption)
+        {
+            if (category == WardrobeCategory.Cores)
+                manager.EquipDefaultSkin();
+            else
+                manager.Unequip(category);
+            return;
+        }
+
         if (skin != null)
             manager.EquipSkin(skin);
         else
             manager.EquipItem(item);
+    }
+
+    private void ShowPreview(GameObject capybaraPreviewPrefab)
+    {
+        if (preview3D == null)
+        {
+            Debug.LogWarning($"[{nameof(WardrobeItemCard)}] Preview3D is not assigned on {name}.");
+            return;
+        }
+
+        if (isNoneOption)
+        {
+            PlayerCustomization customization = manager != null ? manager.CurrentCustomization : null;
+            GameObject instance = capybaraPreviewPrefab != null ? capybaraPreviewPrefab : WardrobePreviewUtility.GetCapybaraPreviewPrefab();
+            if (instance == null)
+            {
+                preview3D.Clear();
+                return;
+            }
+
+            preview3D.Show(instance, previewObject =>
+            {
+                if (previewObject == null)
+                    return;
+
+                PlayerCustomizationApplier applier = previewObject.GetComponent<PlayerCustomizationApplier>();
+                if (applier == null)
+                    applier = previewObject.AddComponent<PlayerCustomizationApplier>();
+
+                PlayerCustomization mutated = customization == null ? new PlayerCustomization() : customization.Clone();
+                if (mutated != null)
+                {
+                    switch (category)
+                    {
+                        case WardrobeCategory.Cores:
+                            mutated.Skin = manager != null && manager.DefaultSkin != null ? manager.DefaultSkin : mutated.Skin;
+                            break;
+                        case WardrobeCategory.Cabeca:
+                            mutated.Head = null;
+                            break;
+                        case WardrobeCategory.Acessorios:
+                            mutated.Accessory = null;
+                            break;
+                        case WardrobeCategory.Roupas:
+                            mutated.Clothing = null;
+                            break;
+                    }
+                }
+
+                applier.Apply(mutated);
+            });
+            return;
+        }
+
+        if (skin != null)
+        {
+            GameObject instance = capybaraPreviewPrefab != null ? capybaraPreviewPrefab : WardrobePreviewUtility.GetCapybaraPreviewPrefab();
+            if (instance == null)
+            {
+                preview3D.Clear();
+                return;
+            }
+
+            preview3D.Show(instance, previewObject =>
+            {
+                if (previewObject == null)
+                    return;
+
+                PlayerCustomizationApplier applier = previewObject.GetComponent<PlayerCustomizationApplier>();
+                if (applier == null)
+                    applier = previewObject.AddComponent<PlayerCustomizationApplier>();
+
+                applier.Apply(new PlayerCustomization { Skin = skin });
+            });
+        }
+        else if (item != null)
+        {
+            GameObject previewPrefab = WardrobePreviewUtility.GetContentPreviewPrefab(item);
+            if (previewPrefab == null)
+            {
+                preview3D.Clear();
+                return;
+            }
+
+            preview3D.Show(previewPrefab);
+        }
+        else
+        {
+            preview3D.Clear();
+        }
+    }
+
+    private bool IsNoneEquipped()
+    {
+        if (manager == null)
+            return false;
+
+        PlayerCustomization customization = manager.CurrentCustomization;
+        if (customization == null)
+            return false;
+
+        switch (category)
+        {
+            case WardrobeCategory.Cores:
+                return manager.IsDefaultSkin(customization.Skin);
+            case WardrobeCategory.Cabeca:
+                return customization.Head == null;
+            case WardrobeCategory.Acessorios:
+                return customization.Accessory == null;
+            case WardrobeCategory.Roupas:
+                return customization.Clothing == null;
+            default:
+                return false;
+        }
     }
 
     private WardrobeEquipment GetEquippedItem()

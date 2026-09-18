@@ -9,8 +9,8 @@ public class BoxOpeningUI : MonoBehaviour
     [SerializeField] private CanvasGroup canvasGroup;
     [SerializeField] private RectTransform boxVisual;
     [SerializeField] private Image boxBackground;
-    [SerializeField] private WardrobeItemPreview itemPreview;
-    [SerializeField] private Transform itemPreviewRoot;
+    [SerializeField] private Preview3D itemPreview;
+    [SerializeField] private RawImage itemPreviewImage;
     [SerializeField] private GameObject capybaraPreviewPrefab;
     [SerializeField] private TMP_Text itemNameText;
     [SerializeField] private TMP_Text rarityText;
@@ -71,10 +71,41 @@ public class BoxOpeningUI : MonoBehaviour
         if (itemPreview == null || item == null)
             return;
 
+        if (itemPreviewImage != null)
+            itemPreview.TargetImage = itemPreviewImage;
+
         if (item is WardrobeSkin skin)
-            itemPreview.ShowSkin(skin, capybaraPreviewPrefab, itemPreviewRoot);
-        else if (item is WardrobeEquipment equipment)
-            itemPreview.ShowContent(equipment, itemPreviewRoot);
+        {
+            GameObject instance = capybaraPreviewPrefab != null ? capybaraPreviewPrefab : WardrobePreviewUtility.GetCapybaraPreviewPrefab();
+            if (instance == null)
+            {
+                itemPreview.Clear();
+                return;
+            }
+
+            itemPreview.Show(instance, previewObject =>
+            {
+                if (previewObject == null)
+                    return;
+
+                PlayerCustomizationApplier applier = previewObject.GetComponent<PlayerCustomizationApplier>();
+                if (applier == null)
+                    applier = previewObject.AddComponent<PlayerCustomizationApplier>();
+
+                applier.Apply(new PlayerCustomization { Skin = skin });
+            });
+        }
+        else
+        {
+            GameObject previewPrefab = WardrobePreviewUtility.GetContentPreviewPrefab(item);
+            if (previewPrefab == null)
+            {
+                itemPreview.Clear();
+                return;
+            }
+
+            itemPreview.Show(previewPrefab);
+        }
     }
 
     private void Close()
@@ -86,7 +117,7 @@ public class BoxOpeningUI : MonoBehaviour
         }
 
         if (itemPreview != null)
-            itemPreview.ClearPreview();
+            itemPreview.Clear();
         if (canvasGroup != null)
             canvasGroup.alpha = 0f;
         gameObject.SetActive(false);

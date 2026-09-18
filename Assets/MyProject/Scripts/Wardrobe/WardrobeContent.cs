@@ -5,14 +5,14 @@ public abstract class WardrobeContent : ScriptableObject
     [SerializeField] private string contentId;
     [SerializeField] private string contentName;
     [SerializeField] private Rarity rarity;
+    [SerializeField] private GameObject prefab;
     [SerializeField] private GameObject previewPrefab;
-    [SerializeField] private GameObject equippedPrefab;
 
     public string ContentId => contentId;
     public string ContentName => string.IsNullOrWhiteSpace(contentName) ? name : contentName;
     public Rarity ContentRarity => rarity;
-    public GameObject PreviewPrefab => previewPrefab;
-    public GameObject EquippedPrefab => equippedPrefab;
+    public GameObject Prefab => prefab;
+    public GameObject PreviewPrefab => previewPrefab != null ? previewPrefab : prefab;
 
 #if UNITY_EDITOR
     protected virtual void OnValidate()
@@ -34,7 +34,10 @@ public abstract class WardrobeContent : ScriptableObject
 
 public abstract class WardrobeEquipment : WardrobeContent
 {
-}
+    [SerializeField] private GameObject equippedPrefab;
+
+    public GameObject EquippedPrefab => equippedPrefab != null ? equippedPrefab : Prefab;
+} 
 
 [CreateAssetMenu(fileName = "New Wardrobe Head", menuName = "Capivarada/Wardrobe/Head")]
 public class WardrobeHead : WardrobeEquipment

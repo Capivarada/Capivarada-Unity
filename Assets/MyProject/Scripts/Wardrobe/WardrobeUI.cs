@@ -71,6 +71,9 @@ public class WardrobeUI : MonoBehaviour
         for (int i = content.childCount - 1; i >= 0; i--)
             Destroy(content.GetChild(i).gameObject);
 
+        WardrobeItemCard noneCard = Instantiate(itemCardPrefab, content);
+        noneCard.InitializeNone(wardrobeManager, currentCategory, capybaraPreviewPrefab);
+
         if (currentCategory == WardrobeCategory.Cores)
         {
             foreach (WardrobeSkin skin in wardrobeManager.GetOwnedSkins())

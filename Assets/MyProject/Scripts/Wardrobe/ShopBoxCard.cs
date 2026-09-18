@@ -7,13 +7,13 @@ public class ShopBoxCard : MonoBehaviour
 {
     [SerializeField] private TMP_Text nameText;
     [SerializeField] private TMP_Text priceText;
-    [SerializeField] private Transform previewRoot;
+    [SerializeField] private RawImage previewImage;
     [SerializeField] private Button selectButton;
     [SerializeField] private Button purchaseButton;
+    [SerializeField] private Preview3D preview3D;
 
     private ShopManager shopManager;
     private WardrobeBox box;
-    private GameObject previewObject;
     private Action<WardrobeBox> onSelected;
 
     public void Initialize(
@@ -59,27 +59,22 @@ public class ShopBoxCard : MonoBehaviour
 
     private void ShowPreview()
     {
-        ClearPreview();
-        if (box == null || box.Prefab == null || previewRoot == null)
+        if (preview3D == null)
+        {
+            Debug.LogWarning($"[{nameof(ShopBoxCard)}] Preview3D is not assigned on {name}.");
             return;
+        }
 
-        previewObject = Instantiate(box.Prefab, previewRoot);
-        previewObject.transform.localPosition = Vector3.zero;
-        previewObject.transform.localRotation = Quaternion.identity;
-        previewObject.transform.localScale = Vector3.one;
-    }
+        if (previewImage != null)
+            preview3D.TargetImage = previewImage;
 
-    private void Update()
-    {
-        if (previewObject != null)
-            previewObject.transform.Rotate(Vector3.up, 35f * Time.deltaTime, Space.World);
-    }
+        if (box == null || box.Prefab == null)
+        {
+            preview3D.Clear();
+            return;
+        }
 
-    private void ClearPreview()
-    {
-        if (previewObject != null)
-            Destroy(previewObject);
-        previewObject = null;
+        preview3D.Show(box.Prefab);
     }
 
     private void OnDestroy()
@@ -88,6 +83,8 @@ public class ShopBoxCard : MonoBehaviour
             selectButton.onClick.RemoveListener(HandleSelected);
         if (purchaseButton != null)
             purchaseButton.onClick.RemoveListener(HandlePurchase);
-        ClearPreview();
+
+        if (preview3D != null)
+            preview3D.Clear();
     }
 }

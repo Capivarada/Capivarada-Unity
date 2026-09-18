@@ -15,11 +15,10 @@ MonoBehaviour:
   boxId: 9f5af2b3e38b4d2f8cddbe35c3bb1302
   boxName: Caixa de Roupas Comum
   type: 2
-  price: 100
-  prefab: {fileID: 0}
+  price: 0
+  prefab: {fileID: 6728078203798565136, guid: cafa864f366a2736d8abb9790dc61834, type: 3}
   dropRates:
-  - rarity: Comum
+  - rarity: 0
     chance: 100
     items:
-    - {fileID: 11400000, guid: 5bebe0f808a5f17458e0558f2404d73f, type: 2}
-    - {fileID: 11400000, guid: ea5b113dfdb5f55549642f7d18b46658, type: 2}
+    - {fileID: 11400000, guid: 678963f1a16d173469786e8c15f05471, type: 2}

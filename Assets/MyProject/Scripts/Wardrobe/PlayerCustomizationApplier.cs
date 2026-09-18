@@ -107,10 +107,10 @@ public class PlayerCustomizationApplier : MonoBehaviour
     {
         ClearEquipment(category);
 
-        if (item == null || item.EquippedPrefab == null || slot == null)
+        if (item == null || item.Prefab == null || slot == null)
             return;
 
-        GameObject equipped = Instantiate(item.EquippedPrefab, slot);
+        GameObject equipped = Instantiate(item.Prefab, slot);
         equipped.transform.localPosition = Vector3.zero;
         equipped.transform.localRotation = Quaternion.identity;
         equipped.transform.localScale = Vector3.one;

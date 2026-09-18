@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 119456864342803921}
   - component: {fileID: 1303585135949238367}
   - component: {fileID: 70419455015862236}
-  m_Layer: 5
+  m_Layer: 9
   m_Name: Rarity
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -88,7 +88,7 @@ GameObject:
   - component: {fileID: 456419015302695798}
   - component: {fileID: 8490701904154735708}
   - component: {fileID: 4623709466200462923}
-  m_Layer: 5
+  m_Layer: 9
   m_Name: Button.Equip
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -208,7 +208,7 @@ GameObject:
   - component: {fileID: 7593151620498006797}
   - component: {fileID: 5741024457873334954}
   - component: {fileID: 2957898317930144190}
-  m_Layer: 5
+  m_Layer: 9
   m_Name: Name
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -345,7 +345,7 @@ GameObject:
   - component: {fileID: 7791256406984841707}
   - component: {fileID: 5764135092350531895}
   - component: {fileID: 4968918707041317448}
-  m_Layer: 5
+  m_Layer: 9
   m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -482,7 +482,7 @@ GameObject:
   - component: {fileID: 3934534878706176310}
   - component: {fileID: 3960583031338054700}
   - component: {fileID: 762181465066558276}
-  m_Layer: 5
+  m_Layer: 9
   m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -621,8 +621,8 @@ GameObject:
   - component: {fileID: 7128990241559367541}
   - component: {fileID: 3506612386924685024}
   - component: {fileID: 5803055264012067003}
-  m_Layer: 5
-  m_Name: Item
+  m_Layer: 9
+  m_Name: WardrobeItem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -730,9 +730,81 @@ MonoBehaviour:
   nameText: {fileID: 2957898317930144190}
   rarityText: {fileID: 4968918707041317448}
   buttonText: {fileID: 762181465066558276}
+  raritySettings: {fileID: 11400000, guid: 642719e0e4c181c48b80f0f4ae4b1eac, type: 2}
   equipButton: {fileID: 4623709466200462923}
-  preview: {fileID: 8619715402523496739}
-  previewRoot: {fileID: 9170220522709166248}
+  preview3D: {fileID: 628879031223981002}
+--- !u!1 &6036343303388252020
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9039193786896200956}
+  - component: {fileID: 8886223981453030872}
+  - component: {fileID: 3587091075159019715}
+  m_Layer: 9
+  m_Name: RawImage
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &9039193786896200956
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6036343303388252020}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 9170220522709166248}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &8886223981453030872
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6036343303388252020}
+  m_CullTransparentMesh: 1
+--- !u!114 &3587091075159019715
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6036343303388252020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RawImage
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Texture: {fileID: 8400000, guid: 1826046492e1feb45b5c1f7d76c1b1c5, type: 2}
+  m_UVRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
 --- !u!1 &8046822637561852237
 GameObject:
   m_ObjectHideFlags: 0
@@ -744,7 +816,8 @@ GameObject:
   - component: {fileID: 9170220522709166248}
   - component: {fileID: 5711714806642228902}
   - component: {fileID: 8619715402523496739}
-  m_Layer: 5
+  - component: {fileID: 628879031223981002}
+  m_Layer: 9
   m_Name: Icon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -762,7 +835,8 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 9039193786896200956}
   m_Father: {fileID: 1283546316522916010}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -790,4 +864,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a5f5932ad0f1f429bcc8bb0134ca615, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WardrobeItemPreview
+  targetImage: {fileID: 3587091075159019715}
+  preview3D: {fileID: 628879031223981002}
+--- !u!114 &628879031223981002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8046822637561852237}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e049c13ac24c2544997415a58eb58d5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Preview3D
+  targetImage: {fileID: 3587091075159019715}
   rotationSpeed: 35
+  minimumDistance: 0.75
+  textureWidth: 512
+  textureHeight: 512
+  previewLayerName: Preview3D
+  transparentBackground: 1
+  backgroundColor: {r: 0.12, g: 0.08, b: 0.2, a: 1}

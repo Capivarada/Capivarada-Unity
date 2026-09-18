@@ -15,11 +15,10 @@ MonoBehaviour:
   boxId: 6d8b794fd7b34ecb8e56d3e5d4f1a207
   boxName: Caixa de Acessorios Comum
   type: 3
-  price: 100
-  prefab: {fileID: 0}
+  price: 0
+  prefab: {fileID: 6728078203798565136, guid: cafa864f366a2736d8abb9790dc61834, type: 3}
   dropRates:
-  - rarity: Comum
+  - rarity: 0
     chance: 100
     items:
-    - {fileID: 11400000, guid: c0f9926d37dece748879bd28c04a6c5e, type: 2}
-    - {fileID: 11400000, guid: a43c95f7501bb76ab8b094477e01c63a, type: 2}
+    - {fileID: 0}

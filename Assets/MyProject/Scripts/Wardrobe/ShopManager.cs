@@ -40,6 +40,7 @@ public class ShopManager : MonoBehaviour
         return true;
     }
 
+
     public bool TryOpenBox(WardrobeBox box, out WardrobeBoxReward reward)
     {
         reward = default;

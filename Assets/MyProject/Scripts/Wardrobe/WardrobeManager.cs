@@ -7,6 +7,7 @@ public class WardrobeManager : MonoBehaviour
     public static WardrobeManager Instance { get; private set; }
 
     [Header("Configured content")]
+    [SerializeField] private GameObject capybaraPreviewPrefab;
     [SerializeField] private WardrobeSkin defaultSkin;
     [SerializeField] private List<WardrobeSkin> availableSkins = new();
     [SerializeField] private List<WardrobeHead> availableHeads = new();
@@ -87,11 +88,16 @@ public class WardrobeManager : MonoBehaviour
     }
 #endif
 
+    public GameObject CapybaraPreviewPrefab => capybaraPreviewPrefab;
+    public WardrobeSkin DefaultSkin => defaultSkin;
+
     public IReadOnlyList<WardrobeSkin> GetOwnedSkins() => GetOwned(inventoryManager, ownedSkins, availableSkins);
     public IReadOnlyList<WardrobeHead> GetOwnedHeads() => GetOwned(inventoryManager, ownedHeads, availableHeads);
     public IReadOnlyList<WardrobeAccessory> GetOwnedAccessories() => GetOwned(inventoryManager, ownedAccessories, availableAccessories);
     public IReadOnlyList<WardrobeCloth> GetOwnedClothes() => GetOwned(inventoryManager, ownedClothes, availableClothes);
     public IReadOnlyList<WardrobeSkin> GetConfiguredSkins() => availableSkins;
+
+    public bool IsDefaultSkin(WardrobeSkin skin) => defaultSkin != null && defaultSkin == skin;
 
     public IEnumerable<WardrobeContent> GetItems(WardrobeCategory category)
     {
@@ -126,9 +132,20 @@ public class WardrobeManager : MonoBehaviour
 
     public void EquipSkin(WardrobeSkin skin)
     {
+        if (skin == null)
+            skin = defaultSkin;
+
         if (skin == null || !Contains(GetOwnedSkins(), skin)) return;
         CurrentCustomization.Skin = skin;
         NotifyCustomizationChanged();
+    }
+
+    public void EquipDefaultSkin()
+    {
+        if (defaultSkin == null)
+            return;
+
+        EquipSkin(defaultSkin);
     }
 
     public void EquipItem(WardrobeContent item)
@@ -155,6 +172,10 @@ public class WardrobeManager : MonoBehaviour
     {
         switch (category)
         {
+            case WardrobeCategory.Cores:
+                if (defaultSkin != null)
+                    CurrentCustomization.Skin = defaultSkin;
+                break;
             case WardrobeCategory.Cabeca: CurrentCustomization.Head = null; break;
             case WardrobeCategory.Acessorios: CurrentCustomization.Accessory = null; break;
             case WardrobeCategory.Roupas: CurrentCustomization.Clothing = null; break;
