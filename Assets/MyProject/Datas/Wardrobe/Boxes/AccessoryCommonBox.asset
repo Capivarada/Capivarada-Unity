@@ -21,4 +21,4 @@ MonoBehaviour:
   - rarity: 0
     chance: 100
     items:
-    - {fileID: 0}
+    - {fileID: 11400000, guid: 1a4a266ad88c796468c18594b7d1cbbe, type: 2}

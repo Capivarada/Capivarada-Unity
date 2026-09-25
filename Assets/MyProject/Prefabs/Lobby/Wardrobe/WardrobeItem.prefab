@@ -879,8 +879,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Preview3D
   targetImage: {fileID: 3587091075159019715}
-  rotationSpeed: 35
-  minimumDistance: 0.75
+  rotationSpeed: 0
+  minimumDistance: 0.05
+  distanceMultiplier: 0.25
+  heightMultiplier: 0.35
   textureWidth: 512
   textureHeight: 512
   previewLayerName: Preview3D

@@ -15,8 +15,8 @@ MonoBehaviour:
   contentId: 58bab522bd4061343a6715cd0340c78a
   contentName: Roxo
   rarity: 0
-  prefab: {fileID: 4453846769052655643, guid: c7ad8399fe27c7612b681f70cce6dd26, type: 3}
-  previewPrefab: {fileID: 4453846769052655643, guid: c7ad8399fe27c7612b681f70cce6dd26, type: 3}
+  prefab: {fileID: 4453846769052655643, guid: b1f30316f443aa44c86b1622bbdce86c, type: 3}
+  previewPrefab: {fileID: 4453846769052655643, guid: b1f30316f443aa44c86b1622bbdce86c, type: 3}
   colors:
   - color: {r: 0.62, g: 0.45, b: 0.9, a: 1}
     metallic: 0

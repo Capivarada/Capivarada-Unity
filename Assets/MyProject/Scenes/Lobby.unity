@@ -627,6 +627,8 @@ MonoBehaviour:
   targetImage: {fileID: 1440210511}
   rotationSpeed: 35
   minimumDistance: 0.75
+  distanceMultiplier: 0.65
+  heightMultiplier: 0.35
   textureWidth: 512
   textureHeight: 512
   previewLayerName: Preview3D
@@ -17044,7 +17046,7 @@ GameObject:
   - component: {fileID: 1896305593}
   - component: {fileID: 1896305595}
   - component: {fileID: 1896305594}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: RestroomPreviewCamera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17095,7 +17097,7 @@ MonoBehaviour:
   m_StopNaN: 0
   m_Dithering: 0
   m_ClearDepth: 0
-  m_AllowXRRendering: 1
+  m_AllowXRRendering: 0
   m_AllowHDROutput: 1
   m_UseScreenCoordOverride: 0
   m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
@@ -18454,13 +18456,15 @@ MonoBehaviour:
   capybaraPreviewPrefab: {fileID: 4453846769052655643, guid: b1f30316f443aa44c86b1622bbdce86c, type: 3}
   defaultSkin: {fileID: 11400000, guid: 27e285e60cf0a8643b4dc83509c6f529, type: 2}
   availableSkins:
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 4e3a9337f9f34dd47aa1b5921279e6c1, type: 2}
+  - {fileID: 11400000, guid: 8a017d4d47743e54ab8bbbe1b2ab5b64, type: 2}
+  - {fileID: 11400000, guid: 58bab522bd4061343a6715cd0340c78a, type: 2}
   availableHeads:
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 3dfdfbaad9befb54d9ea97a45799c4da, type: 2}
   availableAccessories:
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 1a4a266ad88c796468c18594b7d1cbbe, type: 2}
   availableClothes:
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 678963f1a16d173469786e8c15f05471, type: 2}
   ownedSkins: []
   ownedHeads: []
   ownedAccessories: []

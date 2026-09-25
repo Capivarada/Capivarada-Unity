@@ -119,45 +119,7 @@ public class WardrobeItemCard : MonoBehaviour
 
         if (isNoneOption)
         {
-            PlayerCustomization customization = manager != null ? manager.CurrentCustomization : null;
-            GameObject instance = capybaraPreviewPrefab != null ? capybaraPreviewPrefab : WardrobePreviewUtility.GetCapybaraPreviewPrefab();
-            if (instance == null)
-            {
-                preview3D.Clear();
-                return;
-            }
-
-            preview3D.Show(instance, previewObject =>
-            {
-                if (previewObject == null)
-                    return;
-
-                PlayerCustomizationApplier applier = previewObject.GetComponent<PlayerCustomizationApplier>();
-                if (applier == null)
-                    applier = previewObject.AddComponent<PlayerCustomizationApplier>();
-
-                PlayerCustomization mutated = customization == null ? new PlayerCustomization() : customization.Clone();
-                if (mutated != null)
-                {
-                    switch (category)
-                    {
-                        case WardrobeCategory.Cores:
-                            mutated.Skin = manager != null && manager.DefaultSkin != null ? manager.DefaultSkin : mutated.Skin;
-                            break;
-                        case WardrobeCategory.Cabeca:
-                            mutated.Head = null;
-                            break;
-                        case WardrobeCategory.Acessorios:
-                            mutated.Accessory = null;
-                            break;
-                        case WardrobeCategory.Roupas:
-                            mutated.Clothing = null;
-                            break;
-                    }
-                }
-
-                applier.Apply(mutated);
-            });
+            preview3D.Clear();
             return;
         }
 
@@ -181,8 +143,10 @@ public class WardrobeItemCard : MonoBehaviour
 
                 applier.Apply(new PlayerCustomization { Skin = skin });
             });
+            return;
         }
-        else if (item != null)
+
+        if (item != null)
         {
             GameObject previewPrefab = WardrobePreviewUtility.GetContentPreviewPrefab(item);
             if (previewPrefab == null)
@@ -192,11 +156,10 @@ public class WardrobeItemCard : MonoBehaviour
             }
 
             preview3D.Show(previewPrefab);
+            return;
         }
-        else
-        {
-            preview3D.Clear();
-        }
+
+        preview3D.Clear();
     }
 
     private bool IsNoneEquipped()

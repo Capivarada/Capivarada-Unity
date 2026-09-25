@@ -24,7 +24,7 @@ public static class WardrobePreviewUtility
             return null;
 
         if (content is WardrobeSkin)
-            return GetPlayerPreviewPrefab();
+            return null;
 
         GameObject previewPrefab = content.PreviewPrefab;
         if (previewPrefab == null)

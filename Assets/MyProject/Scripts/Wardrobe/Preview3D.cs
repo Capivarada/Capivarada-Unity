@@ -5,8 +5,10 @@ using UnityEngine.UI;
 public class Preview3D : MonoBehaviour
 {
     [SerializeField] private RawImage targetImage;
-    [SerializeField] private float rotationSpeed = 35f;
-    [SerializeField] private float minimumDistance = 0.75f;
+    [SerializeField] private float rotationSpeed = 0f;
+    [SerializeField] private float minimumDistance = 0.05f;
+    [SerializeField] private float distanceMultiplier = 0.25f;
+    [SerializeField] private float heightMultiplier = 0.35f;
     [SerializeField] private int textureWidth = 512;
     [SerializeField] private int textureHeight = 512;
     [SerializeField] private string previewLayerName = "Preview3D";
@@ -56,6 +58,9 @@ public class Preview3D : MonoBehaviour
     public void Clear()
     {
         ClearModel();
+
+        if (targetImage != null)
+            targetImage.texture = null;
     }
 
     public void SetRotationSpeed(float speed)
@@ -174,8 +179,11 @@ public class Preview3D : MonoBehaviour
         modelInstance.transform.localPosition = -combinedBounds.center;
 
         float maxSize = Mathf.Max(combinedBounds.size.x, combinedBounds.size.y, combinedBounds.size.z);
-        float distance = Mathf.Max(minimumDistance, maxSize * 1.8f / Mathf.Tan(previewCamera.fieldOfView * 0.5f * Mathf.Deg2Rad));
-        previewCamera.transform.localPosition = new Vector3(0f, maxSize * 0.35f, -distance);
+        float distance = Mathf.Max(
+            minimumDistance,
+            maxSize * distanceMultiplier / Mathf.Tan(previewCamera.fieldOfView * 0.5f * Mathf.Deg2Rad)
+        );
+        previewCamera.transform.localPosition = new Vector3(0f, maxSize * heightMultiplier, -distance);
         previewCamera.transform.LookAt(Vector3.zero);
     }
 

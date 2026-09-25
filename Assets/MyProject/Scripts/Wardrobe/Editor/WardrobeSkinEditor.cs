@@ -161,7 +161,7 @@ public class WardrobeSkinEditor : Editor
 
         Camera camera = previewUtility.camera;
         camera.clearFlags = CameraClearFlags.SolidColor;
-        camera.backgroundColor = new Color(0.08f, 0.08f, 0.10f, 1f);
+        camera.backgroundColor = new Color(0f, 0f, 0f, 0f);
         camera.fieldOfView = 30f;
         camera.nearClipPlane = 0.01f;
         camera.farClipPlane = 100f;
@@ -249,7 +249,7 @@ public class WardrobeSkinEditor : Editor
         size = Mathf.Max(size, 0.1f);
 
         float halfFov = previewUtility.camera.fieldOfView * 0.5f * Mathf.Deg2Rad;
-        float distance = Mathf.Max(size * 1.8f / Mathf.Tan(halfFov), 1.5f);
+        float distance = Mathf.Max(size * 0.18f / Mathf.Tan(halfFov), 0.18f);
 
         Camera camera = previewUtility.camera;
         camera.transform.position = new Vector3(0f, size * 0.18f, -distance);

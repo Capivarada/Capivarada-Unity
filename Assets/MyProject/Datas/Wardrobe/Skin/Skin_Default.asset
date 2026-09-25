@@ -15,8 +15,8 @@ MonoBehaviour:
   contentId: 27e285e60cf0a8643b4dc83509c6f529
   contentName: "Padr\xE3o"
   rarity: 0
-  prefab: {fileID: 4453846769052655643, guid: c7ad8399fe27c7612b681f70cce6dd26, type: 3}
-  previewPrefab: {fileID: 4453846769052655643, guid: c7ad8399fe27c7612b681f70cce6dd26, type: 3}
+  prefab: {fileID: 4453846769052655643, guid: b1f30316f443aa44c86b1622bbdce86c, type: 3}
+  previewPrefab: {fileID: 4453846769052655643, guid: b1f30316f443aa44c86b1622bbdce86c, type: 3}
   colors:
   - color: {r: 0.52, g: 0.26, b: 0.15, a: 1}
     metallic: 0
