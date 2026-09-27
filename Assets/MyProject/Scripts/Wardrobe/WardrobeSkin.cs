@@ -11,6 +11,7 @@ public class SkinColorData
     [Range(0f, 1f)]
     public float smoothness = 0.5f;
 }
+
 public enum SkinColorSlot
 {
     Skin,
@@ -30,7 +31,8 @@ public class WardrobeSkin : WardrobeContent
 {
     public const int MaterialSlotCount = 7;
 
-    [SerializeField] private SkinColorData[] colors = new SkinColorData[MaterialSlotCount];
+    [SerializeField]
+    private SkinColorData[] colors = new SkinColorData[MaterialSlotCount];
 
     public string SkinId => ContentId;
     public string SkinName => ContentName;
@@ -42,15 +44,20 @@ public class WardrobeSkin : WardrobeContent
         EnsureColorData();
     }
 
-    protected override void OnValidate()
+#if UNITY_EDITOR
+    private void OnValidate()
     {
-        EnsureStableId();
         EnsureColorData();
     }
+#endif
 
     public SkinColorData GetColorData(int index)
     {
         EnsureColorData();
+
+        if (index < 0 || index >= colors.Length)
+            return null;
+
         return colors[index];
     }
 
@@ -65,7 +72,10 @@ public class WardrobeSkin : WardrobeContent
             colors = new SkinColorData[MaterialSlotCount];
 
         if (colors.Length != MaterialSlotCount)
-            System.Array.Resize(ref colors, MaterialSlotCount);
+            System.Array.Resize(
+                ref colors,
+                MaterialSlotCount
+            );
 
         for (int i = 0; i < colors.Length; i++)
         {
