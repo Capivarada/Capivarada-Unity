@@ -16,5 +16,3 @@ MonoBehaviour:
   contentName: Cauda
   rarity: 0
   prefab: {fileID: 5715607617253834934, guid: ac393e1080bb3d8ae8f16d220b261554, type: 3}
-  previewPrefab: {fileID: 5715607617253834934, guid: ac393e1080bb3d8ae8f16d220b261554, type: 3}
-  equippedPrefab: {fileID: 5715607617253834934, guid: ac393e1080bb3d8ae8f16d220b261554, type: 3}

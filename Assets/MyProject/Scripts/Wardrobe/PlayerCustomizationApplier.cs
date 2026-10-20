@@ -33,7 +33,7 @@ public class PlayerCustomizationApplier : MonoBehaviour
     [SerializeField] private SkinMaterialSlot[] skinMaterialSlots =
         new SkinMaterialSlot[WardrobeSkin.MaterialSlotCount];
 
-    private readonly Dictionary<Renderer, Material[]> runtimeMaterials = new();
+    private readonly Dictionary<Renderer, MaterialPropertyBlock> propertyBlocks = new();
     private readonly Dictionary<WardrobeCategory, GameObject> equippedObjects = new();
 
     private void Awake()
@@ -56,6 +56,8 @@ public class PlayerCustomizationApplier : MonoBehaviour
         ApplyEquipment(WardrobeCategory.Roupas, customization.Clothing, clothingSlot);
     }
 
+    public void ApplySkinOnly(WardrobeSkin skin) => ApplySkin(skin);
+
     public void ApplySkin(WardrobeSkin skin)
     {
         if (skin == null)
@@ -69,23 +71,25 @@ public class PlayerCustomizationApplier : MonoBehaviour
             if (slot == null || slot.Renderer == null)
                 continue;
 
-            Material[] materials = GetRuntimeMaterials(slot.Renderer);
-            if (slot.MaterialIndex < 0 || slot.MaterialIndex >= materials.Length)
+            if (slot.MaterialIndex < 0 || slot.MaterialIndex >= slot.Renderer.sharedMaterials.Length)
                 continue;
 
             SkinColorData data = skin.GetColorData(i);
-            Material material = materials[slot.MaterialIndex];
+            if (data == null) continue;
 
-            if (material.HasProperty("_BaseColor"))
-                material.SetColor("_BaseColor", data.color);
-            else if (material.HasProperty("_Color"))
-                material.SetColor("_Color", data.color);
-
-            if (material.HasProperty("_Metallic"))
-                material.SetFloat("_Metallic", data.metallic);
-
-            if (material.HasProperty("_Smoothness"))
-                material.SetFloat("_Smoothness", data.smoothness);
+            if (!propertyBlocks.TryGetValue(slot.Renderer, out MaterialPropertyBlock block))
+            {
+                block = new MaterialPropertyBlock();
+                propertyBlocks.Add(slot.Renderer, block);
+            }
+            slot.Renderer.GetPropertyBlock(block, slot.MaterialIndex);
+            Material material = slot.Renderer.sharedMaterials[slot.MaterialIndex];
+            if (material != null && material.HasProperty("_BaseColor")) block.SetColor("_BaseColor", data.color);
+            else if (material != null && material.HasProperty("_Color")) block.SetColor("_Color", data.color);
+            if (material != null && material.HasProperty("_Metallic")) block.SetFloat("_Metallic", data.metallic);
+            if (material != null && material.HasProperty("_Smoothness")) block.SetFloat("_Smoothness", data.smoothness);
+            else if (material != null && material.HasProperty("_Glossiness")) block.SetFloat("_Glossiness", data.smoothness);
+            slot.Renderer.SetPropertyBlock(block, slot.MaterialIndex);
         }
     }
 
@@ -115,25 +119,6 @@ public class PlayerCustomizationApplier : MonoBehaviour
         equipped.transform.localRotation = Quaternion.identity;
         equipped.transform.localScale = Vector3.one;
         equippedObjects[category] = equipped;
-    }
-
-    private Material[] GetRuntimeMaterials(Renderer renderer)
-    {
-        if (runtimeMaterials.TryGetValue(renderer, out Material[] materials))
-            return materials;
-
-        Material[] sharedMaterials = renderer.sharedMaterials;
-        materials = new Material[sharedMaterials.Length];
-
-        for (int i = 0; i < sharedMaterials.Length; i++)
-        {
-            if (sharedMaterials[i] != null)
-                materials[i] = new Material(sharedMaterials[i]);
-        }
-
-        renderer.materials = materials;
-        runtimeMaterials.Add(renderer, materials);
-        return materials;
     }
 
     private void EnsureSkinMaterialMapping()
@@ -200,18 +185,6 @@ public class PlayerCustomizationApplier : MonoBehaviour
         GameObject slotObject = new(slotName);
         slotObject.transform.SetParent(transform, false);
         return slotObject.transform;
-    }
-
-    private void OnDestroy()
-    {
-        foreach (Material[] materials in runtimeMaterials.Values)
-        {
-            foreach (Material material in materials)
-            {
-                if (material != null)
-                    Destroy(material);
-            }
-        }
     }
 
 }

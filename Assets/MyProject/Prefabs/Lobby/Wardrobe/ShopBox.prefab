@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 2367067420869359756}
   - component: {fileID: 6408710531314448359}
   - component: {fileID: 5618303942837677578}
+  - component: {fileID: 765198280558717032}
   m_Layer: 9
   m_Name: ShopBox
   m_TagString: Untagged
@@ -122,10 +123,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ShopBoxCard
   nameText: {fileID: 3606028008566233568}
   priceText: {fileID: 4376184700612809976}
-  previewImage: {fileID: 3330397707749178426}
   selectButton: {fileID: 5618303942837677578}
   purchaseButton: {fileID: 1835546774735666339}
-  preview3D: {fileID: 2714889832825549736}
 --- !u!114 &5618303942837677578
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -170,6 +169,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &765198280558717032
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 817720111382705393}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd19d09487814ffe9e5a8877de992948, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Preview3D
 --- !u!1 &1365014181133468677
 GameObject:
   m_ObjectHideFlags: 0
@@ -712,9 +723,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6285364688213010090}
   - component: {fileID: 1261939515565216754}
-  - component: {fileID: 3330942074156702832}
   - component: {fileID: 3330397707749178426}
-  - component: {fileID: 2714889832825549736}
   m_Layer: 9
   m_Name: Icon
   m_TagString: Untagged
@@ -749,20 +758,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5788991500603962929}
   m_CullTransparentMesh: 1
---- !u!114 &3330942074156702832
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5788991500603962929}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0a5f5932ad0f1f429bcc8bb0134ca615, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WardrobeItemPreview
-  targetImage: {fileID: 3330397707749178426}
-  preview3D: {fileID: 2714889832825549736}
 --- !u!114 &3330397707749178426
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -783,35 +778,13 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 8400000, guid: eec161322a3d34245bf725f27e13062a, type: 2}
+  m_Texture: {fileID: 8400000, guid: 00ea18311e953cf6180b1a629ad81106, type: 2}
   m_UVRect:
     serializedVersion: 2
     x: 0
     y: 0
     width: 1
     height: 1
---- !u!114 &2714889832825549736
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5788991500603962929}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e049c13ac24c2544997415a58eb58d5f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Preview3D
-  targetImage: {fileID: 3330397707749178426}
-  rotationSpeed: 0
-  minimumDistance: 0.05
-  distanceMultiplier: 0.25
-  heightMultiplier: 0.35
-  textureWidth: 512
-  textureHeight: 512
-  previewLayerName: Preview3D
-  transparentBackground: 1
-  backgroundColor: {r: 0.12, g: 0.08, b: 0.2, a: 1}
 --- !u!1 &8181801187951582065
 GameObject:
   m_ObjectHideFlags: 0

@@ -7,7 +7,6 @@ public class WardrobeManager : MonoBehaviour
     public static WardrobeManager Instance { get; private set; }
 
     [Header("Configured content")]
-    [SerializeField] private GameObject capybaraPreviewPrefab;
     [SerializeField] private WardrobeSkin defaultSkin;
     [SerializeField] private List<WardrobeSkin> availableSkins = new();
     [SerializeField] private List<WardrobeHead> availableHeads = new();
@@ -88,7 +87,6 @@ public class WardrobeManager : MonoBehaviour
     }
 #endif
 
-    public GameObject CapybaraPreviewPrefab => capybaraPreviewPrefab;
     public WardrobeSkin DefaultSkin => defaultSkin;
 
     public IReadOnlyList<WardrobeSkin> GetOwnedSkins() => GetOwned(inventoryManager, ownedSkins, availableSkins);

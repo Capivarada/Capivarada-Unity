@@ -37,6 +37,8 @@ public class LobbyManager : MonoBehaviour
         CreatePlayerAccount();
 
         UpdateUIState(false);
+        
+        Cursor.lockState =  CursorLockMode.None;
     }
 
     #endregion

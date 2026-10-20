@@ -27,6 +27,7 @@ public class SpectatorUI : MonoBehaviour
     public void Show(string playerName)
     {
         if (container != null) container.SetActive(true);
+        Cursor.lockState = CursorLockMode.None;
         SetPlayerName(playerName);
     }
 

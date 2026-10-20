@@ -196,7 +196,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 8490701904154735708}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 5323971474410782246}
+        m_TargetAssemblyTypeName: 
+        m_MethodName: 
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1756347075905489791
 GameObject:
   m_ObjectHideFlags: 0
@@ -732,7 +744,6 @@ MonoBehaviour:
   buttonText: {fileID: 762181465066558276}
   raritySettings: {fileID: 11400000, guid: 642719e0e4c181c48b80f0f4ae4b1eac, type: 2}
   equipButton: {fileID: 4623709466200462923}
-  preview3D: {fileID: 628879031223981002}
 --- !u!1 &6036343303388252020
 GameObject:
   m_ObjectHideFlags: 0
@@ -798,7 +809,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 8400000, guid: 1826046492e1feb45b5c1f7d76c1b1c5, type: 2}
+  m_Texture: {fileID: 8400000, guid: 00ea18311e953cf6180b1a629ad81106, type: 2}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -815,8 +826,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9170220522709166248}
   - component: {fileID: 5711714806642228902}
-  - component: {fileID: 8619715402523496739}
-  - component: {fileID: 628879031223981002}
+  - component: {fileID: 6235551033257266322}
   m_Layer: 9
   m_Name: Icon
   m_TagString: Untagged
@@ -852,7 +862,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8046822637561852237}
   m_CullTransparentMesh: 1
---- !u!114 &8619715402523496739
+--- !u!114 &6235551033257266322
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -861,30 +871,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 8046822637561852237}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0a5f5932ad0f1f429bcc8bb0134ca615, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WardrobeItemPreview
-  targetImage: {fileID: 3587091075159019715}
-  preview3D: {fileID: 628879031223981002}
---- !u!114 &628879031223981002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8046822637561852237}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e049c13ac24c2544997415a58eb58d5f, type: 3}
+  m_Script: {fileID: 11500000, guid: fd19d09487814ffe9e5a8877de992948, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Preview3D
-  targetImage: {fileID: 3587091075159019715}
-  rotationSpeed: 0
-  minimumDistance: 0.05
-  distanceMultiplier: 0.25
-  heightMultiplier: 0.35
-  textureWidth: 512
-  textureHeight: 512
-  previewLayerName: Preview3D
-  transparentBackground: 1
-  backgroundColor: {r: 0.12, g: 0.08, b: 0.2, a: 1}

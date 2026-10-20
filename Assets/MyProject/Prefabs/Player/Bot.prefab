@@ -1440,7 +1440,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 893bb7ddbf604ca6bfba8f0f25d56400, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  deathHeight: -1
+  deathHeight: 2.87
 --- !u!54 &3482387713225922847
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1803,7 +1803,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2175644032441973057}
-  - component: {fileID: 1209970169565578830}
   m_Layer: 7
   m_Name: CameraTarget
   m_TagString: Untagged
@@ -1819,30 +1818,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8575164107234141302}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.8, z: 0}
+  m_LocalRotation: {x: 0.17364816, y: 0, z: 0, w: 0.9848078}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8727685556335557743}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1209970169565578830
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8575164107234141302}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5b7b6fb60454419cb24eae2f16e57fb7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  playerInput: {fileID: 0}
-  cameraTarget: {fileID: 2175644032441973057}
-  sensitivity: 0.15
-  minPitch: -40
-  maxPitch: 60
+  m_LocalEulerAnglesHint: {x: 20, y: 0, z: 0}
 --- !u!1 &8609839268264655884
 GameObject:
   m_ObjectHideFlags: 0

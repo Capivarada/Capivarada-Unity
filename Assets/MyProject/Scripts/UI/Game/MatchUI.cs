@@ -124,7 +124,6 @@ public class MatchUI : MonoBehaviour
     {
         SetActive(powerContainer, false);
         if (spectatorUI != null && spectatablePlayers.Count > 0) spectatorUI.Show(GetPlayerName(spectatablePlayers[spectatedIndex]));
-        Cursor.lockState =  CursorLockMode.None; 
     }
     public void HideSpectatorUI() { isSpectating = false; if (spectatorUI != null) spectatorUI.Hide(); }
     public void HideGameUI() {  if (gameUI != null) gameUI.SetActive(false); }

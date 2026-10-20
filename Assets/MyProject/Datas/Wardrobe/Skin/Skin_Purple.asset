@@ -15,27 +15,25 @@ MonoBehaviour:
   contentId: 58bab522bd4061343a6715cd0340c78a
   contentName: Roxo
   rarity: 0
-  prefab: {fileID: 4453846769052655643, guid: b1f30316f443aa44c86b1622bbdce86c, type: 3}
-  previewPrefab: {fileID: 4453846769052655643, guid: b1f30316f443aa44c86b1622bbdce86c, type: 3}
   colors:
   - color: {r: 0.62, g: 0.45, b: 0.9, a: 1}
-    metallic: 0
-    smoothness: 0.5
+    metallic: 0.25
+    smoothness: 0.25
   - color: {r: 0.28, g: 0.2, b: 0.38, a: 1}
-    metallic: 0
-    smoothness: 0.5
+    metallic: 0.25
+    smoothness: 0.25
   - color: {r: 0.12, g: 0.11, b: 0.17, a: 1}
-    metallic: 0
-    smoothness: 0.5
+    metallic: 0.25
+    smoothness: 0.25
   - color: {r: 0.33, g: 0.28, b: 0.46, a: 1}
-    metallic: 0
-    smoothness: 0.5
+    metallic: 0.25
+    smoothness: 0.25
   - color: {r: 0.9, g: 0.88, b: 0.97, a: 1}
-    metallic: 0
-    smoothness: 0.5
+    metallic: 0.25
+    smoothness: 0.25
   - color: {r: 0.27, g: 0.16, b: 0.39, a: 1}
-    metallic: 0
-    smoothness: 0.5
+    metallic: 0.25
+    smoothness: 0.25
   - color: {r: 0.12, g: 0.1, b: 0.18, a: 1}
-    metallic: 0
-    smoothness: 0.5
+    metallic: 0.25
+    smoothness: 0.25

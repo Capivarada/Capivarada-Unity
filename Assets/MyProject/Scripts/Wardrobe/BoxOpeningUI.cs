@@ -9,18 +9,17 @@ public class BoxOpeningUI : MonoBehaviour
     [SerializeField] private CanvasGroup canvasGroup;
     [SerializeField] private RectTransform boxVisual;
     [SerializeField] private Image boxBackground;
-    [SerializeField] private Preview3D itemPreview;
-    [SerializeField] private RawImage itemPreviewImage;
-    [SerializeField] private GameObject capybaraPreviewPrefab;
     [SerializeField] private TMP_Text itemNameText;
     [SerializeField] private TMP_Text rarityText;
     [SerializeField] private Button closeButton;
     [SerializeField] private float duration = 2.5f;
 
     private Coroutine openingRoutine;
+    private Preview3D itemPreview;
 
     private void Awake()
     {
+        itemPreview = GetComponentInChildren<Preview3D>(true);
         if (closeButton != null)
             closeButton.onClick.AddListener(Close);
         Close();
@@ -68,15 +67,18 @@ public class BoxOpeningUI : MonoBehaviour
 
     private void ShowRewardPreview(WardrobeContent item)
     {
-        if (itemPreview == null || item == null)
+        if (itemPreview == null)
             return;
 
-        if (itemPreviewImage != null)
-            itemPreview.TargetImage = itemPreviewImage;
+        if (item == null)
+        {
+            itemPreview.Clear();
+            return;
+        }
 
         if (item is WardrobeSkin skin)
         {
-            GameObject instance = capybaraPreviewPrefab != null ? capybaraPreviewPrefab : WardrobePreviewUtility.GetCapybaraPreviewPrefab();
+            GameObject instance = WardrobePreviewUtility.GetCapybaraPreviewPrefab();
             if (instance == null)
             {
                 itemPreview.Clear();
@@ -92,12 +94,12 @@ public class BoxOpeningUI : MonoBehaviour
                 if (applier == null)
                     applier = previewObject.AddComponent<PlayerCustomizationApplier>();
 
-                applier.Apply(new PlayerCustomization { Skin = skin });
+                applier.ApplySkinOnly(skin);
             });
         }
-        else
+        else if (item is WardrobeEquipment equipment)
         {
-            GameObject previewPrefab = WardrobePreviewUtility.GetContentPreviewPrefab(item);
+            GameObject previewPrefab = equipment.Prefab;
             if (previewPrefab == null)
             {
                 itemPreview.Clear();

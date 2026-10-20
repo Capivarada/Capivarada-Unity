@@ -7,10 +7,9 @@ public class ShopBoxCard : MonoBehaviour
 {
     [SerializeField] private TMP_Text nameText;
     [SerializeField] private TMP_Text priceText;
-    [SerializeField] private RawImage previewImage;
     [SerializeField] private Button selectButton;
     [SerializeField] private Button purchaseButton;
-    [SerializeField] private Preview3D preview3D;
+    private Preview3D preview3D;
 
     private ShopManager shopManager;
     private WardrobeBox box;
@@ -59,14 +58,12 @@ public class ShopBoxCard : MonoBehaviour
 
     private void ShowPreview()
     {
+        if (preview3D == null) preview3D = GetComponentInChildren<Preview3D>(true);
         if (preview3D == null)
         {
             Debug.LogWarning($"[{nameof(ShopBoxCard)}] Preview3D is not assigned on {name}.");
             return;
         }
-
-        if (previewImage != null)
-            preview3D.TargetImage = previewImage;
 
         if (box == null || box.Prefab == null)
         {

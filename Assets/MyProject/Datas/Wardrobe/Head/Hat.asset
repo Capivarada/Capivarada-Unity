@@ -16,5 +16,3 @@ MonoBehaviour:
   contentName: "Chap\xE9u"
   rarity: 0
   prefab: {fileID: 6728078203798565136, guid: cafa864f366a2736d8abb9790dc61834, type: 3}
-  previewPrefab: {fileID: 6728078203798565136, guid: cafa864f366a2736d8abb9790dc61834, type: 3}
-  equippedPrefab: {fileID: 6728078203798565136, guid: cafa864f366a2736d8abb9790dc61834, type: 3}

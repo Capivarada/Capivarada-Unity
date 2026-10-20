@@ -15,27 +15,25 @@ MonoBehaviour:
   contentId: 4e3a9337f9f34dd47aa1b5921279e6c1
   contentName: Azul
   rarity: 0
-  prefab: {fileID: 4453846769052655643, guid: b1f30316f443aa44c86b1622bbdce86c, type: 3}
-  previewPrefab: {fileID: 4453846769052655643, guid: b1f30316f443aa44c86b1622bbdce86c, type: 3}
   colors:
   - color: {r: 0.28, g: 0.48, b: 0.8, a: 1}
-    metallic: 0
-    smoothness: 0.5
+    metallic: 0.25
+    smoothness: 0.25
   - color: {r: 0.19, g: 0.21, b: 0.4, a: 1}
-    metallic: 0
-    smoothness: 0.5
+    metallic: 0.25
+    smoothness: 0.25
   - color: {r: 0.08, g: 0.11, b: 0.22, a: 1}
-    metallic: 0
-    smoothness: 0.5
+    metallic: 0.25
+    smoothness: 0.25
   - color: {r: 0.31, g: 0.38, b: 0.52, a: 1}
-    metallic: 0
-    smoothness: 0.5
+    metallic: 0.25
+    smoothness: 0.25
   - color: {r: 0.75, g: 0.82, b: 0.94, a: 1}
-    metallic: 0
-    smoothness: 0.5
+    metallic: 0.25
+    smoothness: 0.25
   - color: {r: 0.19, g: 0.2, b: 0.42, a: 1}
-    metallic: 0
-    smoothness: 0.5
+    metallic: 0.25
+    smoothness: 0.25
   - color: {r: 0.09, g: 0.13, b: 0.19, a: 1}
-    metallic: 0
-    smoothness: 0.5
+    metallic: 0.25
+    smoothness: 0.25

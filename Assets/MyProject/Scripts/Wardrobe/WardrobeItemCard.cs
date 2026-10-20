@@ -9,7 +9,7 @@ public class WardrobeItemCard : MonoBehaviour
     [SerializeField] private TMP_Text buttonText;
     [SerializeField] private RaritySettings raritySettings;
     [SerializeField] private Button equipButton;
-    [SerializeField] private Preview3D preview3D;
+    private Preview3D preview3D;
 
     private WardrobeManager manager;
     private WardrobeEquipment item;
@@ -19,8 +19,7 @@ public class WardrobeItemCard : MonoBehaviour
 
     public void Initialize(
         WardrobeManager wardrobeManager,
-        WardrobeContent wardrobeContent,
-        GameObject capybaraPreviewPrefab)
+        WardrobeContent wardrobeContent)
     {
         manager = wardrobeManager;
         skin = wardrobeContent as WardrobeSkin;
@@ -44,7 +43,7 @@ public class WardrobeItemCard : MonoBehaviour
                 rarityText.color = raritySettings.GetColor(wardrobeContent.ContentRarity);
         }
 
-        ShowPreview(capybaraPreviewPrefab);
+        ShowPreview();
 
         if (equipButton != null)
         {
@@ -55,7 +54,7 @@ public class WardrobeItemCard : MonoBehaviour
         RefreshState();
     }
 
-    public void InitializeNone(WardrobeManager wardrobeManager, WardrobeCategory targetCategory, GameObject capybaraPreviewPrefab)
+    public void InitializeNone(WardrobeManager wardrobeManager, WardrobeCategory targetCategory)
     {
         manager = wardrobeManager;
         skin = null;
@@ -69,7 +68,7 @@ public class WardrobeItemCard : MonoBehaviour
         if (rarityText != null)
             rarityText.text = string.Empty;
 
-        ShowPreview(capybaraPreviewPrefab);
+        ShowPreview();
 
         if (equipButton != null)
         {
@@ -109,23 +108,26 @@ public class WardrobeItemCard : MonoBehaviour
             manager.EquipItem(item);
     }
 
-    private void ShowPreview(GameObject capybaraPreviewPrefab)
+    private void ShowPreview()
     {
+        if (preview3D == null) preview3D = GetComponentInChildren<Preview3D>(true);
         if (preview3D == null)
         {
             Debug.LogWarning($"[{nameof(WardrobeItemCard)}] Preview3D is not assigned on {name}.");
             return;
         }
 
-        if (isNoneOption)
+        if (isNoneOption && category != WardrobeCategory.Cores)
         {
             preview3D.Clear();
             return;
         }
 
+        if (isNoneOption) skin = manager != null ? manager.DefaultSkin : null;
+
         if (skin != null)
         {
-            GameObject instance = capybaraPreviewPrefab != null ? capybaraPreviewPrefab : WardrobePreviewUtility.GetCapybaraPreviewPrefab();
+            GameObject instance = WardrobePreviewUtility.GetCapybaraPreviewPrefab();
             if (instance == null)
             {
                 preview3D.Clear();
@@ -141,14 +143,14 @@ public class WardrobeItemCard : MonoBehaviour
                 if (applier == null)
                     applier = previewObject.AddComponent<PlayerCustomizationApplier>();
 
-                applier.Apply(new PlayerCustomization { Skin = skin });
+                applier.ApplySkinOnly(skin);
             });
             return;
         }
 
         if (item != null)
         {
-            GameObject previewPrefab = WardrobePreviewUtility.GetContentPreviewPrefab(item);
+            GameObject previewPrefab = item.Prefab;
             if (previewPrefab == null)
             {
                 preview3D.Clear();

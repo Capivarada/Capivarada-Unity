@@ -7,7 +7,6 @@ public class WardrobeUI : MonoBehaviour
     [Header("References")]
     [SerializeField] private WardrobeManager wardrobeManager;
     [SerializeField] private PlayerCustomizationApplier mainPreview;
-    [SerializeField] private GameObject capybaraPreviewPrefab;
     [SerializeField] private WardrobeItemCard itemCardPrefab;
     [SerializeField] private Transform content;
 
@@ -71,8 +70,11 @@ public class WardrobeUI : MonoBehaviour
         for (int i = content.childCount - 1; i >= 0; i--)
             Destroy(content.GetChild(i).gameObject);
 
-        WardrobeItemCard noneCard = Instantiate(itemCardPrefab, content);
-        noneCard.InitializeNone(wardrobeManager, currentCategory, capybaraPreviewPrefab);
+        if (currentCategory != WardrobeCategory.Todos)
+        {
+            WardrobeItemCard noneCard = Instantiate(itemCardPrefab, content);
+            noneCard.InitializeNone(wardrobeManager, currentCategory);
+        }
 
         if (currentCategory == WardrobeCategory.Cores)
         {
@@ -82,7 +84,7 @@ public class WardrobeUI : MonoBehaviour
                     continue;
 
                 WardrobeItemCard card = Instantiate(itemCardPrefab, content);
-                card.Initialize(wardrobeManager, skin, capybaraPreviewPrefab);
+                card.Initialize(wardrobeManager, skin);
             }
         }
         else
@@ -90,7 +92,7 @@ public class WardrobeUI : MonoBehaviour
             foreach (WardrobeContent item in wardrobeManager.GetItems(currentCategory))
             {
                 WardrobeItemCard card = Instantiate(itemCardPrefab, content);
-                card.Initialize(wardrobeManager, item, capybaraPreviewPrefab);
+                card.Initialize(wardrobeManager, item);
             }
         }
     }

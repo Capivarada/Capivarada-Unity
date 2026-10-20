@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc1812661b014364a886da8779a69fb1, type: 3}
   m_Name: MatchConfig
   m_EditorClassIdentifier: Assembly-CSharp::MatchConfig
-  initialCountdownDuration: 10
-  choosingDuration: 8
+  initialCountdownDuration: 3
+  choosingDuration: 5
   nextRoundCountdown: 3
   revealDuration: 1.5
   maxRounds: 10

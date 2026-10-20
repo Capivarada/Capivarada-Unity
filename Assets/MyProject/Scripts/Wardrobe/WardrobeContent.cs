@@ -5,8 +5,6 @@ public abstract class WardrobeContent : ScriptableObject
     [SerializeField] private string contentId;
     [SerializeField] private string contentName;
     [SerializeField] private Rarity rarity;
-    [SerializeField] private GameObject prefab;
-    [SerializeField] private GameObject previewPrefab;
 
     public string ContentId => contentId;
 
@@ -17,12 +15,7 @@ public abstract class WardrobeContent : ScriptableObject
 
     public Rarity ContentRarity => rarity;
 
-    public GameObject Prefab => prefab;
 
-    public GameObject PreviewPrefab =>
-        previewPrefab != null
-            ? previewPrefab
-            : prefab;
 
 #if UNITY_EDITOR
     private void OnValidate()
@@ -47,13 +40,8 @@ public abstract class WardrobeContent : ScriptableObject
 
 public abstract class WardrobeEquipment : WardrobeContent
 {
-    [SerializeField]
-    private GameObject equippedPrefab;
-
-    public GameObject EquippedPrefab =>
-        equippedPrefab != null
-            ? equippedPrefab
-            : Prefab;
+    [SerializeField] private GameObject prefab;
+    public GameObject Prefab => prefab;
 }
 
 [CreateAssetMenu(

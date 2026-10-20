@@ -752,6 +752,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2408886174842336926}
   - component: {fileID: 6280530932819294237}
+  - component: {fileID: 4839536233600983927}
   m_Layer: 0
   m_Name: Capybara
   m_TagString: Untagged
@@ -798,6 +799,36 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &4839536233600983927
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4453846769052655643}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ead8d45e3019b4a638423f66f3eb07fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCustomizationApplier
+  headSlot: {fileID: 3704288747921232587}
+  accessorySlot: {fileID: 6468875071013090687}
+  clothingSlot: {fileID: 7365867231178855230}
+  skinMaterialSlots:
+  - renderer: {fileID: 4490987502467139817}
+    materialIndex: 0
+  - renderer: {fileID: 4490987502467139817}
+    materialIndex: 1
+  - renderer: {fileID: 4490987502467139817}
+    materialIndex: 2
+  - renderer: {fileID: 4490987502467139817}
+    materialIndex: 3
+  - renderer: {fileID: 4490987502467139817}
+    materialIndex: 4
+  - renderer: {fileID: 4490987502467139817}
+    materialIndex: 5
+  - renderer: {fileID: 4490987502467139817}
+    materialIndex: 6
 --- !u!1 &4800143407935955316
 GameObject:
   m_ObjectHideFlags: 0
@@ -808,7 +839,6 @@ GameObject:
   m_Component:
   - component: {fileID: 6674573536262588893}
   - component: {fileID: 4490987502467139817}
-  - component: {fileID: 1426316438939489957}
   m_Layer: 0
   m_Name: Capivara
   m_TagString: Untagged
@@ -931,36 +961,6 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.0000134352595, y: 0.002482023, z: 0.0045600366}
     m_Extent: {x: 0.0072134873, y: 0.009339358, z: 0.007789802}
   m_DirtyAABB: 0
---- !u!114 &1426316438939489957
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4800143407935955316}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ead8d45e3019b4a638423f66f3eb07fa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerCustomizationApplier
-  headSlot: {fileID: 3704288747921232587}
-  accessorySlot: {fileID: 6468875071013090687}
-  clothingSlot: {fileID: 7365867231178855230}
-  skinMaterialSlots:
-  - renderer: {fileID: 4490987502467139817}
-    materialIndex: 0
-  - renderer: {fileID: 4490987502467139817}
-    materialIndex: 1
-  - renderer: {fileID: 4490987502467139817}
-    materialIndex: 2
-  - renderer: {fileID: 4490987502467139817}
-    materialIndex: 3
-  - renderer: {fileID: 4490987502467139817}
-    materialIndex: 4
-  - renderer: {fileID: 4490987502467139817}
-    materialIndex: 5
-  - renderer: {fileID: 4490987502467139817}
-    materialIndex: 6
 --- !u!1 &4835261867479470439
 GameObject:
   m_ObjectHideFlags: 0
