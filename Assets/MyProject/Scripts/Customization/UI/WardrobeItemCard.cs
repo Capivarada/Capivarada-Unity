@@ -102,7 +102,7 @@ public class WardrobeItemCard : MonoBehaviour
             PlayerCustomizationApplier applier = previewObject.GetComponent<PlayerCustomizationApplier>();
             if (applier != null)
                 applier.ApplySkinOnly(skin);
-        });
+        }, skin.SkinId, skin.Rarity);
     }
 
     private void OnDestroy()

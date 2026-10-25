@@ -26,6 +26,7 @@ public class ShopUI : MonoBehaviour
     [SerializeField] private BoxOpeningUI boxOpeningUI;
     private WardrobeBox selectedBox;
     private bool runtimePurchaseBinding;
+    private PlayFabEconomyService subscribedEconomy;
 
     private void Awake()
     {
@@ -44,6 +45,7 @@ public class ShopUI : MonoBehaviour
     private void OnEnable()
     {
         if (shopManager != null) shopManager.OnRewardGranted += HandleRewardGranted;
+        SubscribeToEconomy();
         if (detailsPurchaseButton != null && !HasPersistentPurchaseBinding() && !runtimePurchaseBinding)
         {
             detailsPurchaseButton.onClick.AddListener(PurchaseSelected);
@@ -51,12 +53,18 @@ public class ShopUI : MonoBehaviour
         }
         ShowBoxes();
     }
-    private void OnDisable() { if (shopManager != null) shopManager.OnRewardGranted -= HandleRewardGranted; }
+    private void OnDisable()
+    {
+        if (shopManager != null) shopManager.OnRewardGranted -= HandleRewardGranted;
+        if (subscribedEconomy != null) subscribedEconomy.OnBalanceChanged -= HandleBalanceChanged;
+        subscribedEconomy = null;
+    }
     public void Configure(ShopManager manager, ShopBoxCard prefab, Transform boxesContent)
     {
         shopManager = manager;
         boxCardPrefab = prefab;
         content = boxesContent;
+        SubscribeToEconomy();
     }
     public Button DetailsPurchaseButton => detailsPurchaseButton;
     public void ShowBoxes()
@@ -83,13 +91,15 @@ public class ShopUI : MonoBehaviour
     }
     private void ShowDetails(WardrobeBox box)
     {
+        bool canReuseCurrentDetails = box != null && box == selectedBox &&
+            rarityContent != null && rarityContent.childCount > 0;
         selectedBox = box;
         if (box != null) Debug.Log("[Shop] Caixa selecionada: " + box.BoxId);
 
         // The details panel is inactive after closing. Destroy its old cards
         // before activating it again, otherwise their Preview3D cameras wake
         // up for one frame alongside the newly created cards.
-        ClearRaritySections();
+        if (!canReuseCurrentDetails) ClearRaritySections();
 
         if (detailsPanel != null)
         {
@@ -100,6 +110,7 @@ public class ShopUI : MonoBehaviour
             if (pointsTabButton != null) pointsTabButton.gameObject.SetActive(box == null);
         }
         if (box == null) return;
+        UpdatePurchaseButtonState();
         if (detailsNameText != null) detailsNameText.text = box.BoxName;
         if (detailsPriceText != null) detailsPriceText.text = box.Price.ToString();
         if (detailsIconImage != null)
@@ -116,12 +127,13 @@ public class ShopUI : MonoBehaviour
                 ? raritySettings.GetColor(box.VisualRarity)
                 : Color.white;
         if (rarityContent == null || raritySectionPrefab == null) return;
-        foreach (RarityDrop drop in box.DropRates)
-            if (drop != null && drop.chance > 0f)
-                Instantiate(raritySectionPrefab, rarityContent).Initialize(
-                    drop.rarity,
-                    drop.chance,
-                    shopManager.Catalog);
+        if (!canReuseCurrentDetails)
+            foreach (RarityDrop drop in box.DropRates)
+                if (drop != null && drop.chance > 0f)
+                    Instantiate(raritySectionPrefab, rarityContent).Initialize(
+                        drop.rarity,
+                        drop.chance,
+                        shopManager.Catalog);
     } 
 
     private void ClearRaritySections()
@@ -139,7 +151,13 @@ public class ShopUI : MonoBehaviour
     
     public void HideDetails()
     {
-        ShowDetails(null);
+        // Keep the already captured card textures. Reopening the same box is
+        // instantaneous and cannot create a second set of Preview3D cameras.
+        if (detailsPanel != null) detailsPanel.SetActive(false);
+        if (boxesTabPanel != null) boxesTabPanel.SetActive(true);
+        if (pointsTabPanel != null) pointsTabPanel.SetActive(false);
+        if (boxesTabButton != null) boxesTabButton.gameObject.SetActive(true);
+        if (pointsTabButton != null) pointsTabButton.gameObject.SetActive(true);
     }
     public void PurchaseSelected()
     {
@@ -149,6 +167,12 @@ public class ShopUI : MonoBehaviour
             Debug.LogWarning("[Shop] Selecione uma caixa antes de comprar.");
             return;
         }
+        if (shopManager.EconomyService == null || shopManager.EconomyService.PointsBalance < selectedBox.Price)
+        {
+            Debug.LogWarning("[Shop] Pontos insuficientes para esta caixa.");
+            UpdatePurchaseButtonState();
+            return;
+        }
         shopManager.PurchaseBox(selectedBox);
     }
     private void HandleRewardGranted(WardrobeBoxReward reward)
@@ -156,6 +180,24 @@ public class ShopUI : MonoBehaviour
         if (detailsPanel != null) detailsPanel.SetActive(false);
         if (boxOpeningUI != null)
             boxOpeningUI.Play(reward, () => { if (selectedBox != null) ShowDetails(selectedBox); else ShowBoxes(); });
+    }
+    private void SubscribeToEconomy()
+    {
+        PlayFabEconomyService economy = shopManager != null ? shopManager.EconomyService : null;
+        if (subscribedEconomy == economy) return;
+        if (subscribedEconomy != null) subscribedEconomy.OnBalanceChanged -= HandleBalanceChanged;
+        subscribedEconomy = economy;
+        if (subscribedEconomy != null) subscribedEconomy.OnBalanceChanged += HandleBalanceChanged;
+        UpdatePurchaseButtonState();
+    }
+    private void HandleBalanceChanged(int _) => UpdatePurchaseButtonState();
+    private void UpdatePurchaseButtonState()
+    {
+        if (detailsPurchaseButton == null) return;
+        detailsPurchaseButton.interactable = selectedBox != null &&
+            shopManager != null &&
+            shopManager.EconomyService != null &&
+            shopManager.EconomyService.PointsBalance >= selectedBox.Price;
     }
     private void OnDestroy()
     {

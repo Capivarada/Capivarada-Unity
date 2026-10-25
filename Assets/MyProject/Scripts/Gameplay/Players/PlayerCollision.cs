@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerCollision : MonoBehaviour
@@ -8,8 +7,6 @@ public class PlayerCollision : MonoBehaviour
 
     private float lastCollisionTime = -1f;
     
-    private static readonly HashSet<ulong> processedCollisions = new();
-
     private void Awake()
     {
         if (rb == null)
@@ -18,13 +15,10 @@ public class PlayerCollision : MonoBehaviour
 
     public void HandleHit(Collider other)
     {
-        if (!other.CompareTag("Player"))
-            return;
+        Rigidbody otherRb = other != null ? other.attachedRigidbody : null;
+        if (otherRb == null && other != null) otherRb = other.GetComponentInParent<Rigidbody>();
 
-        Rigidbody otherRb =
-            other.GetComponentInParent<Rigidbody>();
-
-        if (otherRb == null || otherRb == rb) 
+        if (otherRb == null || otherRb == rb || otherRb.GetComponent<PlayerController>() == null)
             return;
 
         if (gameObject.GetEntityId() > otherRb.gameObject.GetEntityId())
@@ -33,12 +27,18 @@ public class PlayerCollision : MonoBehaviour
         ProcessImpact(otherRb);
     }
 
+    // The solid body collision is the reliable fallback for high-speed hits;
+    // the trigger hitbox can be skipped by a discrete physics step.
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision != null) HandleHit(collision.collider);
+    }
+
     private void ProcessImpact(Rigidbody otherRb)
     {
         PlayerConfig config = GameManager.Instance.PlayerConfig;
-        PlayerController player = gameObject.GetComponent<PlayerController>();
-        
-        player.animator.SetTrigger("Attack");
+        PlayerController player = GetComponent<PlayerController>();
+        if (player != null && player.animator != null) player.animator.SetTrigger("Attack");
         
         if (config == null)
             return;
@@ -115,11 +115,11 @@ public class PlayerCollision : MonoBehaviour
 
         // Cada um recebe uma resposta proporcional
         // à contribuição do outro.
-        float knockbackA =
-            impact * forceB * config.KnockbackMultiplier;
-
-        float knockbackB =
-            impact * forceA * config.KnockbackMultiplier;
+        float response = Mathf.Min(
+            impact * config.KnockbackMultiplier,
+            config.MaxKnockbackVelocity);
+        float knockbackA = response * forceB;
+        float knockbackB = response * forceA;
 
         ApplyResponse(
             rb,
@@ -132,7 +132,7 @@ public class PlayerCollision : MonoBehaviour
             direction,
             knockbackB
         );
-        
+
         Debug.Log(
             $"IMPACTO\n" +
             $"A: {speedA:F2}\n" +

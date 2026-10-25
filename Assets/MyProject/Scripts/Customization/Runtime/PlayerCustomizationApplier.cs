@@ -25,6 +25,7 @@ public class PlayerCustomizationApplier : MonoBehaviour
         new SkinMaterialSlot[WardrobeSkin.MaterialSlotCount];
 
     private readonly Dictionary<Renderer, MaterialPropertyBlock> propertyBlocks = new();
+    public WardrobeSkin AppliedSkin { get; private set; }
 
     private void Awake()
     {
@@ -49,6 +50,7 @@ public class PlayerCustomizationApplier : MonoBehaviour
         if (skin == null)
             return;
 
+        AppliedSkin = skin;
         EnsureSkinMaterialMapping();
         for (int i = 0; i < skinMaterialSlots.Length; i++)
         {

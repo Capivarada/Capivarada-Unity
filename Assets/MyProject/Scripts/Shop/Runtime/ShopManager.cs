@@ -15,6 +15,7 @@ public class ShopManager : MonoBehaviour
     [SerializeField] private PlayFabEconomyService economyService;
     public IReadOnlyList<WardrobeBox> AvailableBoxes => availableBoxes;
     public SkinCatalog Catalog => skinCatalog;
+    public PlayFabEconomyService EconomyService => economyService;
     public event Action<WardrobeBoxReward> OnRewardGranted;
     private bool purchasePending;
     private string pendingRequestId;
@@ -55,6 +56,7 @@ public class ShopManager : MonoBehaviour
         if (purchasePending) { Debug.LogWarning("[Shop] Uma compra já está sendo processada."); return; }
         if (economyService == null) { Debug.LogError("[Shop] PlayFabEconomyService não configurado.", this); return; }
         if (box == null || !availableBoxes.Contains(box) || !box.IsAvailable) { Debug.LogWarning("[Shop] Caixa inválida ou indisponível."); return; }
+        if (economyService.PointsBalance < box.Price) { Debug.LogWarning("[Shop] Pontos insuficientes para esta caixa."); return; }
         if (!string.IsNullOrWhiteSpace(pendingRequestId)) { RecoverPendingPurchase(); return; }
         if (!box.Validate(skinCatalog, out string error)) { Debug.LogWarning("[Shop] " + error); return; }
         if (string.IsNullOrEmpty(PendingKey)) { Debug.LogWarning("[Shop] Faça login com uma conta não visitante para comprar caixas."); return; }

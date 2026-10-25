@@ -7,6 +7,7 @@ public class ShopRaritySection : MonoBehaviour
     [SerializeField] private RaritySettings raritySettings;
     [SerializeField] private TMP_Text rarityText;
     [SerializeField] private Button toggleButton;
+    [SerializeField] private Image toggleImage;
     [SerializeField] private GameObject itemsRoot;
     [SerializeField] private WardrobeItemCard skinCardPrefab;
     private bool expanded;
@@ -14,6 +15,8 @@ public class ShopRaritySection : MonoBehaviour
     public void Initialize(Rarity rarity, float chance, SkinCatalog catalog)
     {
         if (rarityText != null) { rarityText.text = $"{rarity} - {chance:0.##}%"; if (raritySettings != null) rarityText.color = raritySettings.GetColor(rarity); }
+        if (toggleImage != null && raritySettings != null)
+            toggleImage.color = raritySettings.GetColor(rarity);
         if (toggleButton != null) { toggleButton.onClick.RemoveListener(Toggle); toggleButton.onClick.AddListener(Toggle); }
         if (itemsRoot != null && skinCardPrefab != null && catalog != null)
         {
@@ -26,6 +29,14 @@ public class ShopRaritySection : MonoBehaviour
         SetExpanded(true);
     }
     private void Toggle() => SetExpanded(!expanded);
-    private void SetExpanded(bool value) { expanded = value; if (itemsRoot != null) itemsRoot.SetActive(value); }
+
+    private void SetExpanded(bool value)
+    {
+        expanded = value;
+        if (itemsRoot != null)
+            itemsRoot.SetActive(value);
+        if (toggleImage != null)
+            toggleImage.rectTransform.localEulerAngles = new Vector3( 0f, 0f, value ? 180f : -90f);
+    }
     private void OnDestroy() { if (toggleButton != null) toggleButton.onClick.RemoveListener(Toggle); }
 }

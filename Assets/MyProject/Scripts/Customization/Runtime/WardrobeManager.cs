@@ -17,7 +17,8 @@ public class WardrobeManager : MonoBehaviour
     public WardrobeSkin SelectedSkin { get; private set; }
     public SkinCatalog Catalog => skinCatalog;
     public PlayFabEconomyService EconomyService => economyService;
-    private bool subscribed;
+    private PlayFabEconomyService subscribedEconomy;
+    private PlayFabAuthManager subscribedAuth;
     private bool initialized;
 
     private void Awake()
@@ -65,7 +66,13 @@ public class WardrobeManager : MonoBehaviour
     public WardrobeSkin ActiveSkin => SelectedSkin ?? CurrentCustomization?.Skin ?? skinCatalog?.DefaultSkin;
 
     /// <summary>Ensures UI can safely open after a domain reload or scene transition.</summary>
-    public void EnsureInitialized() => InitializeState();
+    public void EnsureInitialized()
+    {
+        InitializeState();
+        Subscribe();
+        if (PlayFabAuthManager.Instance != null && PlayFabAuthManager.Instance.IsLoggedIn)
+            RefreshEconomyAfterLogin();
+    }
     public bool SelectSkin(WardrobeSkin skin)
     {
         if (skin == null || !GetOwnedSkins().Contains(skin)) return false;
@@ -127,17 +134,25 @@ public class WardrobeManager : MonoBehaviour
 
     private void Subscribe()
     {
-        if (subscribed) return;
-        if (economyService != null) economyService.OnInventoryLoaded += ApplyServerInventory;
-        if (PlayFabAuthManager.Instance != null) PlayFabAuthManager.Instance.OnLoginSuccess += RefreshEconomyAfterLogin;
-        subscribed = true;
+        if (subscribedEconomy != economyService)
+        {
+            if (subscribedEconomy != null) subscribedEconomy.OnInventoryLoaded -= ApplyServerInventory;
+            subscribedEconomy = economyService;
+            if (subscribedEconomy != null) subscribedEconomy.OnInventoryLoaded += ApplyServerInventory;
+        }
+
+        PlayFabAuthManager auth = PlayFabAuthManager.Instance;
+        if (subscribedAuth == auth) return;
+        if (subscribedAuth != null) subscribedAuth.OnLoginSuccess -= RefreshEconomyAfterLogin;
+        subscribedAuth = auth;
+        if (subscribedAuth != null) subscribedAuth.OnLoginSuccess += RefreshEconomyAfterLogin;
     }
 
     private void Unsubscribe()
     {
-        if (!subscribed) return;
-        if (economyService != null) economyService.OnInventoryLoaded -= ApplyServerInventory;
-        if (PlayFabAuthManager.Instance != null) PlayFabAuthManager.Instance.OnLoginSuccess -= RefreshEconomyAfterLogin;
-        subscribed = false;
+        if (subscribedEconomy != null) subscribedEconomy.OnInventoryLoaded -= ApplyServerInventory;
+        if (subscribedAuth != null) subscribedAuth.OnLoginSuccess -= RefreshEconomyAfterLogin;
+        subscribedEconomy = null;
+        subscribedAuth = null;
     }
 }

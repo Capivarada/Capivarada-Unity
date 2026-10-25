@@ -16,6 +16,8 @@ public class PlayerController : MonoBehaviour
     private bool hasLaunched;
     private Vector3 aimDirection;
     private Coroutine revealRotation;
+    private PlayerCustomizationApplier customizationApplier;
+    private Renderer skinRenderer;
 
     public event Action<float> OnChargeChanged;
 
@@ -42,6 +44,9 @@ public class PlayerController : MonoBehaviour
             rb =
                 GetComponent<Rigidbody>();
         }
+
+        customizationApplier = GetComponentInChildren<PlayerCustomizationApplier>(true);
+        skinRenderer = GetComponentInChildren<SkinnedMeshRenderer>(true);
     }
 
     private void Start()
@@ -214,8 +219,27 @@ public class PlayerController : MonoBehaviour
     {
         if (impulseIndicator != null)
         {
+            impulseIndicator.SetTint(GetSkinColor());
             impulseIndicator.ShowArrow();
         }
+    }
+
+    private Color GetSkinColor()
+    {
+        if (customizationApplier == null)
+            customizationApplier = GetComponentInChildren<PlayerCustomizationApplier>(true);
+        WardrobeSkin skin = customizationApplier != null ? customizationApplier.AppliedSkin : null;
+        SkinColorData skinColor = skin != null ? skin.GetColorData(SkinColorSlot.Skin) : null;
+        if (skinColor != null) return skinColor.color;
+
+        if (skinRenderer != null && skinRenderer.sharedMaterials.Length > 0)
+        {
+            Material material = skinRenderer.sharedMaterials[0];
+            if (material != null && material.HasProperty("_BaseColor")) return material.GetColor("_BaseColor");
+            if (material != null && material.HasProperty("_Color")) return material.GetColor("_Color");
+        }
+
+        return Color.white;
     }
 
     public void BeginRevealRotation(float duration)

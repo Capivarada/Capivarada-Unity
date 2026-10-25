@@ -19,3 +19,4 @@ MonoBehaviour:
   minimumImpactVelocity: 0.1
   collisionCooldown: 0.05
   knockbackMultiplier: 1
+  maxKnockbackVelocity: 12

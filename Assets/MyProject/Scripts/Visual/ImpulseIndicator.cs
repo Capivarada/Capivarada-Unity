@@ -4,6 +4,7 @@ public class ImpulseIndicator : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private GameObject cubePrefab;
+    [SerializeField] private SpriteRenderer indicatorSprite;
 
     [Header("Indicator")]
     private GameObject arrow;
@@ -12,6 +13,7 @@ public class ImpulseIndicator : MonoBehaviour
     private const float ForwardAdvancePerForce = 0.2f;
 
     private float currentCharge;
+    private Color tint = Color.white;
 
     public float CurrentCharge => currentCharge;
 
@@ -31,6 +33,15 @@ public class ImpulseIndicator : MonoBehaviour
             HideArrow();
     }
 
+    public void SetTint(Color color)
+    {
+        tint = color;
+        if (indicatorSprite == null)
+            indicatorSprite = GetComponentInChildren<SpriteRenderer>(true);
+        if (indicatorSprite != null)
+            indicatorSprite.color = tint;
+    }
+
     public void ShowArrow()
     {
         if (currentCharge <= 0 || cubePrefab == null) return;
@@ -38,6 +49,10 @@ public class ImpulseIndicator : MonoBehaviour
         {
             arrow = Instantiate(cubePrefab, transform);
         }
+        if (indicatorSprite == null)
+            indicatorSprite = arrow.GetComponentInChildren<SpriteRenderer>(true);
+        if (indicatorSprite != null)
+            indicatorSprite.color = tint;
         UpdateArrowScale();
         arrow.SetActive(true);
     }

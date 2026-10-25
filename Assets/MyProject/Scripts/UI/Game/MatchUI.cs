@@ -150,11 +150,12 @@ public class MatchUI : MonoBehaviour
         if (resultShown) return;
         switch (state)
         {
-            case RoundState.Countdown: ShowStartingUI(); break;
+            case RoundState.Countdown: ShowStartingUI(); HidePowerSpeedPanel(); break;
             case RoundState.Choosing: ShowChoosingUI(); break;
             case RoundState.Revealing:
             case RoundState.Moving: ShowRevealingUI(); break;
-            case RoundState.NextRound: SetActive(titleContainer, true); SetActive(roundContainer, true); SetActive(powerContainer, false); break;
+            case RoundState.NextRound: SetActive(titleContainer, true); SetActive(roundContainer, true); SetActive(powerContainer, false); HidePowerSpeedPanel(); break;
+            case RoundState.Finished: HidePowerSpeedPanel(); break;
         }
     }
 
@@ -379,6 +380,11 @@ public class MatchUI : MonoBehaviour
         if (powerShakeCoroutine != null) StopCoroutine(powerShakeCoroutine);
         powerShakeCoroutine = null;
         if (powerSpeedPanel != null) powerSpeedPanel.anchoredPosition = powerSpeedPanelBasePosition;
+    }
+    private void HidePowerSpeedPanel()
+    {
+        StopPowerShake();
+        if (powerSpeedPanel != null) powerSpeedPanel.gameObject.SetActive(false);
     }
     private IEnumerator ShakePowerImage()
     {

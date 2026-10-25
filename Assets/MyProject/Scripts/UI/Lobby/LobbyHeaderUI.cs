@@ -49,8 +49,9 @@ public sealed class LobbyHeaderUI : MonoBehaviour
     private void UpdateProgress(int xp, int level)
     {
         if (levelText != null) levelText.text = $"Nível {level}";
-        if(xpText != null) xpText.text = $"{xp}/{xpPerLevel}";
-        if (xpBar != null) { xpBar.maxValue = xpPerLevel; xpBar.value = Mathf.Clamp(xp % xpPerLevel, 0, xpPerLevel); }
+        int levelXP = Mathf.Max(0, xp % xpPerLevel);
+        if(xpText != null) xpText.text = $"{levelXP}/{xpPerLevel}";
+        if (xpBar != null) { xpBar.maxValue = xpPerLevel; xpBar.value = levelXP; }
     }
     private void LoadProgress() { if (progress != null) progress.LoadProgress(); }
     public void ConfigureGuestRestrictedButtons(IEnumerable<Button> buttons)

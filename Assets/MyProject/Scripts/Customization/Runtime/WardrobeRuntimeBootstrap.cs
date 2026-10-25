@@ -65,7 +65,13 @@ public sealed class WardrobeRuntimeBootstrap : MonoBehaviour
     {
         for (Transform current = transform; current != null; current = current.parent)
         {
-            if (current.name == "Preview3D Runtime" &&
+            // Both the former per-card renderer and the atlas runtime contain
+            // skin-specific clones. They must never receive the equipped skin
+            // from the lobby's global scene-preview pass.
+            if ((current.name == "Preview3D Runtime" ||
+                 current.name == "Preview3D Atlas Runtime" ||
+                 current.name == "Preview3D Capture Runtime" ||
+                 current.name == "Preview3D Preview Factory") &&
                 (current.gameObject.hideFlags & HideFlags.HideAndDontSave) != 0)
                 return true;
         }

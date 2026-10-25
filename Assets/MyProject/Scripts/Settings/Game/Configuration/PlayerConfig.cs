@@ -42,10 +42,12 @@ public class PlayerConfig : ScriptableObject
     [SerializeField, Tooltip("Minimum relative speed that produces a player impact.")] [Range(0.1f, 5f)] private float minimumImpactVelocity = 2f;
     [SerializeField, Tooltip("Minimum time between processed impacts for a player.")] [Range(0.001f, 0.5f)] private float collisionCooldown = 0.001f;
     [SerializeField, Tooltip("Multiplier for the collision response received from the opponent.")] [Range(0.1f, 3f)] private float knockbackMultiplier = 1.2f;
+    [SerializeField, Tooltip("Caps the extra collision velocity so a fast hit stays readable.")] [Range(1f, 30f)] private float maxKnockbackVelocity = 12f;
 
     public float MinimumImpactVelocity => minimumImpactVelocity;
     public float CollisionCooldown => collisionCooldown;
     public float KnockbackMultiplier => knockbackMultiplier;
+    public float MaxKnockbackVelocity => maxKnockbackVelocity;
 
     #endregion
 }

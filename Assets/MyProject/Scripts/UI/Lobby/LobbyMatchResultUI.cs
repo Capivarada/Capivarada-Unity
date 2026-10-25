@@ -149,7 +149,7 @@ public class LobbyMatchResultUI : MonoBehaviour
 
         Set(
             totalAccumulatedXPText,
-            $"{result.TotalXP} XP"
+            $"{result.XPEarned} XP"
         );
 
 
@@ -174,7 +174,7 @@ public class LobbyMatchResultUI : MonoBehaviour
 
         Set(
             totalCoinsText,
-            $"+{result.TotalCoinsEarned} Pontos"
+            $"{result.TotalCoinsEarned}"
         );
 
 
@@ -197,7 +197,9 @@ public class LobbyMatchResultUI : MonoBehaviour
                 ? result.XPRequired
                 : 1500;
 
-        int totalXP = result.TotalXP;
+        // Text in the result UI is match-local. Account XP remains necessary
+        // only to animate the level bar across a possible level-up.
+        int matchXP = result.XPEarned;
 
         int previousXP =
             Mathf.Max(0, result.PreviousXP);
@@ -281,7 +283,7 @@ public class LobbyMatchResultUI : MonoBehaviour
                 SetXP(
                     0,
                     xpRequired,
-                    totalXP
+                    matchXP
                 );
 
                 yield return new WaitForSeconds(
@@ -292,7 +294,7 @@ public class LobbyMatchResultUI : MonoBehaviour
             SetXP(
                 levelXP,
                 xpRequired,
-                totalXP
+                matchXP
             );
 
             yield return null;
@@ -309,7 +311,7 @@ public class LobbyMatchResultUI : MonoBehaviour
         SetXP(
             finalXP % xpRequired,
             xpRequired,
-            totalXP
+            matchXP
         );
 
         animationCoroutine = null;

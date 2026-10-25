@@ -142,7 +142,7 @@ public class BoxOpeningUI : MonoBehaviour
                 PlayerCustomizationApplier applier = previewObject.GetComponent<PlayerCustomizationApplier>();
                 if (applier != null) applier.ApplySkinOnly(skin);
                 else Debug.LogWarning("Preview da capivara não possui PlayerCustomizationApplier.");
-            });
+            }, skin.SkinId, skin.Rarity);
     }
 
     private void Close()

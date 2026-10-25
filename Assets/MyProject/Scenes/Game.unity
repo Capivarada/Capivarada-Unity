@@ -3060,7 +3060,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   matchManager: {fileID: 1201099847}
   gameManager: {fileID: 1201099848}
-  arenaBounds: {fileID: 0}
+  arenaBounds: {fileID: 288692768}
 --- !u!114 &1201099847
 MonoBehaviour:
   m_ObjectHideFlags: 0
