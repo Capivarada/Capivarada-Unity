@@ -344,7 +344,7 @@ Transform:
   m_GameObject: {fileID: 1647871552711319313}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.757, z: 0}
+  m_LocalPosition: {x: 0, y: 0.25, z: 1.35}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -363,7 +363,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cubePrefab: {fileID: 7508559611911911884, guid: abc2bec9757fa4c88bafc3c37870f5c1, type: 3}
-  cubeSpacing: 0.2
 --- !u!1 &1759842993379550390
 GameObject:
   m_ObjectHideFlags: 0
@@ -1988,7 +1987,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
+  m_ActiveFontFeatures: 6e72656bu
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1

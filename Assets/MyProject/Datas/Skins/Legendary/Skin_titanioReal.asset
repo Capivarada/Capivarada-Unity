@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32611b192117fa5f4a8b15aea1654029, type: 3}
+  m_Name: Skin_titanioReal
+  m_EditorClassIdentifier: Assembly-CSharp::WardrobeSkin
+  contentId: titanioReal
+  contentName: Titanio Real
+  rarity: 4
+  colors:
+  - color: {r: 0.86, g: 0.18060003, b: 0.42518404, a: 1}
+    metallic: 0.664
+    smoothness: 0.76
+  - color: {r: 0.41279998, g: 0.17799936, b: 0.26252759, a: 1}
+    metallic: 0.664
+    smoothness: 0.76
+  - color: {r: 0.41279998, g: 0.17799936, b: 0.26252759, a: 1}
+    metallic: 0.664
+    smoothness: 0.76
+  - color: {r: 0.94, g: 0.55516416, b: 0.103400014, a: 1}
+    metallic: 0.664
+    smoothness: 0.76
+  - color: {r: 0.73248, g: 0.96, b: 0.8780929, a: 1}
+    metallic: 0.664
+    smoothness: 0.76
+  - color: {r: 0.94, g: 0.55516416, b: 0.103400014, a: 1}
+    metallic: 0.664
+    smoothness: 0.76
+  - color: {r: 0.94, g: 0.55516416, b: 0.103400014, a: 1}
+    metallic: 0
+    smoothness: 0.45

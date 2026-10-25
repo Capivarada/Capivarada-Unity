@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32611b192117fa5f4a8b15aea1654029, type: 3}
+  m_Name: Skin_florestaEncantada
+  m_EditorClassIdentifier: Assembly-CSharp::WardrobeSkin
+  contentId: florestaEncantada
+  contentName: Floresta Encantada
+  rarity: 3
+  colors:
+  - color: {r: 0.256, g: 0.8, b: 0.57696, a: 1}
+    metallic: 0.508
+    smoothness: 0.64
+  - color: {r: 0.19599359, g: 0.384, b: 0.30691737, a: 1}
+    metallic: 0.508
+    smoothness: 0.64
+  - color: {r: 0.19599359, g: 0.384, b: 0.30691737, a: 1}
+    metallic: 0.508
+    smoothness: 0.64
+  - color: {r: 0.19359997, g: 0.6878079, b: 0.88, a: 1}
+    metallic: 0.508
+    smoothness: 0.64
+  - color: {r: 0.96, g: 0.76416, b: 0.84445435, a: 1}
+    metallic: 0.508
+    smoothness: 0.64
+  - color: {r: 0.19359997, g: 0.6878079, b: 0.88, a: 1}
+    metallic: 0.508
+    smoothness: 0.64
+  - color: {r: 0.19359997, g: 0.6878079, b: 0.88, a: 1}
+    metallic: 0
+    smoothness: 0.45

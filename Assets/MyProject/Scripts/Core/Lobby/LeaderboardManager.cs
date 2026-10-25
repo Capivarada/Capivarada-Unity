@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using PlayFab;
 using PlayFab.ClientModels;
 
@@ -21,6 +22,7 @@ public class LeaderboardManager : MonoBehaviour
     private Transform eliminationsLeaderboard;
 
     [SerializeField]
+    [FormerlySerializedAs("playTimeLeaderboard")]
     private Transform levelLeaderboard;
 
     [SerializeField]
@@ -76,10 +78,11 @@ public class LeaderboardManager : MonoBehaviour
 
     private void GetLeaderboard(
         string statisticName,
-        Transform leaderboardUI)
+        Transform leaderboardUI,
+        bool formatAsDuration = false)
     {
         if (leaderboardUI == null ||
-            leaderboardUI == null)
+            playerEntryPrefab == null)
         {
             Debug.LogError(
                 $"[Leaderboard] Content não configurado: {statisticName}"
@@ -103,7 +106,8 @@ public class LeaderboardManager : MonoBehaviour
             {
                 PopulateLeaderboard(
                     result.Leaderboard,
-                    leaderboardUI
+                    leaderboardUI,
+                    formatAsDuration
                 );
             },
             error =>
@@ -122,7 +126,8 @@ public class LeaderboardManager : MonoBehaviour
 
     private void PopulateLeaderboard(
         List<PlayerLeaderboardEntry> players,
-        Transform content)
+        Transform content,
+        bool formatAsDuration)
     {
         foreach (PlayerLeaderboardEntry player in players)
         {
@@ -153,7 +158,8 @@ public class LeaderboardManager : MonoBehaviour
             ui.Setup(
                 player.Position,
                 playerName,
-                player.StatValue
+                player.StatValue,
+                formatAsDuration
             );
         }
     }

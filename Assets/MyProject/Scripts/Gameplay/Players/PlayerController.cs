@@ -1,0 +1,310 @@
+using System;
+using UnityEngine;
+
+public class PlayerController : MonoBehaviour
+{
+    [Header("References")]
+    [SerializeField]
+    private ImpulseIndicator impulseIndicator;
+    [SerializeField] public Animator animator;
+
+    [SerializeField]
+    private Rigidbody rb;
+
+    private const float ChargeStep = 0.5f;
+    private float currentCharge;
+    private bool hasLaunched;
+    private Vector3 aimDirection;
+    private Coroutine revealRotation;
+
+    public event Action<float> OnChargeChanged;
+
+    public bool IsRevealingDirection => revealRotation != null;
+
+    public bool HasLaunched =>
+        hasLaunched;
+
+    public float CurrentCharge =>
+        currentCharge;
+
+    private void Awake()
+    {
+        if (impulseIndicator == null)
+        {
+            impulseIndicator =
+                GetComponentInChildren<
+                    ImpulseIndicator
+                >();
+        }
+
+        if (rb == null)
+        {
+            rb =
+                GetComponent<Rigidbody>();
+        }
+    }
+
+    private void Start()
+    {
+        aimDirection = transform.forward;
+        UpdateIndicator();
+    }
+
+    private void Update()
+    {
+        HandleRotation();
+    }
+
+    #region AIM
+
+    public void SetAimDirection(
+        Vector3 direction
+    )
+    {
+        if (hasLaunched)
+            return;
+
+        direction.y = 0f;
+
+        if (
+            direction.sqrMagnitude <=
+            0.001f
+        )
+        {
+            return;
+        }
+
+        direction.Normalize();
+
+        // Keep the arrow in front of the capybara while choosing. The player
+        // rotates only during the "Direções Reveladas" phase.
+        aimDirection = direction;
+    }
+
+    public Vector3 GetAimDirection()
+    {
+        return aimDirection.sqrMagnitude > 0.001f ? aimDirection : transform.forward;
+    }
+
+    #endregion
+
+    #region CHARGE
+
+    public void IncreaseCharge()
+    {
+        if (hasLaunched)
+            return;
+
+        PlayerConfig config = GameManager.Instance.PlayerConfig;
+        if (config == null)
+            return;
+
+        if (currentCharge >= config.MaxCharge)
+            return;
+
+        currentCharge = Mathf.Min(config.MaxCharge, currentCharge + ChargeStep);
+
+        UpdateIndicator();
+    }
+
+    public void DecreaseCharge()
+    {
+        if (hasLaunched)
+            return;
+
+        PlayerConfig config = GameManager.Instance.PlayerConfig;
+        if (config == null)
+            return;
+
+        if (currentCharge <= config.MinCharge)
+            return;
+
+        currentCharge = Mathf.Max(config.MinCharge, currentCharge - ChargeStep);
+
+        UpdateIndicator();
+    }
+
+    public void SetCharge(
+        float charge
+    )
+    {
+        if (hasLaunched)
+            return;
+
+        PlayerConfig config = GameManager.Instance.PlayerConfig;
+        if (config == null)
+            return;
+
+        currentCharge = Mathf.Clamp(charge, config.MinCharge, config.MaxCharge);
+        currentCharge = Mathf.Round(currentCharge / ChargeStep) * ChargeStep;
+
+        UpdateIndicator();
+    }
+
+    #endregion
+
+    #region IMPULSE
+
+    public void Launch()
+    {
+        if (hasLaunched)
+            return;
+
+        if (currentCharge <= 0)
+            return;
+
+        if(currentCharge <= 2)
+            animator.SetBool("Walk", true);
+        if(currentCharge <= 4)
+            animator.SetBool("Run", true);
+        if(currentCharge >= 5)
+            animator.SetBool("Trot", true);
+            
+            
+        hasLaunched = true;
+
+        PlayerConfig config = GameManager.Instance.PlayerConfig;
+        if (config == null)
+            return;
+
+        Vector3 direction =
+            GetAimDirection();
+
+        direction.y = 0f;
+
+        direction.Normalize();
+
+        float force =
+            config.ImpulseForce * 
+            currentCharge;
+
+        rb.AddForce(
+            direction * force,
+            ForceMode.Impulse
+        );
+        
+       
+    }
+
+    #endregion
+
+    #region ROUND
+
+    public void ResetRound()
+    {
+        if (revealRotation != null) StopCoroutine(revealRotation);
+        revealRotation = null;
+        hasLaunched = false;
+
+        currentCharge = 0f;
+        HideIndicator();
+
+        UpdateIndicator();
+    }
+
+    public void HideIndicator()
+    {
+        if (impulseIndicator != null)
+        {
+            impulseIndicator.HideArrow();
+        }
+    }
+
+    public void ShowIndicator()
+    {
+        if (impulseIndicator != null)
+        {
+            impulseIndicator.ShowArrow();
+        }
+    }
+
+    public void BeginRevealRotation(float duration)
+    {
+        if (revealRotation != null) StopCoroutine(revealRotation);
+        revealRotation = StartCoroutine(RotateToAimDirection(duration));
+    }
+
+    private System.Collections.IEnumerator RotateToAimDirection(float duration)
+    {
+        Vector3 direction = GetAimDirection();
+        direction.y = 0f;
+        if (direction.sqrMagnitude <= 0.001f)
+        {
+            revealRotation = null;
+            yield break;
+        }
+
+        Quaternion startRotation = transform.rotation;
+        Quaternion targetRotation = Quaternion.LookRotation(direction.normalized);
+        float elapsed = 0f;
+        float safeDuration = Mathf.Max(0.01f, duration);
+        while (elapsed < safeDuration)
+        {
+            elapsed += Time.deltaTime;
+            transform.rotation = Quaternion.Slerp(startRotation, targetRotation, Mathf.Clamp01(elapsed / safeDuration));
+            yield return null;
+        }
+
+        transform.rotation = targetRotation;
+        revealRotation = null;
+    }
+
+    #endregion
+
+    #region ROTATION
+
+    private void HandleRotation()
+    {
+        if (!hasLaunched)
+            return;
+        PlayerConfig config = GameManager.Instance.PlayerConfig;
+        if (config == null)
+            return;
+
+        Vector3 velocity =
+            rb.linearVelocity;
+
+        velocity.y = 0f;
+
+        if (
+            velocity.sqrMagnitude <=
+            0.01f
+        )
+        {
+            return;
+        }
+
+        Quaternion targetRotation =
+            Quaternion.LookRotation(
+                velocity.normalized
+            );
+
+        float rotationAmount =
+            1f -
+            Mathf.Exp(
+                -config.RotationSpeed *
+                Time.deltaTime
+            );
+
+        transform.rotation =
+            Quaternion.Slerp(
+                transform.rotation,
+                targetRotation,
+                rotationAmount
+            );
+    }
+
+    #endregion
+
+    private void UpdateIndicator()
+    {
+        if (impulseIndicator == null)
+            return;
+
+        impulseIndicator.SetCharge(
+            currentCharge
+        );
+
+        OnChargeChanged?.Invoke(currentCharge);
+    }
+}

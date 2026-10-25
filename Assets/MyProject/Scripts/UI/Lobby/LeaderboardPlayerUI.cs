@@ -10,12 +10,15 @@ public class LeaderboardPlayerUI : MonoBehaviour
     public void Setup(
         int position,
         string playerName,
-        int value)
+        int value,
+        bool formatAsDuration = false)
     {
         positionText.text =$"{position + 1}º";
 
         nameText.text = playerName;
 
-        valueText.text = value.ToString();
+        valueText.text = formatAsDuration
+            ? System.TimeSpan.FromSeconds(Mathf.Max(0, value)).ToString(@"hh\:mm\:ss")
+            : value.ToString();
     }
 }

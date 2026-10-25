@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -18,6 +19,7 @@ public class MatchUI : MonoBehaviour
     [Header("Stage Text")]
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text countdownText;
+    [SerializeField] private GameObject countdownContainer;
     [SerializeField] private TMP_Text roundText;
     [SerializeField] private TMP_Text eliminatedPlayersText;
     [SerializeField] private TMP_Text killsText;
@@ -25,6 +27,7 @@ public class MatchUI : MonoBehaviour
     [Header("Power")]
     [SerializeField] private TMP_Text powerText;
     [SerializeField] private Image powerImage;
+    [SerializeField] private RectTransform powerSpeedPanel;
 
     [Header("End Of Match")]
     [SerializeField] private SpectatorUI spectatorUI;
@@ -51,6 +54,12 @@ public class MatchUI : MonoBehaviour
     private bool returningToLobby;
     private string displayedTitle;
     private Coroutine returnCoroutine;
+    private float matchStartedAt;
+    private int reportedKills;
+    private int reportedRounds;
+    private bool titleAnimationPlayedWhileVisible;
+    private Coroutine powerShakeCoroutine;
+    private Vector2 powerSpeedPanelBasePosition;
 
     private void Awake()
     {
@@ -63,11 +72,16 @@ public class MatchUI : MonoBehaviour
             spectatorUI.NextRequested += SpectateNext;
             spectatorUI.ReturnToLobbyRequested += ShowResultAndReturn;
         }
+        if (countdownContainer == null && countdownText != null && countdownText.transform.parent != null)
+            countdownContainer = countdownText.transform.parent.gameObject;
+        if (powerSpeedPanel != null) powerSpeedPanelBasePosition = powerSpeedPanel.anchoredPosition;
         HideSpectatorUI();
     }
 
     private void Start()
     {
+        matchStartedAt = Time.realtimeSinceStartup;
+        PlayFabMatchManager.Instance?.BeginMatch();
         if (roundManager != null)
         {
             roundManager.OnStateChanged += HandleRoundStateChanged;
@@ -81,7 +95,7 @@ public class MatchUI : MonoBehaviour
             matchManager.OnMatchFinished += HandleMatchFinished;
             totalPlayers = matchManager.AllPlayers.Count;
         }
-        SetActive(titleContainer, false);
+        HideTitleContainer();
         SetActive(powerContainer, false);
         SetActive(roundContainer, false);
         UpdateEliminatedPlayers();
@@ -95,13 +109,16 @@ public class MatchUI : MonoBehaviour
         humanDeath = player != null ? player.GetComponent<PlayerDeath>() : null;
         if (humanPlayer != null) humanPlayer.OnChargeChanged += HandleChargeChanged;
         if (humanDeath != null) humanDeath.OnPlayerDeath += HandleHumanDeath;
+        if (humanPlayer != null) HandleChargeChanged(humanPlayer.CurrentCharge);
     }
 
     public void SetPlayer(GameObject player)
     {
-        if (playerData != null) playerData.OnKillsChanged -= HandleKillsChanged;
+        if (playerData != null) { playerData.OnKillsChanged -= HandleKillsChanged; playerData.OnRoundsSurvivedChanged -= HandleRoundsSurvivedChanged; }
         playerData = player != null ? player.GetComponent<PlayerMatchData>() : null;
-        if (playerData != null) playerData.OnKillsChanged += HandleKillsChanged;
+        reportedKills = playerData != null ? playerData.Kills : 0;
+        reportedRounds = playerData != null ? playerData.RoundsSurvived : 0;
+        if (playerData != null) { playerData.OnKillsChanged += HandleKillsChanged; playerData.OnRoundsSurvivedChanged += HandleRoundsSurvivedChanged; }
         UpdateKills();
     }
 
@@ -145,8 +162,30 @@ public class MatchUI : MonoBehaviour
     {
         humanEliminated = true;
         SetActive(powerContainer, false);
+
+        // A morte pode acontecer antes de haver alguém para observar. O cursor
+        // precisa ser liberado independentemente de o painel ser exibido.
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
         RefreshSpectatablePlayers();
         if (spectatablePlayers.Count > 0) BeginSpectating(0);
+    }
+
+    private void Update()
+    {
+        if (!isSpectating || spectatablePlayers.Count == 0)
+            return;
+
+        Keyboard keyboard = Keyboard.current;
+        Mouse mouse = Mouse.current;
+
+        if ((keyboard != null && keyboard.leftArrowKey.wasPressedThisFrame) ||
+            (mouse != null && mouse.backButton.wasPressedThisFrame))
+            SpectatePrevious();
+
+        if ((keyboard != null && keyboard.rightArrowKey.wasPressedThisFrame) ||
+            (mouse != null && mouse.forwardButton.wasPressedThisFrame))
+            SpectateNext();
     }
 
     private void HandlePlayerEliminated(GameObject _)
@@ -159,6 +198,8 @@ public class MatchUI : MonoBehaviour
 
     private void HandleMatchFinished(IReadOnlyList<MatchResult> _)
     {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
         ShowResultAndReturn();
         HideSpectatorUI();
         HideGameUI();
@@ -199,7 +240,7 @@ public class MatchUI : MonoBehaviour
             return;
 
         SetActive(powerContainer, false);
-        SetActive(titleContainer, false);
+        HideTitleContainer();
         SetActive(roundContainer, false);
 
         MatchResult result =
@@ -244,11 +285,10 @@ public class MatchUI : MonoBehaviour
         PlayFabMatchManager.Instance.OnMatchProcessError +=
             OnMatchProcessError;
 
-        PlayFabMatchManager.Instance.SendMatchResult(
+        PlayFabMatchManager.Instance.CompleteMatch(
             matchResult.Placement,
-            matchResult.Kills,
-            matchResult.RoundsSurvived,
-            matchResult.Won
+            matchResult.Won,
+            Mathf.FloorToInt(Time.realtimeSinceStartup - matchStartedAt)
         );
     }
     
@@ -296,7 +336,8 @@ public class MatchUI : MonoBehaviour
     {
         if (titleText != null) titleText.text = title;
         SetActive(titleContainer, true);
-        if (displayedTitle == title) return;
+        if (titleAnimationPlayedWhileVisible) return;
+        titleAnimationPlayedWhileVisible = true;
         displayedTitle = title;
         if (titleContainerAnimator != null) { titleContainerAnimator.Rebind(); titleContainerAnimator.Play(0, 0, 0f); }
        
@@ -304,12 +345,66 @@ public class MatchUI : MonoBehaviour
 
     private void UpdateCountdown(float time)
     {
-        if (countdownText == null) return; bool visible = time > 0f; countdownText.gameObject.SetActive(visible); if (visible) countdownText.text = Mathf.CeilToInt(time).ToString();
+        bool visible = time > 0f;
+        if (countdownContainer != null) countdownContainer.SetActive(visible);
+        else if (countdownText != null) countdownText.gameObject.SetActive(visible);
+        if (visible && countdownText != null) countdownText.text = Mathf.CeilToInt(time).ToString();
     }
     private void UpdateRound(int round) { if (roundText != null) roundText.text = $"Rodada {round}"; }
-    private void HandleChargeChanged(int charge) { if (powerText != null) powerText.text = $"{charge}/10"; if (powerImage != null) powerImage.fillAmount = charge / 10f; }
+    private void HandleChargeChanged(float charge)
+    {
+        // Keep the original filled power display intact. The speed streaks are
+        // a separate full-screen panel supplied by the scene UI.
+        if (powerText != null) powerText.text = $"{charge:0.#}/5";
+        if (powerImage != null) powerImage.fillAmount = charge / 5f;
+        if (powerSpeedPanel == null) return;
+        // This panel intentionally only changes at whole-force thresholds.
+        // Half steps remain visible in the filled PowerImage, but do not make
+        // the speed-streak presentation jump between its five authored states.
+        int speedTier = Mathf.FloorToInt(charge);
+        bool visible = speedTier > 0;
+        powerSpeedPanel.gameObject.SetActive(visible);
+        if (!visible) { StopPowerShake(); return; }
+        float scale = speedTier switch { 1 => 1.5f, 2 => 1.4f, 3 => 1.3f, 4 => 1.2f, _ => 1.1f };
+        powerSpeedPanel.localScale = Vector3.one * scale;
+        if (speedTier >= 5) StartPowerShake(); else StopPowerShake();
+    }
+
+    private void StartPowerShake()
+    {
+        if (powerShakeCoroutine == null) powerShakeCoroutine = StartCoroutine(ShakePowerImage());
+    }
+    private void StopPowerShake()
+    {
+        if (powerShakeCoroutine != null) StopCoroutine(powerShakeCoroutine);
+        powerShakeCoroutine = null;
+        if (powerSpeedPanel != null) powerSpeedPanel.anchoredPosition = powerSpeedPanelBasePosition;
+    }
+    private IEnumerator ShakePowerImage()
+    {
+        while (true)
+        {
+            if (powerSpeedPanel != null) powerSpeedPanel.anchoredPosition = powerSpeedPanelBasePosition + UnityEngine.Random.insideUnitCircle * 7f;
+            yield return null;
+        }
+    }
+    private void HideTitleContainer()
+    {
+        titleAnimationPlayedWhileVisible = false;
+        SetActive(titleContainer, false);
+    }
     private void UpdateKills() { if (killsText != null && playerData != null) killsText.text = playerData.Kills.ToString(); }
-    private void HandleKillsChanged(int _) => UpdateKills();
+    private void HandleKillsChanged(int kills)
+    {
+        UpdateKills();
+        for (int value = reportedKills; value < kills; value++) PlayFabMatchManager.Instance?.RecordKill();
+        reportedKills = Mathf.Max(reportedKills, kills);
+    }
+    private void HandleRoundsSurvivedChanged(int rounds)
+    {
+        for (int value = reportedRounds; value < rounds; value++) PlayFabMatchManager.Instance?.RecordRoundSurvived();
+        reportedRounds = Mathf.Max(reportedRounds, rounds);
+    }
     private void UpdateEliminatedPlayers() { if (eliminatedPlayersText != null) eliminatedPlayersText.text = $"{eliminatedCount}/{totalPlayers}"; }
     private static string GetPlayerName(GameObject player) => player != null ? player.name : string.Empty;
     private static void SetActive(GameObject target, bool active) { if (target != null) target.SetActive(active); }
@@ -317,10 +412,11 @@ public class MatchUI : MonoBehaviour
     private void OnDestroy()
     {
         if (returnCoroutine != null) StopCoroutine(returnCoroutine);
+        StopPowerShake();
         if (roundManager != null) { roundManager.OnStateChanged -= HandleRoundStateChanged; roundManager.OnRoundChanged -= UpdateRound; roundManager.OnTimerChanged -= UpdateCountdown; roundManager.OnTitleChanged -= ShowTitle; }
         if (matchManager != null) { matchManager.OnPlayerEliminated -= HandlePlayerEliminated; matchManager.OnMatchFinished -= HandleMatchFinished; }
         if (spectatorUI != null) { spectatorUI.PreviousRequested -= SpectatePrevious; spectatorUI.NextRequested -= SpectateNext; spectatorUI.ReturnToLobbyRequested -= ShowResultAndReturn; }
-        if (playerData != null) playerData.OnKillsChanged -= HandleKillsChanged;
+        if (playerData != null) { playerData.OnKillsChanged -= HandleKillsChanged; playerData.OnRoundsSurvivedChanged -= HandleRoundsSurvivedChanged; }
         UnsubscribeHuman();
     }
 }

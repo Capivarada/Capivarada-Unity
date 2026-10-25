@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32611b192117fa5f4a8b15aea1654029, type: 3}
+  m_Name: Skin_vulcao
+  m_EditorClassIdentifier: Assembly-CSharp::WardrobeSkin
+  contentId: vulcao
+  contentName: Vulcao
+  rarity: 2
+  colors:
+  - color: {r: 0.38737524, g: 0.74, b: 0.31820002, a: 1}
+    metallic: 0.352
+    smoothness: 0.52
+  - color: {r: 0.23333287, g: 0.3552, b: 0.20942591, a: 1}
+    metallic: 0.352
+    smoothness: 0.52
+  - color: {r: 0.23333287, g: 0.3552, b: 0.20942591, a: 1}
+    metallic: 0.352
+    smoothness: 0.52
+  - color: {r: 0.2706, g: 0.82, b: 0.5595844, a: 1}
+    metallic: 0.352
+    smoothness: 0.52
+  - color: {r: 0.93307775, g: 0.79583997, b: 0.96, a: 1}
+    metallic: 0.352
+    smoothness: 0.52
+  - color: {r: 0.2706, g: 0.82, b: 0.5595844, a: 1}
+    metallic: 0.352
+    smoothness: 0.52
+  - color: {r: 0.06, g: 0.07, b: 0.09, a: 1}
+    metallic: 0
+    smoothness: 0.45

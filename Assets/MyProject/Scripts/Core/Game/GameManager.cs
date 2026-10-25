@@ -312,7 +312,7 @@ public class GameManager : MonoBehaviour
             ApplyCustomization(
                 bot,
                 wardrobeManager != null
-                    ? wardrobeManager.CreateRandomBotCustomization()
+                    ? wardrobeManager.CreateRandomBotSkinCustomization()
                     : null
             );
 
@@ -372,9 +372,13 @@ public class GameManager : MonoBehaviour
         if (player == null || customization == null)
             return;
 
-        PlayerCustomizationApplier applier =
-            player.GetComponent<PlayerCustomizationApplier>();
+        PlayerCustomizationApplier applier = player.GetComponent<PlayerCustomizationApplier>();
+        if (applier == null)
+            applier = player.GetComponentInChildren<PlayerCustomizationApplier>();
 
+        // The original Player and Bot prefabs predate customization. Add the
+        // applier at runtime so their seven SkinnedMeshRenderer materials are
+        // still customized without altering their visual prefab hierarchy.
         if (applier == null)
             applier = player.AddComponent<PlayerCustomizationApplier>();
 

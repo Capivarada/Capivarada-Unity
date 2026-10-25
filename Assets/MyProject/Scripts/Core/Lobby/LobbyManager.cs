@@ -10,15 +10,9 @@ using TMPro;
 /// </summary>
 public class LobbyManager : MonoBehaviour
 {
-    #region UI References
-
-    [SerializeField] private TextMeshProUGUI playButtonText;
-
-    #endregion
-
     #region Configuration
 
-    [SerializeField] private float searchDuration = 5f;
+    [SerializeField] private float searchDuration = 1f;
     [SerializeField] private string gameSceneName = "Game";
 
     #endregion
@@ -33,23 +27,8 @@ public class LobbyManager : MonoBehaviour
 
     private void Start()
     {
-        // Create player account for this session
-        CreatePlayerAccount();
 
-        UpdateUIState(false);
-        
-        Cursor.lockState =  CursorLockMode.None;
-    }
-
-    #endregion
-
-    #region Account Setup
-
-    private void CreatePlayerAccount()
-    {
-        // Create a guest account for this session
-        // In future, this will be replaced with PlayFab login
-        Debug.Log("[LobbyManager] Creating guest player account...");
+        Cursor.lockState = CursorLockMode.None;
     }
 
     #endregion
@@ -74,7 +53,6 @@ public class LobbyManager : MonoBehaviour
     private IEnumerator SearchAndLoadGame()
     {
         isSearching = true;
-        UpdateUIState(true);
 
         Debug.Log("[LobbyManager] Starting player search...");
 
@@ -102,18 +80,8 @@ public class LobbyManager : MonoBehaviour
         isSearching = false;
         SceneManager.LoadScene(gameSceneName);
     }
-
-    #endregion
-
-    #region UI Updates
-
-    private void UpdateUIState(bool searching)
-    {
-        if (playButtonText != null)
-        {
-            playButtonText.text = searching ? "Searching..." : "Play";
-        }
-    }
-
+    
     #endregion
 }
+
+

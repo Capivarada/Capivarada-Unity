@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   minCharge: 0
   maxCharge: 5
-  impulseForce: 5
+  impulseForce: 4.5
   rotationSpeed: 15
   minimumImpactVelocity: 0.1
   collisionCooldown: 0.05

@@ -30,7 +30,7 @@ public class LobbyPlayerProgress : MonoBehaviour
         );
 
         CurrentXP = 0;
-        Level = 1;
+        Level = 0;
 
         OnProgressLoaded?.Invoke(
             CurrentXP,

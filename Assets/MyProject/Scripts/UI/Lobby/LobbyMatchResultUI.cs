@@ -164,7 +164,7 @@ public class LobbyMatchResultUI : MonoBehaviour
 
         Set(
             victoryBonusText,
-            $"+{result.VictoryBonusCoins} Cascos"
+            $"+{result.VictoryBonusCoins} Pontos"
         );
 
 
@@ -174,7 +174,7 @@ public class LobbyMatchResultUI : MonoBehaviour
 
         Set(
             totalCoinsText,
-            $"{result.TotalCoinsEarned}"
+            $"+{result.TotalCoinsEarned} Pontos"
         );
 
 

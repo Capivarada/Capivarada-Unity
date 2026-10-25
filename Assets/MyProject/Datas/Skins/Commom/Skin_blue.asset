@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32611b192117fa5f4a8b15aea1654029, type: 3}
+  m_Name: Skin_blue
+  m_EditorClassIdentifier: Assembly-CSharp::WardrobeSkin
+  contentId: azul
+  contentName: Azul
+  rarity: 0
+  colors:
+  - color: {r: 0.28, g: 0.48, b: 0.8, a: 1}
+    metallic: 0.25
+    smoothness: 0.25
+  - color: {r: 0.19, g: 0.21, b: 0.4, a: 1}
+    metallic: 0.25
+    smoothness: 0.25
+  - color: {r: 0.08, g: 0.11, b: 0.22, a: 1}
+    metallic: 0.25
+    smoothness: 0.25
+  - color: {r: 0.31, g: 0.38, b: 0.52, a: 1}
+    metallic: 0.25
+    smoothness: 0.25
+  - color: {r: 0.75, g: 0.82, b: 0.94, a: 1}
+    metallic: 0.25
+    smoothness: 0.25
+  - color: {r: 0.19, g: 0.2, b: 0.42, a: 1}
+    metallic: 0.25
+    smoothness: 0.25
+  - color: {r: 0.09, g: 0.13, b: 0.19, a: 1}
+    metallic: 0.25
+    smoothness: 0.25

@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32611b192117fa5f4a8b15aea1654029, type: 3}
+  m_Name: Skin_capivaraCosmica
+  m_EditorClassIdentifier: Assembly-CSharp::WardrobeSkin
+  contentId: capivaraCosmica
+  contentName: Capivara Cosmica
+  rarity: 5
+  colors:
+  - color: {r: 0.09200002, g: 0.92, b: 0.19964011, a: 1}
+    metallic: 0.82
+    smoothness: 0.88
+  - color: {r: 0.15544319, g: 0.4416, b: 0.19264361, a: 1}
+    metallic: 0.82
+    smoothness: 0.88
+  - color: {r: 0.15544319, g: 0.4416, b: 0.19264361, a: 1}
+    metallic: 0.82
+    smoothness: 0.88
+  - color: {r: 0, g: 1, b: 0.61, a: 1}
+    metallic: 0.82
+    smoothness: 0.88
+  - color: {r: 0.96, g: 0.7008, b: 0.9263039, a: 1}
+    metallic: 0.82
+    smoothness: 0.88
+  - color: {r: 0, g: 1, b: 0.61, a: 1}
+    metallic: 0.82
+    smoothness: 0.88
+  - color: {r: 0, g: 1, b: 0.61, a: 1}
+    metallic: 0
+    smoothness: 0.45

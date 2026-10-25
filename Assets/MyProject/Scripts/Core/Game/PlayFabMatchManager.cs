@@ -13,6 +13,8 @@ public class PlayFabMatchManager : MonoBehaviour
     public event Action<string> OnMatchProcessError;
 
     private bool processingMatch;
+    private string activeMatchId;
+    private readonly Queue<MatchEvent> pendingEvents = new();
 
     // Resultado da ÚLTIMA partida.
     // É apenas memória/runtime. Não é salvo localmente.
@@ -30,12 +32,32 @@ public class PlayFabMatchManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-   public void SendMatchResult(
-    int placement,
-    int kills,
-    int roundsSurvived,
-    bool won)
-{
+    public void BeginMatch()
+    {
+        if (PlayFabAuthManager.Instance != null && PlayFabAuthManager.Instance.IsGuest) return;
+        if (PlayFabAuthManager.Instance == null || !PlayFabAuthManager.Instance.IsLoggedIn)
+        {
+            OnMatchProcessError?.Invoke("PlayFab não está conectado.");
+            return;
+        }
+        if (!string.IsNullOrEmpty(activeMatchId)) return;
+        activeMatchId = Guid.NewGuid().ToString("N");
+        pendingEvents.Enqueue(new MatchEvent(MatchEventType.Start));
+        ProcessNextEvent();
+    }
+
+    public void RecordKill() => QueueProgress(MatchEventType.Kill);
+    public void RecordRoundSurvived() => QueueProgress(MatchEventType.Round);
+
+    private void QueueProgress(MatchEventType type)
+    {
+        if (string.IsNullOrEmpty(activeMatchId)) return;
+        pendingEvents.Enqueue(new MatchEvent(type));
+        ProcessNextEvent();
+    }
+
+    public void CompleteMatch(int placement, bool won, int durationSeconds)
+    {
     if (PlayFabAuthManager.Instance != null &&
         PlayFabAuthManager.Instance.IsGuest)
     {
@@ -44,7 +66,7 @@ public class PlayFabMatchManager : MonoBehaviour
             "Visitante: resultado descartado. Nenhum dado foi salvo."
         );
 
-    OnMatchProcessed.Invoke(null);
+        OnMatchProcessed?.Invoke(null);
         return;
     }
 
@@ -62,72 +84,43 @@ public class PlayFabMatchManager : MonoBehaviour
         return;
     }
 
-    // ================================================
-    // PLAYFAB
-    // ================================================
-
-    if (!PlayFabAuthManager.Instance.IsLoggedIn)
-    {
-        Debug.LogError(
-            "[PlayFabMatchManager] PlayFab não está conectado."
-        );
-
-        OnMatchProcessError?.Invoke(
-            "PlayFab não está conectado."
-        );
-
-        return;
+        if (string.IsNullOrEmpty(activeMatchId)) BeginMatch();
+        pendingEvents.Enqueue(new MatchEvent(MatchEventType.Finish, placement, won, durationSeconds));
+        ProcessNextEvent();
     }
 
-    processingMatch = true;
-
-    var request = new ExecuteCloudScriptRequest
+    private void ProcessNextEvent()
     {
-        FunctionName = "ProcessMatchResult",
-
-        FunctionParameter = new
+        if (processingMatch || pendingEvents.Count == 0) return;
+        if (string.IsNullOrEmpty(activeMatchId)) return;
+        MatchEvent next = pendingEvents.Peek();
+        processingMatch = true;
+        string functionName = next.Type == MatchEventType.Start ? "StartMatchTracking" :
+            next.Type == MatchEventType.Finish ? "ProcessMatchResult" : "RecordMatchEvent";
+        object parameters = next.Type == MatchEventType.Start ? new { matchId = activeMatchId } :
+            next.Type == MatchEventType.Finish ? new { matchId = activeMatchId, placement = next.Placement, won = next.Won, durationSeconds = Mathf.Clamp(next.DurationSeconds, 0, 14400) } :
+            new { matchId = activeMatchId, type = next.Type == MatchEventType.Kill ? "kill" : "round" };
+        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest
         {
-            placement = placement,
-            kills = kills,
-            roundsSurvived = roundsSurvived,
-            won = won
-        },
+            FunctionName = functionName,
+            FunctionParameter = parameters,
+            GeneratePlayStreamEvent = true
+        }, result => OnEventSuccess(next, result), OnCloudScriptError);
+    }
 
-        GeneratePlayStreamEvent = true
-    };
-
-    PlayFabClientAPI.ExecuteCloudScript(
-        request,
-        OnCloudScriptSuccess,
-        OnCloudScriptError
-    );
-}
-
-
-    private void OnCloudScriptSuccess(
-        ExecuteCloudScriptResult result)
+    private void OnEventSuccess(MatchEvent completed, ExecuteCloudScriptResult response)
     {
-        Debug.Log(
-            "[PlayFabMatchManager] FunctionResult recebido:\n" +
-            (result.FunctionResult == null
-                ? "NULL"
-                : result.FunctionResult.ToString())
-        );
-
         try
         {
-            LastMatchResult =
-                ParseFunctionResult(result.FunctionResult);
-
+            pendingEvents.Dequeue();
             processingMatch = false;
-
-            Debug.Log(
-                "[PlayFabMatchManager] Partida salva com sucesso!"
-            );
-
-            OnMatchProcessed?.Invoke(
-                LastMatchResult
-            );
+            if (completed.Type == MatchEventType.Finish)
+            {
+                LastMatchResult = ParseFunctionResult(response.FunctionResult);
+                activeMatchId = null;
+                OnMatchProcessed?.Invoke(LastMatchResult);
+            }
+            ProcessNextEvent();
         }
         catch (Exception e)
         {
@@ -215,6 +208,7 @@ result.MatchCoins = GetInt(coins, "match");
 result.VictoryBonusCoins = GetInt(coins, "victoryBonus");
 result.LevelUpCoins = GetInt(coins, "levelUp");
 result.TotalCoinsEarned = GetInt(coins, "total");
+result.PointsBalance = GetInt(coins, "points");
 
         // =====================================================
         // ESTATÍSTICAS
@@ -225,6 +219,7 @@ result.TotalCoinsEarned = GetInt(coins, "total");
         result.Matches = GetInt(statistics, "matches");
         result.Eliminations = GetInt(statistics, "eliminations");
         result.Wins = GetInt(statistics, "wins");
+        result.PlayTimeSeconds = GetInt(statistics, "playTimeSeconds");
 
 
         return result;
@@ -294,6 +289,14 @@ result.TotalCoinsEarned = GetInt(coins, "total");
 
         OnMatchProcessError?.Invoke(message);
     }
+
+    private enum MatchEventType { Start, Kill, Round, Finish }
+    private readonly struct MatchEvent
+    {
+        public readonly MatchEventType Type; public readonly int Placement; public readonly bool Won; public readonly int DurationSeconds;
+        public MatchEvent(MatchEventType type, int placement = 0, bool won = false, int durationSeconds = 0)
+        { Type = type; Placement = placement; Won = won; DurationSeconds = durationSeconds; }
+    }
 }
 
 [Serializable]
@@ -354,6 +357,7 @@ public class MatchProcessResult
     public int VictoryBonusCoins;
     public int LevelUpCoins;
     public int TotalCoinsEarned;
+    public int PointsBalance;
 
 
     // ==========================================
@@ -363,4 +367,5 @@ public class MatchProcessResult
     public int Matches;
     public int Eliminations;
     public int Wins;
+    public int PlayTimeSeconds;
 }

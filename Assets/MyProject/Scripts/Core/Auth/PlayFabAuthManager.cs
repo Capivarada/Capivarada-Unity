@@ -21,10 +21,11 @@ public class PlayFabAuthManager : MonoBehaviour
     public string Nickname { get; private set; }
     
     private string registeredEmail;
-    private string currentLoginPassword;
     
-    private const string SavedEmailKey = "Capivarada_SavedEmail";
-    private const string SavedPasswordKey = "Capivarada_SavedPassword";
+    // Older releases persisted e-mail and password in PlayerPrefs. PlayerPrefs
+    // is not encrypted, so credentials must never be kept there.
+    private const string LegacySavedEmailKey = "Capivarada_SavedEmail";
+    private const string LegacySavedPasswordKey = "Capivarada_SavedPassword";
     public event Action<float> OnAuthProgress;
 
     private void Awake()
@@ -37,6 +38,7 @@ public class PlayFabAuthManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        RemoveLegacyCredentials();
     }
     
     private void SetAuthProgress(float progress)
@@ -52,15 +54,10 @@ public class PlayFabAuthManager : MonoBehaviour
 
     public bool HasSavedLogin()
     {
-        return
-            PlayerPrefs.HasKey(SavedEmailKey) &&
-            PlayerPrefs.HasKey(SavedPasswordKey) &&
-            !string.IsNullOrWhiteSpace(
-                PlayerPrefs.GetString(SavedEmailKey)
-            ) &&
-            !string.IsNullOrWhiteSpace(
-                PlayerPrefs.GetString(SavedPasswordKey)
-            );
+        // Device recognition is intentionally not implemented with an IP,
+        // PlayerPrefs value or client-side CustomId. Those are copyable and
+        // would grant account access without proving ownership.
+        return false;
     }
     
     public void AutoLogin()
@@ -74,20 +71,7 @@ public class PlayFabAuthManager : MonoBehaviour
             return;
         }
 
-        string email =
-            PlayerPrefs.GetString(SavedEmailKey);
-
-        string password =
-            PlayerPrefs.GetString(SavedPasswordKey);
-
-        Debug.Log(
-            $"[PlayFab] Tentando login automático: {email}"
-        );
-
-        LoginWithEmail(
-            email,
-            password
-        );
+        OnLoginError?.Invoke("Entre com e-mail e senha para autorizar este dispositivo.");
     }
     
     // =====================================================
@@ -146,7 +130,6 @@ public class PlayFabAuthManager : MonoBehaviour
         email = email.Trim();
         
         registeredEmail = email;
-        currentLoginPassword = password;
 
         if (password.Length < 6)
         {
@@ -257,7 +240,6 @@ public class PlayFabAuthManager : MonoBehaviour
         email = email.Trim();
         
         registeredEmail = email;
-        currentLoginPassword = password;
         
         SetAuthProgress(0.25f);
 
@@ -288,8 +270,6 @@ public class PlayFabAuthManager : MonoBehaviour
 
         PlayFabId = result.PlayFabId;
 
-        SaveLoginCredentials();
-        
         SetAuthProgress(0.60f);
 
         Debug.Log(
@@ -299,29 +279,11 @@ public class PlayFabAuthManager : MonoBehaviour
         GetNickname();
     }
     
-    private void SaveLoginCredentials()
+    private static void RemoveLegacyCredentials()
     {
-        if (string.IsNullOrWhiteSpace(registeredEmail) ||
-            string.IsNullOrWhiteSpace(currentLoginPassword))
-        {
-            return;
-        }
-
-        PlayerPrefs.SetString(
-            SavedEmailKey,
-            registeredEmail
-        );
-
-        PlayerPrefs.SetString(
-            SavedPasswordKey,
-            currentLoginPassword
-        );
-
+        PlayerPrefs.DeleteKey(LegacySavedEmailKey);
+        PlayerPrefs.DeleteKey(LegacySavedPasswordKey);
         PlayerPrefs.Save();
-
-        Debug.Log(
-            "[PlayFab] Credenciais salvas para autologin."
-        );
     }
 
     // =====================================================

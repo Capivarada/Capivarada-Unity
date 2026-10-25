@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 public class ImpulseIndicator : MonoBehaviour
@@ -7,55 +6,59 @@ public class ImpulseIndicator : MonoBehaviour
     [SerializeField] private GameObject cubePrefab;
 
     [Header("Indicator")]
-    [SerializeField] private float cubeSpacing = 0.5f;
+    private GameObject arrow;
+    private Vector3 originalIndicatorScale;
+    private Vector3 originalIndicatorPosition;
+    private const float ForwardAdvancePerForce = 0.2f;
 
-    private readonly List<GameObject> cubes = new();
+    private float currentCharge;
 
-    private int currentCharge = 0;
-
-    public int CurrentCharge => currentCharge;
+    public float CurrentCharge => currentCharge;
 
     private void Awake()
     {
-        UpdateIndicator();
+        originalIndicatorScale = transform.localScale;
+        originalIndicatorPosition = transform.localPosition;
+        HideArrow();
     }
 
-    public void SetCharge(int charge)
+    public void SetCharge(float charge)
     {
-        currentCharge = Mathf.Clamp(charge, 0, 10);
+        currentCharge = Mathf.Clamp(charge, 0f, 5f);
 
-        UpdateIndicator();
+        UpdateArrowScale();
+        if (currentCharge == 0)
+            HideArrow();
     }
 
-    private void UpdateIndicator()
+    public void ShowArrow()
     {
-        ClearCubes();
-
-        for (int i = 0; i < currentCharge; i++)
+        if (currentCharge <= 0 || cubePrefab == null) return;
+        if (arrow == null)
         {
-            GameObject cube = Instantiate(
-                cubePrefab,
-                transform
-            );
-
-            cube.transform.localPosition =
-                Vector3.forward * cubeSpacing * (i + 1);
-
-            cube.transform.localRotation =
-                Quaternion.identity;
-
-            cubes.Add(cube);
+            arrow = Instantiate(cubePrefab, transform);
         }
+        UpdateArrowScale();
+        arrow.SetActive(true);
     }
 
-    private void ClearCubes()
+    public void HideArrow()
     {
-        foreach (GameObject cube in cubes)
-        {
-            if (cube != null)
-                Destroy(cube);
-        }
+        if (arrow != null) arrow.SetActive(false);
+    }
 
-        cubes.Clear();
+    private void UpdateArrowScale()
+    {
+        // Only the forward axis grows: force 1 = (1,1,1), force 2 =
+        // (1,1,2), etc., while preserving prefab-authored X/Y scale.
+        Vector3 scale = originalIndicatorScale;
+        scale.z = originalIndicatorScale.z * currentCharge;
+        transform.localScale = scale;
+
+        // Keep the authored position (for example z = 1.35 at force 1) and
+        // move forward by 0.2 for each subsequent force point.
+        Vector3 position = originalIndicatorPosition;
+        position.z += Mathf.Max(0f, currentCharge - 1f) * ForwardAdvancePerForce;
+        transform.localPosition = position;
     }
 }
