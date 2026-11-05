@@ -1,0 +1,2 @@
+using UnityEngine;
+public sealed class HeadAccessoryApplier : MonoBehaviour { [SerializeField] private Transform anchor; private GameObject instance; public void SetAccessory(HeadAccessoryDefinition accessory) { if (instance != null) Destroy(instance); if (accessory == null || accessory.Prefab == null || anchor == null) return; instance = Instantiate(accessory.Prefab, anchor); instance.transform.SetLocalPositionAndRotation(accessory.LocalPosition, Quaternion.Euler(accessory.LocalEulerAngles)); instance.transform.localScale = accessory.LocalScale; } }
