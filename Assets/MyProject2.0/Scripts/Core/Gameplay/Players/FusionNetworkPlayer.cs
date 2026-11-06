@@ -25,6 +25,7 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
     private FusionRoundController rounds;
     private Camera localCamera;
     private bool wasEliminated;
+    private Coroutine attachPresentationCoroutine;
 
     public override void Spawned()
     {
@@ -35,13 +36,19 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
         if (body == null) body = GetComponent<Rigidbody>();
         if (legacyHumanController != null) legacyHumanController.enabled = false;
         if (legacyDeath != null) legacyDeath.enabled = false;
-        if (localInput != null) localInput.enabled = Object.HasInputAuthority;
+        // Shared Authority uses state authority as the local player's ownership.
+        // InputAuthority is not assigned the same way as Client/Server sessions.
+        bool isLocalPlayer = Object.HasStateAuthority;
+        if (localInput != null) localInput.enabled = isLocalPlayer;
+        PlayerCameraLook cameraLook = GetComponentInChildren<PlayerCameraLook>(true);
+        if (cameraLook != null) cameraLook.enabled = isLocalPlayer;
         rounds = FindFirstObjectByType<FusionRoundController>();
 
         if (Object.HasStateAuthority)
         {
             if (AimDirection.sqrMagnitude < 0.001f) AimDirection = transform.forward;
             if (string.IsNullOrWhiteSpace(NetworkNickname)) NetworkNickname = ResolveLocalNickname();
+            attachPresentationCoroutine = StartCoroutine(AttachLocalPresentation());
         }
     }
 
@@ -82,7 +89,7 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
 
     private void ReadLocalChoice()
     {
-        if (!Object.HasInputAuthority || localInput == null) return;
+        if (!Object.HasStateAuthority || localInput == null) return;
         if (localCamera == null) localCamera = Camera.main;
         if (localCamera != null)
         {
@@ -101,6 +108,41 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
     {
         foreach (Renderer renderer in GetComponentsInChildren<Renderer>(true)) renderer.enabled = value;
         foreach (Collider collider in GetComponentsInChildren<Collider>(true)) collider.enabled = value;
+    }
+
+    private System.Collections.IEnumerator AttachLocalPresentation()
+    {
+        // Fusion can spawn before the scene camera and UI complete their
+        // Awake/Start pass. Retry briefly so a valid local player replaces
+        // the authored camera pose before the round starts.
+        for (int attempt = 0; attempt < 30; attempt++)
+        {
+            PlayerCameraController cameraController = FindFirstObjectByType<PlayerCameraController>();
+            PlayerCameraLook cameraLook = GetComponentInChildren<PlayerCameraLook>(true);
+            MatchUI matchUI = FindFirstObjectByType<MatchUI>();
+
+            if (cameraController != null && cameraLook != null)
+                cameraController.SetTarget(cameraLook.transform);
+
+            if (matchUI != null)
+            {
+                matchUI.SetHumanPlayer(gameObject);
+                matchUI.SetPlayer(gameObject);
+            }
+
+            if (cameraController != null && cameraLook != null && matchUI != null)
+                yield break;
+
+            yield return null;
+        }
+
+        Debug.LogWarning("[FusionNetworkPlayer] Não foi possível conectar completamente a câmera/UI local. Verifique PlayerCameraController, MatchUI e o filho CameraTarget.", this);
+    }
+
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        if (attachPresentationCoroutine != null)
+            StopCoroutine(attachPresentationCoroutine);
     }
 
     private static string ResolveLocalNickname()

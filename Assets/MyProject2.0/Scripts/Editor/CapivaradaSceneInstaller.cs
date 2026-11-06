@@ -76,6 +76,7 @@ public static class CapivaradaSceneInstaller
         FindOrAdd<FusionPlayerSpawner>(gameManager);
         FindOrAdd<FusionBotSpawner>(gameManager);
         FindOrAdd<SceneReadinessController>(gameManager);
+        FindOrAdd<FusionWaitingCinematicController>(gameManager);
         MarkAndSave(game);
         Debug.Log("[CapivaradaSceneInstaller] Foundation components were added to GameManager. Assign the NetworkObject player/bot prefabs and spawn points manually, then let Fusion bake the NetworkObject before playtesting.");
     }

@@ -132,6 +132,21 @@ public class MatchUI : MonoBehaviour
         SetActive(titleContainer, true); SetActive(powerContainer, false); SetActive(roundContainer, false);
         HideSpectatorUI();
     }
+
+    /// <summary>Presentation used only while Fusion waits for the room to start.</summary>
+    public void ShowNetworkWaiting(string title, float remainingSeconds)
+    {
+        ShowTitle(title);
+        SetActive(powerContainer, false);
+        SetActive(roundContainer, false);
+        HideSpectatorUI();
+        UpdateCountdown(remainingSeconds);
+    }
+
+    public void HideNetworkWaiting()
+    {
+        UpdateCountdown(0f);
+    }
     public void ShowChoosingUI()
     {
         SetActive(titleContainer, true); SetActive(roundContainer, true); SetActive(powerContainer, !humanEliminated);
