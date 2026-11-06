@@ -1,8 +1,74 @@
+using System.Collections;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public sealed class LobbyNavigationController : MonoBehaviour
 {
-    [SerializeField] private PanelNavigatorController panels; [SerializeField] private string menuPanel = "Menu"; [SerializeField] private string gameScene = "Game_Scene"; [SerializeField] private string trainingScene = "Training_Scene";
-    public void Open(string panelId) => panels?.Show(panelId); public void BackToMenu() => panels?.Show(menuPanel); public void Play() { if (!string.IsNullOrWhiteSpace(gameScene)) SceneManager.LoadScene(gameScene); } public void Training() { if (!string.IsNullOrWhiteSpace(trainingScene)) SceneManager.LoadScene(trainingScene); } public void Quit() => Application.Quit();
+    [SerializeField] private PanelNavigatorController panels;
+    [SerializeField] private SessionAccessService session;
+    [SerializeField] private FusionSessionService fusion;
+    [SerializeField] private string menuPanel = "Menu";
+    [SerializeField] private string gameScene = "Game_Scene";
+    [SerializeField] private string trainingScene = "Practice_Scene";
+    [SerializeField] private string loadingScene = "Loading_Scene";
+    private bool joiningMatch;
+
+    private void Awake()
+    {
+        if (session == null) session = ServiceHub.Instance != null ? ServiceHub.Instance.Session : SessionAccessService.Instance;
+        if (fusion == null) fusion = ServiceHub.Instance != null ? ServiceHub.Instance.Fusion : FusionSessionService.Instance;
+    }
+
+    public void Open(string panelId) => panels?.Show(panelId);
+    public void BackToMenu() => panels?.Show(menuPanel);
+
+    public void Play()
+    {
+        if (session != null && !session.IsOnline)
+        {
+            Debug.LogWarning("[Lobby] Online match requested without an online session.", this);
+            return;
+        }
+        if (joiningMatch) return;
+        StartCoroutine(JoinOnlineMatch());
+    }
+
+    public void Training()
+    {
+        MatchParticipationContext.StartPractice();
+        Load(trainingScene);
+    }
+
+    public void Quit() => Application.Quit();
+
+    private IEnumerator JoinOnlineMatch()
+    {
+        joiningMatch = true;
+        if (fusion == null)
+        {
+            Debug.LogError("[Lobby] FusionSessionService não está configurado no Services.", this);
+            joiningMatch = false;
+            yield break;
+        }
+
+        Task<bool> join = fusion.JoinRandomMatchAsync();
+        while (!join.IsCompleted) yield return null;
+        joiningMatch = false;
+        if (join.Status != TaskStatus.RanToCompletion || !join.Result)
+        {
+            Debug.LogWarning("[Lobby] Não foi possível encontrar uma partida Fusion.", this);
+            yield break;
+        }
+
+        MatchParticipationContext.StartOnline(session);
+        Load(gameScene);
+    }
+
+    private void Load(string scene)
+    {
+        if (string.IsNullOrWhiteSpace(scene)) return;
+        SceneLoadRequest.Request(scene);
+        SceneManager.LoadScene(string.IsNullOrWhiteSpace(loadingScene) ? scene : loadingScene);
+    }
 }

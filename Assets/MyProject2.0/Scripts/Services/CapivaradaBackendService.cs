@@ -29,6 +29,12 @@ public sealed class CapivaradaBackendService : MonoBehaviour
         StartCoroutine(Send("GET", route, null, succeeded, failed));
     }
 
+    /// <summary>GET for public diagnostics and content that intentionally do not require a PlayFab ticket.</summary>
+    public void GetPublic<T>(string route, Action<T> succeeded, Action<string> failed)
+    {
+        StartCoroutine(Send("GET", route, null, succeeded, failed, false));
+    }
+
     public void Post<TRequest, TResponse>(string route, TRequest body, Action<TResponse> succeeded, Action<string> failed)
     {
         StartCoroutine(Send("POST", route, JsonUtility.ToJson(body), succeeded, failed, true));

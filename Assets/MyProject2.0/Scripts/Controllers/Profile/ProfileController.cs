@@ -74,11 +74,13 @@ public class MatchHistoryCardController : MonoBehaviour
 public class OtherProfileController : MonoBehaviour
 {
     [SerializeField] private GameObject root; [SerializeField] private PanelNavigatorController panelNavigator; [SerializeField] private string panelId = "OtherProfile", returnPanelId = "Leaderboard"; [SerializeField] private PlayerProfileService profileService; [SerializeField] private FriendsService friendsService; [SerializeField] private AvatarCatalog avatarCatalog; [SerializeField] private SkinCatalog skinCatalog; [SerializeField] private PlayerCustomizationApplier capybaraPreview; [SerializeField] private UnityEngine.UI.Image avatarImage; [SerializeField] private TMP_Text nicknameText, idLevelText, statusText, matchesText, eliminationsText, winsText, playTimeText, socialFeedbackText; [SerializeField] private Button addFriendButton, inviteGroupButton;
+    [SerializeField] private SessionAccessService session;
     private string viewedPlayerId;
     private void Awake()
     {
         if (profileService == null) profileService = ServiceHub.Instance != null ? ServiceHub.Instance.Profile : PlayerProfileService.Instance;
         if (friendsService == null) friendsService = ServiceHub.Instance != null ? ServiceHub.Instance.Friends : FriendsService.Instance;
+        if (session == null) session = ServiceHub.Instance != null ? ServiceHub.Instance.Session : SessionAccessService.Instance;
     }
     private void OnEnable() { if (friendsService != null) friendsService.Changed += RefreshSocialActions; }
     private void OnDisable() { if (friendsService != null) friendsService.Changed -= RefreshSocialActions; }
@@ -104,11 +106,17 @@ public class OtherProfileController : MonoBehaviour
         if (data == null) return;
         viewedPlayerId = data.playerId;
         if (nicknameText != null) nicknameText.text = data.nickname; if (idLevelText != null) idLevelText.text = $"ID #{data.playerId} · Nível {data.level:00}"; if (statusText != null) statusText.text = ""; if (matchesText != null) matchesText.text = data.matches.ToString(); if (eliminationsText != null) eliminationsText.text = data.eliminations.ToString(); if (winsText != null) winsText.text = data.wins.ToString(); if (playTimeText != null) playTimeText.text = System.TimeSpan.FromSeconds(data.playTimeSeconds).ToString(@"h\:mm"); AvatarDefinition avatar = avatarCatalog != null ? avatarCatalog.Find(data.avatarId) ?? avatarCatalog.Default : null; if (avatarImage != null && avatar != null) avatarImage.sprite = avatar.Sprite; if (capybaraPreview != null && skinCatalog != null) capybaraPreview.ApplySkin(skinCatalog.FindById(data.equippedSkinId) ?? skinCatalog.DefaultSkin);
-        friendsService?.Refresh();
+        if (session == null || session.CanUseSocial) friendsService?.Refresh();
         RefreshSocialActions();
     }
     private void RefreshSocialActions()
     {
+        if (session != null && !session.CanUseSocial)
+        {
+            if (addFriendButton != null) addFriendButton.gameObject.SetActive(false);
+            if (inviteGroupButton != null) inviteGroupButton.gameObject.SetActive(false);
+            return;
+        }
         bool isSelf = profileService != null && profileService.Current != null && string.Equals(viewedPlayerId, profileService.Current.playerId, System.StringComparison.Ordinal);
         bool isFriend = !isSelf && friendsService != null && friendsService.IsFriend(viewedPlayerId);
         bool hasPendingRequest = !isFriend && friendsService != null && friendsService.HasPendingRequest(viewedPlayerId);

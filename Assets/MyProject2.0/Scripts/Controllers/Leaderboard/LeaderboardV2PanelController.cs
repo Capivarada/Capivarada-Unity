@@ -12,12 +12,13 @@ public sealed class LeaderboardV2PanelController : MonoBehaviour
     [SerializeField] private LeaderboardTopPlayerController topPlayer;
     [SerializeField] private OtherProfileController otherProfile;
     [SerializeField] private PlayerProfileService profileService;
+    [SerializeField] private SessionAccessService session;
     [SerializeField] private int pageSize = 10;
     private readonly List<GameObject> rows = new();
     private LeaderboardV2Metric metric = LeaderboardV2Metric.Matches;
     private bool loading;
 
-    private void Awake() { if (service == null) service = ServiceHub.Instance != null ? ServiceHub.Instance.LeaderboardV2 : LeaderboardV2Service.Instance; if (profileService == null) profileService = ServiceHub.Instance != null ? ServiceHub.Instance.Profile : PlayerProfileService.Instance; }
+    private void Awake() { if (service == null) service = ServiceHub.Instance != null ? ServiceHub.Instance.LeaderboardV2 : LeaderboardV2Service.Instance; if (profileService == null) profileService = ServiceHub.Instance != null ? ServiceHub.Instance.Profile : PlayerProfileService.Instance; if (session == null) session = ServiceHub.Instance != null ? ServiceHub.Instance.Session : SessionAccessService.Instance; }
     private void OnEnable() { Reload(); }
     public void ShowMatches() => Select(LeaderboardV2Metric.Matches);
     public void ShowEliminations() => Select(LeaderboardV2Metric.Eliminations);
@@ -30,7 +31,7 @@ public sealed class LeaderboardV2PanelController : MonoBehaviour
         if (topPlayer != null) topPlayer.gameObject.SetActive(false);
         if (selfRow != null) selfRow.gameObject.SetActive(false);
         Load();
-        LoadSelf();
+        if (session == null || session.CanUseSelfLeaderboardRow) LoadSelf();
     }
     private void Load()
     {

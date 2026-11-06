@@ -49,7 +49,26 @@ public class PlayerProfileService : MonoBehaviour
     }
     public void LoadOther(string playerId, Action<PlayerProfileData> done)
     {
-        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest { FunctionName = "GetPublicPlayerProfile", FunctionParameter = new { playerId } }, result => { if (result.Error != null) { Report($"Perfil público: {result.Error.Error}: {result.Error.Message}"); return; } if (result.FunctionResult is not PlayFab.Json.JsonObject data) { Report("Resposta pública de perfil inválida: retorno sem objeto JSON."); return; } PlayerProfileData profile = new PlayerProfileData { playerId = playerId, nickname = Text(data, "nickname"), avatarId = Text(data, "avatarId"), equippedSkinId = Text(data, "equippedSkinId"), level = Number(data, "level", 1), experience = Number(data, "experience", 0), experienceToNext = Number(data, "experienceToNext", 1500), matches = Number(data, "matches", 0), eliminations = Number(data, "eliminations", 0), wins = Number(data, "wins", 0), playTimeSeconds = Number(data, "playTimeSeconds", 0) }; done?.Invoke(profile); }, error => Report(error.ErrorMessage));
+        if (string.IsNullOrWhiteSpace(playerId)) { Report("ID de jogador inválido."); return; }
+        if (backend == null) { Report("CapivaradaBackendService não foi configurado em Services."); return; }
+        backend.GetPublic<PublicProfileResponse>("profiles/" + Uri.EscapeDataString(playerId), result =>
+        {
+            if (result == null) { Report("Resposta pública de perfil inválida."); return; }
+            done?.Invoke(new PlayerProfileData
+            {
+                playerId = result.playerId,
+                nickname = result.nickname,
+                avatarId = result.avatarId,
+                equippedSkinId = result.equippedSkinId,
+                level = Mathf.Max(1, result.level),
+                experience = result.experience,
+                experienceToNext = result.experienceToNext > 0 ? result.experienceToNext : 1500,
+                matches = result.matches,
+                eliminations = result.eliminations,
+                wins = result.wins,
+                playTimeSeconds = result.playTimeSeconds
+            });
+        }, error => Report("Perfil público: " + error));
     }
     private void LoadAccountCreation(Action done)
     {
@@ -81,7 +100,6 @@ public class PlayerProfileService : MonoBehaviour
         backend.Post<NicknameIndexInput, CapivaradaBackendService.EmptyResponse>("profiles/me/nickname-index", new NicknameIndexInput { nickname = Current.nickname.Trim() }, _ => { }, _ => { });
     }
     private static int ReadInt(Dictionary<string, UserDataRecord> data, string key, int fallback) => data.TryGetValue(key, out UserDataRecord value) && int.TryParse(value.Value, out int parsed) ? parsed : fallback;
-    private static string Text(PlayFab.Json.JsonObject data, string key) => data.TryGetValue(key, out object value) && value != null ? value.ToString() : string.Empty;
-    private static int Number(PlayFab.Json.JsonObject data, string key, int fallback) { try { return data.TryGetValue(key, out object value) ? Convert.ToInt32(value) : fallback; } catch { return fallback; } }
+    [Serializable] private class PublicProfileResponse { public string playerId, nickname, avatarId, equippedSkinId; public int level, experience, experienceToNext, matches, eliminations, wins; public float playTimeSeconds; }
     private void Publish() => Changed?.Invoke(Current); private void Report(string message) { Failed?.Invoke(message); Debug.LogWarning(message, this); }
 }

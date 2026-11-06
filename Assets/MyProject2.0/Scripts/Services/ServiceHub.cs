@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// <summary>Único ponto de acesso aos serviços instalados no GameObject Services da Loading_Scene.</summary>
+/// <summary>Único ponto de acesso aos serviços persistentes instalados no GameObject Services da Boot_Scene.</summary>
 public sealed class ServiceHub : MonoBehaviour
 {
     public static ServiceHub Instance { get; private set; }
@@ -14,6 +14,12 @@ public sealed class ServiceHub : MonoBehaviour
     [SerializeField] private EconomyV2Service economyV2;
     [SerializeField] private LeaderboardV2Service leaderboardV2;
     [SerializeField] private FriendsService friends;
+    [Header("Session and availability")]
+    [SerializeField] private SessionAccessService session;
+    [SerializeField] private BackendHealthService health;
+    [Header("Realtime")]
+    [SerializeField] private FusionSessionService fusion;
+    [SerializeField] private VivoxVoiceChannelService voice;
     public PlayFabAuthManager Authentication => authentication;
     public PlayerProfileService Profile => profile;
     public EconomyService Economy => economy;
@@ -23,6 +29,10 @@ public sealed class ServiceHub : MonoBehaviour
     public EconomyV2Service EconomyV2 => economyV2;
     public LeaderboardV2Service LeaderboardV2 => leaderboardV2;
     public FriendsService Friends => friends;
+    public SessionAccessService Session => session;
+    public BackendHealthService Health => health;
+    public FusionSessionService Fusion => fusion;
+    public VivoxVoiceChannelService Voice => voice;
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -36,6 +46,10 @@ public sealed class ServiceHub : MonoBehaviour
         if (economyV2 == null) economyV2 = GetComponent<EconomyV2Service>();
         if (leaderboardV2 == null) leaderboardV2 = GetComponent<LeaderboardV2Service>();
         if (friends == null) friends = GetComponent<FriendsService>();
+        if (session == null) session = GetComponent<SessionAccessService>();
+        if (health == null) health = GetComponent<BackendHealthService>();
+        if (fusion == null) fusion = GetComponent<FusionSessionService>();
+        if (voice == null) voice = GetComponent<VivoxVoiceChannelService>();
         DontDestroyOnLoad(gameObject);
     }
 }

@@ -14,6 +14,7 @@ public sealed class FriendsService : MonoBehaviour
     [Serializable] private class RequestInput { public string playerId; public string nicknameOrId; public string requestId; }
 
     [SerializeField] private CapivaradaBackendService backend;
+    [SerializeField] private SessionAccessService session;
     public static FriendsService Instance { get; private set; }
     public IReadOnlyList<FriendSummary> Friends => friends;
     public IReadOnlyList<FriendRequestSummary> Incoming => incoming;
@@ -29,11 +30,13 @@ public sealed class FriendsService : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         if (backend == null) backend = GetComponent<CapivaradaBackendService>();
+        if (session == null) session = GetComponent<SessionAccessService>();
         DontDestroyOnLoad(gameObject);
     }
 
     public void Refresh()
     {
+        if (!CanUseSocial()) return;
         if (backend == null) { Failed?.Invoke("CapivaradaBackendService não foi configurado em Services."); return; }
         backend.Get<FriendListResponse>("friends", result =>
         {
@@ -74,6 +77,7 @@ public sealed class FriendsService : MonoBehaviour
     /// <summary>Direct PlayFab fallback only returns established friendships, never pending requests.</summary>
     public void RefreshAcceptedFromPlayFab(Action completed = null)
     {
+        if (!CanUseSocial()) return;
         PlayFabClientAPI.GetFriendsList(new GetFriendsListRequest { ProfileConstraints = new PlayerProfileViewConstraints { ShowDisplayName = true } }, result =>
         {
             friends.Clear();
@@ -85,7 +89,16 @@ public sealed class FriendsService : MonoBehaviour
 
     private void Execute(string route, RequestInput input, Action completed)
     {
+        if (!CanUseSocial()) return;
         if (backend == null) { Failed?.Invoke("CapivaradaBackendService não foi configurado em Services."); return; }
         backend.Post<RequestInput, CapivaradaBackendService.EmptyResponse>(route, input, _ => { Refresh(); completed?.Invoke(); }, Failed);
+    }
+
+    private bool CanUseSocial()
+    {
+        if (session == null) session = ServiceHub.Instance != null ? ServiceHub.Instance.Session : SessionAccessService.Instance;
+        if (session == null || session.CanUseSocial) return true;
+        Failed?.Invoke("Faça login para usar amigos e solicitações.");
+        return false;
     }
 }

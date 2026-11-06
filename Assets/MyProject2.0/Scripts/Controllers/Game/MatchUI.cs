@@ -61,6 +61,7 @@ public class MatchUI : MonoBehaviour
     private bool titleAnimationPlayedWhileVisible;
     private Coroutine powerShakeCoroutine;
     private Vector2 powerSpeedPanelBasePosition;
+    private bool IsPractice => MatchParticipationContext.IsPractice || string.Equals(SceneManager.GetActiveScene().name, "Practice_Scene", StringComparison.Ordinal);
 
     private void Awake()
     {
@@ -69,7 +70,6 @@ public class MatchUI : MonoBehaviour
         if (roundManager == null) roundManager = FindFirstObjectByType<RoundManager>();
         if (matchManager == null) matchManager = FindFirstObjectByType<MatchManager>();
         if (cameraController == null) cameraController = FindFirstObjectByType<PlayerCameraController>();
-        EnsureMatchProcessor();
         if (spectatorUI != null)
         {
             spectatorUI.PreviousRequested += SpectatePrevious;
@@ -85,7 +85,6 @@ public class MatchUI : MonoBehaviour
     private void Start()
     {
         matchStartedAt = Time.realtimeSinceStartup;
-        playFabMatchManager?.BeginMatch();
         if (roundManager != null)
         {
             roundManager.OnStateChanged += HandleRoundStateChanged;
@@ -274,24 +273,15 @@ public class MatchUI : MonoBehaviour
             yield return new WaitForSeconds(1f);
         }
 
-        if (playFabMatchManager == null)
-        {
-            Debug.LogWarning("Processador de partida indisponível. Retornando ao Lobby sem registrar a partida.", this);
-            LoadLobby();
-            yield break;
-        }
-
-        playFabMatchManager.OnMatchProcessed +=
-            OnMatchProcessed;
-
-        playFabMatchManager.OnMatchProcessError +=
-            OnMatchProcessError;
-
-        playFabMatchManager.CompleteMatch(
-            matchResult.Placement,
-            matchResult.Won,
-            Mathf.FloorToInt(Time.realtimeSinceStartup - matchStartedAt)
-        );
+        // A Unity client never settles rewards. The authoritative Fusion
+        // match server will call Azure with CAPIVARADA_MATCH_SERVER_SECRET.
+        // Practice and guest matches intentionally produce no persistence.
+        if (!IsPractice && MatchParticipationContext.CanEarnRewards)
+            Debug.Log("[Match] Resultado aguarda liquidação pelo servidor dedicado.", this);
+        else
+            Debug.Log("[Match] Practice or guest match ended. Returning without persistence.", this);
+        LoadLobby();
+        yield break;
     }
 
     private void OnMatchProcessed(
@@ -437,12 +427,12 @@ public class MatchUI : MonoBehaviour
     private void HandleKillsChanged(int kills)
     {
         UpdateKills();
-        for (int value = reportedKills; value < kills; value++) PlayFabMatchManager.Instance?.RecordKill();
+        if (!IsPractice) for (int value = reportedKills; value < kills; value++) PlayFabMatchManager.Instance?.RecordKill();
         reportedKills = Mathf.Max(reportedKills, kills);
     }
     private void HandleRoundsSurvivedChanged(int rounds)
     {
-        for (int value = reportedRounds; value < rounds; value++) PlayFabMatchManager.Instance?.RecordRoundSurvived();
+        if (!IsPractice) for (int value = reportedRounds; value < rounds; value++) PlayFabMatchManager.Instance?.RecordRoundSurvived();
         reportedRounds = Mathf.Max(reportedRounds, rounds);
     }
     private void UpdateEliminatedPlayers() { if (eliminatedPlayersText != null) eliminatedPlayersText.text = $"{eliminatedCount}/{totalPlayers}"; }

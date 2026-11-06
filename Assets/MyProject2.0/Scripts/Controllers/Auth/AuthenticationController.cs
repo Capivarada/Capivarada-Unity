@@ -14,7 +14,7 @@ public sealed class AuthenticationController : MonoBehaviour
     [Header("Registration")] [SerializeField] private TMP_InputField registerNickname; [SerializeField] private TMP_InputField registerEmail; [SerializeField] private TMP_InputField registerPassword; [SerializeField] private TMP_InputField registerConfirmation; [SerializeField] private Toggle acceptPrivacy;
     [Header("Recovery")] [SerializeField] private TMP_InputField recoveryEmail;
     [SerializeField] private CapivaradaBackendService backend;
-    [Header("Feedback")] [SerializeField] private TMP_Text feedbackText; [SerializeField] private string lobbyScene = "Lobby_Scene";
+    [Header("Feedback")] [SerializeField] private TMP_Text feedbackText; [SerializeField] private string lobbyScene = "Lobby_Scene"; [SerializeField] private string loadingScene = "Loading_Scene";
     private void Awake() { if (authentication == null) authentication = ServiceHub.Instance != null ? ServiceHub.Instance.Authentication : PlayFabAuthManager.Instance; if (backend == null) backend = ServiceHub.Instance != null ? ServiceHub.Instance.Backend : CapivaradaBackendService.Instance; }
     private void OnEnable() { if (authentication == null) return; authentication.OnLoginSuccess += OpenLobby; authentication.OnLoginError += ShowFeedback; }
     private void OnDisable() { if (authentication == null) return; authentication.OnLoginSuccess -= OpenLobby; authentication.OnLoginError -= ShowFeedback; }
@@ -41,7 +41,12 @@ public sealed class AuthenticationController : MonoBehaviour
             error => { Debug.LogError("[Recuperação de senha] " + error, this); ShowFeedback("Não foi possível solicitar a recuperação. Tente novamente."); });
     }
     public void TogglePasswordVisibility(TMP_InputField input) { if (input != null) input.contentType = input.contentType == TMP_InputField.ContentType.Password ? TMP_InputField.ContentType.Standard : TMP_InputField.ContentType.Password; if (input != null) input.ForceLabelUpdate(); }
-    private void OpenLobby() { if (!string.IsNullOrWhiteSpace(lobbyScene)) SceneManager.LoadScene(lobbyScene); }
+    private void OpenLobby()
+    {
+        if (string.IsNullOrWhiteSpace(lobbyScene)) return;
+        SceneLoadRequest.Request(lobbyScene);
+        SceneManager.LoadScene(string.IsNullOrWhiteSpace(loadingScene) ? lobbyScene : loadingScene);
+    }
     private void ClearFeedback() => ShowFeedback(string.Empty);
     private void ShowFeedback(string message) { if (feedbackText != null) feedbackText.text = message; }
     private static bool IsEmail(string value) => value.Contains('@') && value.LastIndexOf('.') > value.IndexOf('@');

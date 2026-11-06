@@ -3,7 +3,7 @@ using UnityEngine;
 
 public enum LeaderboardV2Metric { Matches, Eliminations, Wins, Level }
 
-/// <summary>Reads the V2 leaderboard through the authenticated backend, which hydrates public player data consistently for every row.</summary>
+/// <summary>Reads public V2 leaderboard pages and the authenticated player's own row.</summary>
 public sealed class LeaderboardV2Service : MonoBehaviour
 {
     [Serializable] public class PlayerEntry
@@ -41,12 +41,16 @@ public sealed class LeaderboardV2Service : MonoBehaviour
         if (backend == null) { Failed?.Invoke("CapivaradaBackendService não foi configurado em Services."); return; }
         string route = "leaderboards/" + Uri.EscapeDataString(IdFor(metric)) + "?count=" + Mathf.Clamp(pageSize, 1, 100);
         if (!string.IsNullOrWhiteSpace(continuationToken)) route += "&continuationToken=" + Uri.EscapeDataString(continuationToken);
-        backend.Get<LeaderboardResponse>(route, result => succeeded?.Invoke(result?.entries ?? Array.Empty<PlayerEntry>(), result?.continuationToken), Failed);
+        // Rankings are intentionally public: online guests can browse them without
+        // a PlayFab session ticket. The server still owns all projection data.
+        backend.GetPublic<LeaderboardResponse>(route, result => succeeded?.Invoke(result?.entries ?? Array.Empty<PlayerEntry>(), result?.continuationToken), Failed);
     }
 
     public void LoadSelf(LeaderboardV2Metric metric, Action<PlayerEntry> succeeded)
     {
         if (backend == null) { Failed?.Invoke("CapivaradaBackendService não foi configurado em Services."); return; }
+        SessionAccessService session = ServiceHub.Instance != null ? ServiceHub.Instance.Session : SessionAccessService.Instance;
+        if (session != null && !session.CanUseSelfLeaderboardRow) return;
         backend.Get<AroundResponse>("leaderboards/" + Uri.EscapeDataString(IdFor(metric)) + "/me", result => succeeded?.Invoke(result?.entry), Failed);
     }
 

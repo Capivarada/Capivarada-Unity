@@ -12,6 +12,7 @@ public sealed class EconomyV2Service : MonoBehaviour
     [Serializable] public class BoxOpenRequest { public string itemId; public string idempotencyId; }
     [Serializable] public class BoxOpenResult { public string itemId; public string skinId; public string rarity; public bool duplicate; public int duplicatePoints; public int remainingPoints; }
     [SerializeField] private CapivaradaBackendService backend;
+    [SerializeField] private SessionAccessService session;
     [Tooltip("Optional Economy V2 Store ID. Leave empty until the store exists in PlayFab.")]
     [SerializeField] private string storeId = "";
 
@@ -30,11 +31,13 @@ public sealed class EconomyV2Service : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         if (backend == null) backend = GetComponent<CapivaradaBackendService>();
+        if (session == null) session = GetComponent<SessionAccessService>();
         DontDestroyOnLoad(gameObject);
     }
 
     public void RefreshStore()
     {
+        if (!CanUseEconomy()) return;
         storeItems.Clear();
         SearchPage(null);
     }
@@ -42,12 +45,14 @@ public sealed class EconomyV2Service : MonoBehaviour
     /// <summary>Loads the authenticated player's Economy V2 inventory and PA balance.</summary>
     public void RefreshInventory()
     {
+        if (!CanUseEconomy()) return;
         inventoryItems.Clear();
         LoadInventoryPage(null);
     }
 
     public void OpenBox(string itemId, Action<BoxOpenResult> succeeded, Action<string> failed = null)
     {
+        if (!CanUseEconomy(failed)) return;
         if (string.IsNullOrWhiteSpace(itemId)) { (failed ?? Failed)?.Invoke("A caixa não possui Item ID V2."); return; }
         if (backend == null) { (failed ?? Failed)?.Invoke("CapivaradaBackendService não foi configurado em Services."); return; }
         backend.Post<BoxOpenRequest, BoxOpenResult>("economy/boxes/open", new BoxOpenRequest { itemId = itemId, idempotencyId = Guid.NewGuid().ToString("N") }, succeeded, failed ?? Failed);
@@ -104,5 +109,13 @@ public sealed class EconomyV2Service : MonoBehaviour
     {
         if (item?.Tags == null) return false;
         return item.Tags.Exists(tag => string.Equals(tag, "capivarada-box", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private bool CanUseEconomy(Action<string> failed = null)
+    {
+        if (session == null) session = ServiceHub.Instance != null ? ServiceHub.Instance.Session : SessionAccessService.Instance;
+        if (session == null || session.CanUseEconomy) return true;
+        (failed ?? Failed)?.Invoke("Faça login para acessar a economia.");
+        return false;
     }
 }
