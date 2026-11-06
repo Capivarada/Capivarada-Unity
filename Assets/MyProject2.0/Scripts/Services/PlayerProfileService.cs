@@ -29,13 +29,13 @@ public class PlayerProfileService : MonoBehaviour
     public void Load()
     {
         if (authentication == null || !authentication.IsLoggedIn) { Publish(); return; }
-        PlayFabClientAPI.GetUserData(new GetUserDataRequest { Keys = new List<string> { "profile" } }, result => { if (result.Data != null && result.Data.TryGetValue("profile", out UserDataRecord data)) Current = JsonUtility.FromJson<PlayerProfileData>(data.Value) ?? Current; Current.playerId = authentication.PlayFabId; if (string.IsNullOrWhiteSpace(Current.nickname)) Current.nickname = authentication.Nickname; LoadReadOnly(Current, () => LoadV2Progression(Publish)); }, error => Report(error.ErrorMessage));
+        PlayFabClientAPI.GetUserData(new GetUserDataRequest { Keys = new List<string> { "profile" } }, result => { if (result.Data != null && result.Data.TryGetValue("profile", out UserDataRecord data)) Current = JsonUtility.FromJson<PlayerProfileData>(data.Value) ?? Current; Current.playerId = authentication.PlayFabId; if (string.IsNullOrWhiteSpace(Current.nickname)) Current.nickname = authentication.Nickname; SyncNicknameIndex(); LoadReadOnly(Current, () => LoadV2Progression(Publish)); }, error => Report(error.ErrorMessage));
     }
     public void Save(string nickname, string avatarId, string equippedSkinId, Action done = null)
     {
         if (authentication == null || !authentication.IsLoggedIn || authentication.IsGuest) { Report("Faça login para salvar o perfil."); return; }
         Current.playerId = authentication.PlayFabId; Current.nickname = string.IsNullOrWhiteSpace(nickname) ? Current.nickname : nickname.Trim(); Current.avatarId = avatarId ?? Current.avatarId; Current.equippedSkinId = equippedSkinId ?? Current.equippedSkinId; authentication.ChangeNickname(Current.nickname);
-        PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest { Data = new Dictionary<string, string> { ["profile"] = JsonUtility.ToJson(Current) }, Permission = UserDataPermission.Public }, _ => { Publish(); done?.Invoke(); }, error => Report(error.ErrorMessage));
+        PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest { Data = new Dictionary<string, string> { ["profile"] = JsonUtility.ToJson(Current) }, Permission = UserDataPermission.Public }, _ => { SyncNicknameIndex(); Publish(); done?.Invoke(); }, error => Report(error.ErrorMessage));
     }
     public void SaveCosmetics(PlayerCosmeticLoadout cosmetics, Action done = null)
     {
@@ -65,6 +65,12 @@ public class PlayerProfileService : MonoBehaviour
     {
         if (backend == null) { done?.Invoke(); return; }
         backend.Get<ProgressionResponse>("profiles/me/progression", result => { if (result != null) { Current.matches = result.matches; Current.eliminations = result.eliminations; Current.wins = result.wins; Current.level = Mathf.Max(1, result.level); } done?.Invoke(); }, _ => done?.Invoke());
+    }
+    [Serializable] private class NicknameIndexInput { public string nickname; }
+    private void SyncNicknameIndex()
+    {
+        if (backend == null || authentication == null || !authentication.IsLoggedIn || authentication.IsGuest || string.IsNullOrWhiteSpace(Current.nickname)) return;
+        backend.Post<NicknameIndexInput, CapivaradaBackendService.EmptyResponse>("profiles/me/nickname-index", new NicknameIndexInput { nickname = Current.nickname.Trim() }, _ => { }, _ => { });
     }
     private static int ReadInt(Dictionary<string, UserDataRecord> data, string key, int fallback) => data.TryGetValue(key, out UserDataRecord value) && int.TryParse(value.Value, out int parsed) ? parsed : fallback;
     private static string Text(PlayFab.Json.JsonObject data, string key) => data.TryGetValue(key, out object value) && value != null ? value.ToString() : string.Empty;
