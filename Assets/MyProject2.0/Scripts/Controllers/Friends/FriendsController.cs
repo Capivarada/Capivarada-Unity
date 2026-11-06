@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 /// <summary>
@@ -16,12 +15,6 @@ public sealed class FriendsController : MonoBehaviour
     [Header("Services")]
     [SerializeField] private FriendsService friendsService;
     [SerializeField] private OtherProfileController otherProfile;
-
-    [Header("Main panels")]
-    [FormerlySerializedAs("friendsView")]
-    [SerializeField] private GameObject friendsPanel;
-    [FormerlySerializedAs("requestsView")]
-    [SerializeField] private GameObject requestPanel;
 
     [Header("FriendsPanel")]
     [SerializeField] private TMP_InputField friendSearchInput;
@@ -63,7 +56,7 @@ public sealed class FriendsController : MonoBehaviour
 
         if (friendSearchInput != null) friendSearchInput.onValueChanged.AddListener(OnFriendSearchChanged);
         if (requestSearchInput != null) requestSearchInput.onValueChanged.AddListener(OnRequestSearchChanged);
-        ShowFriendsPanel();
+        RebuildFriends();
         friendsService?.Refresh();
     }
 
@@ -78,24 +71,6 @@ public sealed class FriendsController : MonoBehaviour
         if (friendSearchInput != null) friendSearchInput.onValueChanged.RemoveListener(OnFriendSearchChanged);
         if (requestSearchInput != null) requestSearchInput.onValueChanged.RemoveListener(OnRequestSearchChanged);
     }
-
-    public void ShowFriendsPanel()
-    {
-        SetPanelVisible(friendsPanel, true);
-        SetPanelVisible(requestPanel, false);
-        RebuildFriends();
-    }
-
-    public void ShowRequestPanel()
-    {
-        SetPanelVisible(friendsPanel, false);
-        SetPanelVisible(requestPanel, true);
-        ShowReceivedRequests();
-    }
-
-    // Existing button bindings keep working while the scene moves to the new panel names.
-    public void ShowFriends() => ShowFriendsPanel();
-    public void ShowRequests() => ShowRequestPanel();
 
     public void ShowReceivedRequests()
     {
@@ -190,11 +165,6 @@ public sealed class FriendsController : MonoBehaviour
         if (string.IsNullOrWhiteSpace(filter)) return true;
         return (!string.IsNullOrWhiteSpace(nickname) && nickname.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0)
                || (!string.IsNullOrWhiteSpace(playerId) && playerId.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0);
-    }
-
-    private static void SetPanelVisible(GameObject panel, bool visible)
-    {
-        if (panel != null && panel.activeSelf != visible) panel.SetActive(visible);
     }
 
     private void SetBusy(bool busy)
