@@ -169,7 +169,7 @@ public static class CapivaradaLobbyScreenInstaller
         for (int i = 0; i < labels.Length; i++)
         {
             int column = i % 2; int row = i / 2;
-            RectTransform card = PanelBox(colorsView.transform, "Color_" + labels[i], new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(28f + column * 330f, -180f - row * 190f), new Vector2(330f, 164f));
+            RectTransform card = CardBox(colorsView.transform, "Color_" + labels[i], new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(28f + column * 330f, -180f - row * 190f), new Vector2(330f, 164f));
             Text(card, "Label", labels[i], 19, Cream, FontStyles.Bold, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(18f, -38f), new Vector2(-18f, 0f));
             Text(card, "HueLabel", "MATIZ", 13, Muted, FontStyles.Bold, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(18f, -76f), new Vector2(100f, 24f));
             sliders[i * 2] = Slider(card, "Hue", new Vector2(18f, -110f), new Vector2(-18f, -88f));
@@ -277,7 +277,7 @@ public static class CapivaradaLobbyScreenInstaller
         RectTransform rect = Ui(name, parent, min, max, new Vector2(.5f, .5f), Vector2.zero, Vector2.zero).GetComponent<RectTransform>(); rect.offsetMin = offsetMin; rect.offsetMax = offsetMax;
         Image image = rect.gameObject.AddComponent<Image>(); ConfigureImage(image, PanelSprite(), Panel); return rect;
     }
-    private static RectTransform PanelBox(Transform parent, string name, Vector2 anchor, Vector2 pivot, Vector2 pos, Vector2 size)
+    private static RectTransform CardBox(Transform parent, string name, Vector2 anchor, Vector2 pivot, Vector2 pos, Vector2 size)
     {
         RectTransform rect = Ui(name, parent, anchor, anchor, pivot, pos, size).GetComponent<RectTransform>(); Image image = rect.gameObject.AddComponent<Image>(); ConfigureImage(image, PanelSprite(), Panel); return rect;
     }
