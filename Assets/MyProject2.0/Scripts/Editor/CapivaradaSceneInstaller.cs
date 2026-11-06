@@ -72,9 +72,12 @@ public static class CapivaradaSceneInstaller
 
         FindOrAdd<NetworkObject>(gameManager);
         FindOrAdd<FusionArenaMatchController>(gameManager);
+        FindOrAdd<FusionRoundController>(gameManager);
+        FindOrAdd<FusionPlayerSpawner>(gameManager);
+        FindOrAdd<FusionBotSpawner>(gameManager);
         FindOrAdd<SceneReadinessController>(gameManager);
         MarkAndSave(game);
-        Debug.Log("[CapivaradaSceneInstaller] FusionArenaMatchController and NetworkObject added to GameManager. Configure this scene in Fusion's NetworkProjectConfig before playtesting.");
+        Debug.Log("[CapivaradaSceneInstaller] Foundation components were added to GameManager. Assign the NetworkObject player/bot prefabs and spawn points manually, then let Fusion bake the NetworkObject before playtesting.");
     }
 
     [MenuItem("Capivarada/Scenes/Create Lobby variants")]

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fusion;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Owns the Fusion runner lifecycle. This is deliberately separate from match
@@ -14,6 +15,7 @@ public sealed class FusionSessionService : MonoBehaviour
     [SerializeField] private NetworkRunner runnerPrefab;
     [SerializeField, Min(1)] private int maximumPlayers = 8;
     [SerializeField] private string roomPrefix = "capivarada";
+    [SerializeField] private string onlineGameScenePath = "Assets/MyProject2.0/Scenes/Game_Scene.unity";
     private NetworkRunner runner;
     private bool starting;
     private bool connectingLobby;
@@ -106,7 +108,10 @@ public sealed class FusionSessionService : MonoBehaviour
                 SessionProperties = new Dictionary<string, SessionProperty>
                 {
                     { "mode", "arena" }
-                }
+                },
+                // A real Fusion scene manager is required so scene NetworkObjects
+                // (the round gate and spawners) are replicated after the transition.
+                SceneManager = runner.GetComponent<NetworkSceneManagerDefault>()
             });
             if (!result.Ok)
             {
@@ -125,6 +130,37 @@ public sealed class FusionSessionService : MonoBehaviour
         finally
         {
             starting = false;
+        }
+    }
+
+    /// <summary>
+    /// Enters a random Shared session and lets the Shared Master perform the
+    /// network scene transition. Other peers receive that transition from Fusion;
+    /// they must never call Unity's SceneManager directly for an online match.
+    /// </summary>
+    public async Task<bool> JoinRandomMatchAndLoadAsync()
+    {
+        if (!await JoinRandomMatchAsync()) return false;
+
+        if (!runner.IsSceneAuthority) return true;
+
+        int buildIndex = SceneUtility.GetBuildIndexByScenePath(onlineGameScenePath);
+        if (buildIndex < 0)
+        {
+            Failed?.Invoke($"A cena online '{onlineGameScenePath}' não está no Build Profile.");
+            return false;
+        }
+
+        try
+        {
+            runner.LoadScene(SceneRef.FromIndex(buildIndex), LoadSceneMode.Single);
+            Debug.Log($"[FusionSessionService] Shared Master carregando a cena online (build index {buildIndex}).");
+            return true;
+        }
+        catch (Exception exception)
+        {
+            Failed?.Invoke($"Falha ao carregar a cena Fusion: {exception.Message}");
+            return false;
         }
     }
 

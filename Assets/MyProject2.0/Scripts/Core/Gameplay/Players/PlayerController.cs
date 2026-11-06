@@ -29,6 +29,16 @@ public class PlayerController : MonoBehaviour
     public float CurrentCharge =>
         currentCharge;
 
+    /// <summary>Applies replicated choice state without exposing mutable fields.</summary>
+    public void ApplyNetworkSelection(Vector3 direction, float charge)
+    {
+        SetAimDirection(direction);
+        SetCharge(charge);
+    }
+
+    /// <summary>Network bridge entry point used once per synchronized round.</summary>
+    public void LaunchFromNetwork() => Launch();
+
     private void Awake()
     {
         if (impulseIndicator == null)

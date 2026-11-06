@@ -52,7 +52,7 @@ public sealed class LobbyNavigationController : MonoBehaviour
             yield break;
         }
 
-        Task<bool> join = fusion.JoinRandomMatchAsync();
+        Task<bool> join = fusion.JoinRandomMatchAndLoadAsync();
         while (!join.IsCompleted) yield return null;
         joiningMatch = false;
         if (join.Status != TaskStatus.RanToCompletion || !join.Result)
@@ -62,7 +62,8 @@ public sealed class LobbyNavigationController : MonoBehaviour
         }
 
         MatchParticipationContext.StartOnline(session);
-        Load(gameScene);
+        // Fusion owns the online scene transition. Loading it locally here would
+        // produce a disconnected copy of Game_Scene on this client.
     }
 
     private void Load(string scene)
