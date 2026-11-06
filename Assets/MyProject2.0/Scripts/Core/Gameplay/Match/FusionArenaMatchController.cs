@@ -41,13 +41,14 @@ public sealed class FusionArenaMatchController : NetworkBehaviour, IPlayerJoined
         if (CountHumans() >= requiredSlots || (StartTimer.IsRunning && StartTimer.Expired(Runner))) BeginMatch();
     }
 
-    public void OnPlayerJoined(PlayerRef player)
+    // Fusion 2.1 invokes these exact interface names (without the On prefix).
+    public void PlayerJoined(PlayerRef player)
     {
         PublishWaiting();
         if (Object.HasStateAuthority && CountHumans() >= requiredSlots && !MatchStarted) BeginMatch();
     }
 
-    public void OnPlayerLeft(PlayerRef player) => PublishWaiting();
+    public void PlayerLeft(PlayerRef player) => PublishWaiting();
 
     private void BeginMatch()
     {
