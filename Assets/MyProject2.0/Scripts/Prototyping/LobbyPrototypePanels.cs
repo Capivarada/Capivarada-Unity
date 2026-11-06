@@ -60,7 +60,7 @@ public abstract class PrototypePanelBase : MonoBehaviour
     protected TMP_Text Text(Transform parent, string value, int size = 22, Color? color = null, float minHeight = 0f)
     {
         GameObject item = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement)); item.transform.SetParent(parent, false);
-        TextMeshProUGUI text = item.GetComponent<TextMeshProUGUI>(); text.font = Font; text.text = value; text.fontSize = size; text.color = color ?? new Color(.95f, .92f, .88f); text.enableWordWrapping = true;
+        TextMeshProUGUI text = item.GetComponent<TextMeshProUGUI>(); text.font = Font; text.text = value; text.fontSize = size; text.color = color ?? new Color(.95f, .92f, .88f); text.textWrappingMode = TextWrappingModes.Normal;
         item.GetComponent<LayoutElement>().minHeight = minHeight > 0f ? minHeight : size + 12f; return text;
     }
 
