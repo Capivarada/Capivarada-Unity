@@ -82,6 +82,15 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        // This legacy manager owns the fully local simulation. It remains the
+        // implementation for Practice_Scene only; an online Fusion scene uses
+        // FusionArenaMatchController instead and must not spawn local clones.
+        if (!MatchParticipationContext.IsPractice)
+        {
+            Debug.Log("[GameManager] Online match detected. Local practice simulation is disabled.");
+            return;
+        }
+
         arenaBounds = FindObjectOfType<ArenaBounds>();
 
         if (arenaBounds == null)
