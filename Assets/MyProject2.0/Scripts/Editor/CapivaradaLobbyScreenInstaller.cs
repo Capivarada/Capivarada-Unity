@@ -205,7 +205,7 @@ public static class CapivaradaLobbyScreenInstaller
         Image background = root.AddComponent<Image>(); ConfigureImage(background, ItemSprite(), Black);
         LayoutElement layout = root.AddComponent<LayoutElement>(); layout.minHeight = 92f;
         Button profile = root.AddComponent<Button>(); profile.targetGraphic = background;
-        Image avatar = Image(root.transform, "Avatar", new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(54f, 0f), new Vector2(58f, 58f), PanelSprite(), Color.white);
+        Image avatar = CreateImage(root.transform, "Avatar", new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(54f, 0f), new Vector2(58f, 58f), PanelSprite(), Color.white);
         TMP_Text nickname = Text(root.transform, "Nickname", "Jogador", 21, Cream, FontStyles.Bold, new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(102f, 14f), new Vector2(390f, 30f));
         TMP_Text status = Text(root.transform, "Status", "Offline", 16, Online, FontStyles.Normal, new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(102f, -18f), new Vector2(420f, 26f));
         Button invite = Button(root.transform, "Button.Invite", "CONVIDAR", SecondarySprite(), new Vector2(1f, .5f), new Vector2(1f, .5f), new Vector2(-122f, 0f), new Vector2(190f, 52f), 17);
@@ -219,7 +219,7 @@ public static class CapivaradaLobbyScreenInstaller
         string path = FriendPrefabFolder + (incoming ? "/FriendRequestReceived.prefab" : "/FriendRequestSent.prefab");
         GameObject root = Ui(incoming ? "FriendRequestReceived" : "FriendRequestSent", null, Vector2.zero, Vector2.one, new Vector2(.5f, .5f), Vector2.zero, new Vector2(900f, 106f));
         Image background = root.AddComponent<Image>(); ConfigureImage(background, ItemSprite(), Black); LayoutElement layout = root.AddComponent<LayoutElement>(); layout.minHeight = 106f;
-        Image avatar = Image(root.transform, "Avatar", new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(54f, 0f), new Vector2(60f, 60f), PanelSprite(), Color.white);
+        Image avatar = CreateImage(root.transform, "Avatar", new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(54f, 0f), new Vector2(60f, 60f), PanelSprite(), Color.white);
         TMP_Text nickname = Text(root.transform, "Nickname", "Jogador", 21, Cream, FontStyles.Bold, new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(105f, 15f), new Vector2(360f, 30f));
         TMP_Text metadata = Text(root.transform, "Metadata", "Nível 01", 16, Muted, FontStyles.Normal, new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(105f, -18f), new Vector2(360f, 26f));
         Button reject = Button(root.transform, "Button.Reject", "RECUSAR", SecondarySprite(), new Vector2(1f, .5f), new Vector2(1f, .5f), new Vector2(-310f, 0f), new Vector2(170f, 52f), 16);
@@ -235,10 +235,10 @@ public static class CapivaradaLobbyScreenInstaller
         GameObject root = Ui("CosmeticChoiceCard", null, Vector2.zero, Vector2.one, new Vector2(.5f, .5f), Vector2.zero, new Vector2(160f, 175f));
         Image background = root.AddComponent<Image>(); ConfigureImage(background, ItemSprite(), Black); LayoutElement layout = root.AddComponent<LayoutElement>(); layout.preferredWidth = 160f; layout.preferredHeight = 175f;
         Button button = root.AddComponent<Button>(); button.targetGraphic = background;
-        Image icon = Image(root.transform, "Icon", new Vector2(.5f, 1f), new Vector2(.5f, 1f), new Vector2(0f, -54f), new Vector2(74f, 74f), null, Color.white);
+        Image icon = CreateImage(root.transform, "Icon", new Vector2(.5f, 1f), new Vector2(.5f, 1f), new Vector2(0f, -54f), new Vector2(74f, 74f), null, Color.white);
         TMP_Text title = Text(root.transform, "Name", "Item", 16, Cream, FontStyles.Bold, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(12f, 35f), new Vector2(-12f, 60f));
         TMP_Text state = Text(root.transform, "State", "Obtido", 14, Orange, FontStyles.Normal, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(12f, 14f), new Vector2(-12f, 38f));
-        Image lockVisual = Image(root.transform, "Lock", new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-25f, -24f), new Vector2(26f, 26f), LoadSprite("Assets/MyProject2.0/Sprites/Icons/Icon_Lock.png"), Color.white);
+        Image lockVisual = CreateImage(root.transform, "Lock", new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-25f, -24f), new Vector2(26f, 26f), LoadSprite("Assets/MyProject2.0/Sprites/Icons/Icon_Lock.png"), Color.white);
         GameObject selectedRoot = Ui("Selected", root.transform, Vector2.zero, Vector2.one, new Vector2(.5f, .5f), Vector2.zero, Vector2.zero);
         Image selectedVisual = selectedRoot.AddComponent<Image>(); ConfigureImage(selectedVisual, TabSelectedSprite(), new Color(Orange.r, Orange.g, Orange.b, .45f)); selectedVisual.raycastTarget = false;
         CosmeticChoiceCard controller = root.AddComponent<CosmeticChoiceCard>(); Assign(controller, "nameText", title); Assign(controller, "stateText", state); Assign(controller, "icon", icon); Assign(controller, "button", button); Assign(controller, "lockVisual", lockVisual.gameObject); Assign(controller, "selectedVisual", selectedVisual.gameObject);
@@ -297,10 +297,11 @@ public static class CapivaradaLobbyScreenInstaller
     {
         GameObject root = Ui(name, parent, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(.5f, 1f), Vector2.zero, Vector2.zero); RectTransform rect = root.GetComponent<RectTransform>(); rect.offsetMin = offsetMin; rect.offsetMax = offsetMax;
         Slider slider = root.AddComponent<Slider>(); slider.minValue = 0f; slider.maxValue = 1f; slider.value = .5f;
-        Image background = Image(root.transform, "Background", new Vector2(0f, .5f), new Vector2(1f, .5f), Vector2.zero, new Vector2(0f, 8f), null, Border);
+        Image background = CreateImage(root.transform, "Background", new Vector2(0f, .5f), new Vector2(1f, .5f), Vector2.zero, new Vector2(0f, 8f), null, Border);
         GameObject fillArea = Ui("Fill Area", root.transform, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(.5f, .5f), Vector2.zero, Vector2.zero); RectTransform fa = fillArea.GetComponent<RectTransform>(); fa.offsetMin = new Vector2(0f, 0f); fa.offsetMax = new Vector2(-14f, 0f);
-        Image fill = Image(fillArea.transform, "Fill", Vector2.zero, Vector2.one, new Vector2(.5f, .5f), Vector2.zero, Vector2.zero, null, Orange); slider.fillRect = fill.rectTransform;
-        Image handle = Image(root.transform, "Handle", new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(18f, 18f), null, Cream); slider.handleRect = handle.rectTransform; slider.targetGraphic = handle;
+        GameObject fillRoot = Ui("Fill", fillArea.transform, Vector2.zero, Vector2.one, new Vector2(.5f, .5f), Vector2.zero, Vector2.zero);
+        Image fill = fillRoot.AddComponent<Image>(); ConfigureImage(fill, null, Orange); slider.fillRect = fill.rectTransform;
+        Image handle = CreateImage(root.transform, "Handle", new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(18f, 18f), null, Cream); slider.handleRect = handle.rectTransform; slider.targetGraphic = handle;
         return slider;
     }
     private static TMP_InputField Input(Transform parent, string name, string placeholder, Vector2 offsetMin, Vector2 offsetMax)
@@ -318,7 +319,7 @@ public static class CapivaradaLobbyScreenInstaller
         Color labelColor = sprite == PrimarySprite() ? Black : Cream;
         TMP_Text text = Text(root.transform, "Text", label, fontSize, labelColor, FontStyles.Bold, Stretch(), Vector2.zero, Vector2.zero, Vector2.zero); text.alignment = TextAlignmentOptions.Center; return button;
     }
-    private static Image Image(Transform parent, string name, Vector2 anchor, Vector2 pivot, Vector2 pos, Vector2 size, Sprite sprite, Color color)
+    private static Image CreateImage(Transform parent, string name, Vector2 anchor, Vector2 pivot, Vector2 pos, Vector2 size, Sprite sprite, Color color)
     {
         GameObject root = Ui(name, parent, anchor, anchor, pivot, pos, size); Image image = root.AddComponent<Image>(); ConfigureImage(image, sprite, color); return image;
     }
