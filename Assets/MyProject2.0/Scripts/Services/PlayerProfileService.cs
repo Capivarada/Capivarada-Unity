@@ -7,7 +7,7 @@ using UnityEngine;
 [Serializable]
 public class PlayerProfileData
 {
-    public string playerId, nickname, email, avatarId, equippedSkinId;
+    public string playerId, nickname, email, avatarId, equippedSkinId, createdAtUtc;
     public PlayerCosmeticLoadout cosmetics = new();
     public int level = 1, experience, experienceToNext = 1000, matches, eliminations, wins;
     public float playTimeSeconds;
@@ -29,7 +29,7 @@ public class PlayerProfileService : MonoBehaviour
     public void Load()
     {
         if (authentication == null || !authentication.IsLoggedIn) { Publish(); return; }
-        PlayFabClientAPI.GetUserData(new GetUserDataRequest { Keys = new List<string> { "profile" } }, result => { if (result.Data != null && result.Data.TryGetValue("profile", out UserDataRecord data)) Current = JsonUtility.FromJson<PlayerProfileData>(data.Value) ?? Current; Current.playerId = authentication.PlayFabId; if (string.IsNullOrWhiteSpace(Current.nickname)) Current.nickname = authentication.Nickname; SyncNicknameIndex(); LoadReadOnly(Current, () => LoadV2Progression(Publish)); }, error => Report(error.ErrorMessage));
+        PlayFabClientAPI.GetUserData(new GetUserDataRequest { Keys = new List<string> { "profile" } }, result => { if (result.Data != null && result.Data.TryGetValue("profile", out UserDataRecord data)) Current = JsonUtility.FromJson<PlayerProfileData>(data.Value) ?? Current; Current.playerId = authentication.PlayFabId; if (string.IsNullOrWhiteSpace(Current.nickname)) Current.nickname = authentication.Nickname; LoadAccountCreation(() => { SyncNicknameIndex(); LoadReadOnly(Current, () => LoadV2Progression(Publish)); }); }, error => Report(error.ErrorMessage));
     }
     public void Save(string nickname, string avatarId, string equippedSkinId, Action done = null)
     {
@@ -50,6 +50,14 @@ public class PlayerProfileService : MonoBehaviour
     public void LoadOther(string playerId, Action<PlayerProfileData> done)
     {
         PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest { FunctionName = "GetPublicPlayerProfile", FunctionParameter = new { playerId } }, result => { if (result.Error != null) { Report($"Perfil público: {result.Error.Error}: {result.Error.Message}"); return; } if (result.FunctionResult is not PlayFab.Json.JsonObject data) { Report("Resposta pública de perfil inválida: retorno sem objeto JSON."); return; } PlayerProfileData profile = new PlayerProfileData { playerId = playerId, nickname = Text(data, "nickname"), avatarId = Text(data, "avatarId"), equippedSkinId = Text(data, "equippedSkinId"), level = Number(data, "level", 1), experience = Number(data, "experience", 0), experienceToNext = Number(data, "experienceToNext", 1500), matches = Number(data, "matches", 0), eliminations = Number(data, "eliminations", 0), wins = Number(data, "wins", 0), playTimeSeconds = Number(data, "playTimeSeconds", 0) }; done?.Invoke(profile); }, error => Report(error.ErrorMessage));
+    }
+    private void LoadAccountCreation(Action done)
+    {
+        PlayFabClientAPI.GetAccountInfo(new GetAccountInfoRequest(), result =>
+        {
+            if (result.AccountInfo != null) Current.createdAtUtc = result.AccountInfo.Created.ToUniversalTime().ToString("O");
+            done?.Invoke();
+        }, _ => done?.Invoke());
     }
     private void LoadReadOnly(PlayerProfileData profile, Action done, string playerId = null)
     {

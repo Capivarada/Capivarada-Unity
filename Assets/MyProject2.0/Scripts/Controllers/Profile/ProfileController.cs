@@ -21,7 +21,26 @@ public sealed class ProfileController : MonoBehaviour
     public void ReturnFromEdit() { editProfile?.Close(); if (profileView != null) profileView.SetActive(true); }
     private void Bind(PlayerProfileData data)
     {
-        if (data == null) return; int required = data.experienceToNext > 0 ? data.experienceToNext : 1500; int localXp = Mathf.Max(0, data.experience % required); if (nicknameText != null) nicknameText.text = data.nickname; if (idText != null) idText.text = $"ID #{data.playerId}"; if (levelText != null) levelText.text = $"Nível {data.level:00}"; if (experienceText != null) experienceText.text = $"{localXp}/{required} XP"; if (experienceSlider != null) experienceSlider.value = (float)localXp / required; if (matchesText != null) matchesText.text = data.matches.ToString(); if (eliminationsText != null) eliminationsText.text = data.eliminations.ToString(); if (winsText != null) winsText.text = data.wins.ToString(); if (playTimeText != null) playTimeText.text = System.TimeSpan.FromSeconds(data.playTimeSeconds).ToString(@"h\:mm"); AvatarDefinition avatar = avatarCatalog != null ? avatarCatalog.Find(data.avatarId) ?? avatarCatalog.Default : null; if (avatar != null && avatarImage != null) avatarImage.sprite = avatar.Sprite; BuildHistory(data.recentMatches);
+        if (data == null) return; int required = data.experienceToNext > 0 ? data.experienceToNext : 1500; int localXp = Mathf.Max(0, data.experience % required); if (nicknameText != null) nicknameText.text = data.nickname; if (idText != null) idText.text = $"ID #{data.playerId}"; if (levelText != null) levelText.text = $"Nível {data.level:00}"; if (experienceText != null) experienceText.text = $"{localXp}/{required} XP"; if (experienceSlider != null) experienceSlider.value = (float)localXp / required; if (matchesText != null) matchesText.text = data.matches.ToString(); if (eliminationsText != null) eliminationsText.text = data.eliminations.ToString(); if (winsText != null) winsText.text = data.wins.ToString(); if (playTimeText != null) playTimeText.text = AccountAge(data.createdAtUtc); AvatarDefinition avatar = avatarCatalog != null ? avatarCatalog.Find(data.avatarId) ?? avatarCatalog.Default : null; if (avatar != null && avatarImage != null) avatarImage.sprite = avatar.Sprite; BuildHistory(data.recentMatches);
+    }
+    private static string AccountAge(string createdAtUtc)
+    {
+        if (!System.DateTime.TryParse(createdAtUtc, null, System.Globalization.DateTimeStyles.AdjustToUniversal, out System.DateTime created)) return "—";
+        System.DateTime start = created.ToUniversalTime().Date;
+        System.DateTime today = System.DateTime.UtcNow.Date;
+        if (start > today) return "0 dias";
+        int years = today.Year - start.Year;
+        if (start.AddYears(years) > today) years--;
+        System.DateTime cursor = start.AddYears(years);
+        int months = (today.Year - cursor.Year) * 12 + today.Month - cursor.Month;
+        if (cursor.AddMonths(months) > today) months--;
+        cursor = cursor.AddMonths(months);
+        int days = (today - cursor).Days;
+        var parts = new List<string>();
+        if (years > 0) parts.Add($"{years} {(years == 1 ? "ano" : "anos")}");
+        if (months > 0) parts.Add($"{months} {(months == 1 ? "mês" : "meses")}");
+        if (days > 0 || parts.Count == 0) parts.Add($"{days} {(days == 1 ? "dia" : "dias")}");
+        return string.Join(", ", parts);
     }
     private void BuildHistory(List<MatchHistoryData> matches) { foreach (MatchHistoryCardController card in history) if (card != null) Destroy(card.gameObject); history.Clear(); if (matches == null || historyContent == null || historyPrefab == null) return; for (int i = 0; i < Mathf.Min(3, matches.Count); i++) { MatchHistoryCardController card = Instantiate(historyPrefab, historyContent); card.Bind(matches[i]); history.Add(card); } }
 }
