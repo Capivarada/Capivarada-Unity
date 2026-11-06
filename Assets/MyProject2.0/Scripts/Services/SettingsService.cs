@@ -1,12 +1,21 @@
 using UnityEngine;
+using UnityEngine.Audio;
 
-/// <summary>Persists and applies runtime settings. Audio routing remains UI-facing until AudioMixer groups are wired.</summary>
+/// <summary>Persists and applies runtime display, graphics and mixer settings.</summary>
 public sealed class SettingsService : MonoBehaviour
 {
     public static SettingsService Instance { get; private set; }
-    public const string Master = "settings.master", Music = "settings.music", Sfx = "settings.sfx", Voice = "settings.voice", Brightness = "settings.brightness";
+    public const string Master = "settings.master", Music = "settings.music", Sfx = "settings.sfx", Voice = "settings.voice", MuteAll = "settings.muteAll", Brightness = "settings.brightness";
     public const string ResolutionIndex = "settings.screen.resolution", DisplayMode = "settings.screen.mode", VSync = "settings.screen.vsync";
     public const string Quality = "settings.graphics.quality", Shadows = "settings.graphics.shadows", Effects = "settings.graphics.effects", FpsLimit = "settings.graphics.fps";
+    [Header("Audio Mixer")]
+    [SerializeField] private AudioMixer audioMixer;
+    [SerializeField] private string masterParameter = "MasterVolume";
+    [SerializeField] private string musicParameter = "MusicVolume";
+    [SerializeField] private string sfxParameter = "SFXVolume";
+    [Tooltip("Optional. Leave blank until the mixer has a voice group exposed.")]
+    [SerializeField] private string voiceParameter = "";
+    public event System.Action<float> BrightnessChanged;
 
     private void Awake()
     {
@@ -14,6 +23,7 @@ public sealed class SettingsService : MonoBehaviour
         else if (Instance != this) { Destroy(gameObject); return; }
         DontDestroyOnLoad(gameObject);
         ApplyDisplayAndGraphics();
+        ApplyAudio();
     }
 
     public float Get(string key, float fallback = 1f) => PlayerPrefs.GetFloat(key, fallback);
@@ -30,6 +40,20 @@ public sealed class SettingsService : MonoBehaviour
         ApplyShadows(GetBool(Shadows, true));
         ApplyFrameRate(GetInt(FpsLimit, 60), GetBool(VSync, true));
         ApplyResolution(GetInt(ResolutionIndex, -1), GetInt(DisplayMode, 0));
+    }
+
+    public void ApplyAudio()
+    {
+        float master = GetBool(MuteAll) ? 0f : Get(Master);
+        SetMixer(masterParameter, master);
+        SetMixer(musicParameter, Get(Music));
+        SetMixer(sfxParameter, Get(Sfx));
+        SetMixer(voiceParameter, Get(Voice));
+    }
+
+    public void ApplyBrightness(float value)
+    {
+        BrightnessChanged?.Invoke(Mathf.Clamp01(value));
     }
 
     public void ApplyQuality(int qualityIndex)
@@ -59,4 +83,12 @@ public sealed class SettingsService : MonoBehaviour
         };
         Screen.SetResolution(option.width, option.height, mode, option.refreshRateRatio);
     }
+
+    private void SetMixer(string parameter, float linear)
+    {
+        if (audioMixer == null || string.IsNullOrWhiteSpace(parameter)) return;
+        audioMixer.SetFloat(parameter, LinearToDecibels(linear));
+    }
+
+    private static float LinearToDecibels(float linear) => Mathf.Log10(Mathf.Clamp(linear, 0.0001f, 1f)) * 20f;
 }

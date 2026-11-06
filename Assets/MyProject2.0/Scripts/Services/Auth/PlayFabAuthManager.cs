@@ -20,6 +20,8 @@ public class PlayFabAuthManager : MonoBehaviour
 
     public string PlayFabId { get; private set; }
     public string Nickname { get; private set; }
+    /// <summary>Authenticated contact e-mail kept only in memory for the current session.</summary>
+    public string Email => registeredEmail;
     
     private string registeredEmail;
     [Header("Google Web Login")]

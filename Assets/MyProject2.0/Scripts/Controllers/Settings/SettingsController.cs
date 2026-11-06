@@ -25,12 +25,12 @@ public sealed class SettingsController : MonoBehaviour
     public void SaveAudio()
     {
         if (settings == null) return;
-        settings.Set(SettingsService.Master, muteAll != null && muteAll.isOn ? 0f : Value(master)); settings.Set(SettingsService.Music, Value(music)); settings.Set(SettingsService.Sfx, Value(sfx)); settings.Set(SettingsService.Voice, Value(voice)); settings.Save();
+        settings.Set(SettingsService.Master, Value(master)); settings.Set(SettingsService.Music, Value(music)); settings.Set(SettingsService.Sfx, Value(sfx)); settings.Set(SettingsService.Voice, Value(voice)); settings.SetBool(SettingsService.MuteAll, muteAll != null && muteAll.isOn); settings.ApplyAudio(); settings.Save();
     }
     public void SaveScreen()
     {
         if (settings == null) return;
-        settings.Set(SettingsService.Brightness, Value(brightness)); settings.SetInt(SettingsService.ResolutionIndex, resolution != null ? resolution.value : -1); settings.SetInt(SettingsService.DisplayMode, displayMode != null ? displayMode.value : 0); settings.SetBool(SettingsService.VSync, vSync != null && vSync.isOn);
+        settings.Set(SettingsService.Brightness, Value(brightness)); settings.ApplyBrightness(Value(brightness)); settings.SetInt(SettingsService.ResolutionIndex, resolution != null ? resolution.value : -1); settings.SetInt(SettingsService.DisplayMode, displayMode != null ? displayMode.value : 0); settings.SetBool(SettingsService.VSync, vSync != null && vSync.isOn);
         settings.ApplyResolution(settings.GetInt(SettingsService.ResolutionIndex, -1), settings.GetInt(SettingsService.DisplayMode)); settings.ApplyFrameRate(settings.GetInt(SettingsService.FpsLimit, 60), settings.GetBool(SettingsService.VSync)); settings.Save();
     }
     public void SaveGraphics()
@@ -58,7 +58,7 @@ public sealed class SettingsController : MonoBehaviour
         if (settings == null) return;
         PopulateResolutions(); Set(master, settings.Get(SettingsService.Master)); Set(music, settings.Get(SettingsService.Music)); Set(sfx, settings.Get(SettingsService.Sfx)); Set(voice, settings.Get(SettingsService.Voice)); Set(brightness, settings.Get(SettingsService.Brightness)); Set(horizontal, settings.Get("settings.sensitivity.horizontal", .5f)); Set(vertical, settings.Get("settings.sensitivity.vertical", .5f));
         if (displayMode != null) displayMode.SetValueWithoutNotify(settings.GetInt(SettingsService.DisplayMode)); if (vSync != null) vSync.SetIsOnWithoutNotify(settings.GetBool(SettingsService.VSync, true)); if (quality != null) quality.SetValueWithoutNotify(Mathf.Clamp(settings.GetInt(SettingsService.Quality, QualitySettings.GetQualityLevel()), 0, Mathf.Max(0, quality.options.Count - 1))); if (shadows != null) shadows.SetIsOnWithoutNotify(settings.GetBool(SettingsService.Shadows, true)); if (effects != null) effects.SetValueWithoutNotify(settings.GetInt(SettingsService.Effects)); if (fpsLimit != null) fpsLimit.SetValueWithoutNotify(IndexForFrameRate(settings.GetInt(SettingsService.FpsLimit, 60)));
-        if (invertHorizontal != null) invertHorizontal.SetIsOnWithoutNotify(settings.GetBool("settings.invert.horizontal")); if (invertVertical != null) invertVertical.SetIsOnWithoutNotify(settings.GetBool("settings.invert.vertical")); if (publicProfile != null) publicProfile.SetIsOnWithoutNotify(settings.GetBool("settings.public", true)); if (receiveInvites != null) receiveInvites.SetIsOnWithoutNotify(settings.GetBool("settings.invites", true)); if (emailText != null) emailText.text = ""; RefreshLabels();
+        if (muteAll != null) muteAll.SetIsOnWithoutNotify(settings.GetBool(SettingsService.MuteAll)); if (invertHorizontal != null) invertHorizontal.SetIsOnWithoutNotify(settings.GetBool("settings.invert.horizontal")); if (invertVertical != null) invertVertical.SetIsOnWithoutNotify(settings.GetBool("settings.invert.vertical")); if (publicProfile != null) publicProfile.SetIsOnWithoutNotify(settings.GetBool("settings.public", true)); if (receiveInvites != null) receiveInvites.SetIsOnWithoutNotify(settings.GetBool("settings.invites", true)); if (emailText != null) emailText.text = authentication != null ? authentication.Email : string.Empty; settings.ApplyAudio(); settings.ApplyBrightness(settings.Get(SettingsService.Brightness)); RefreshLabels();
     }
     private void PopulateResolutions()
     {
