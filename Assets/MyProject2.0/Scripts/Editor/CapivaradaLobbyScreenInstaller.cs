@@ -122,9 +122,8 @@ public static class CapivaradaLobbyScreenInstaller
         Assign(controller, "friendsContent", friendContent); Assign(controller, "receivedContent", receivedContent); Assign(controller, "sentContent", sentContent);
         Assign(controller, "addFriendInput", addInput); Assign(controller, "friendsTabText", friendsTabText); Assign(controller, "requestsTabText", requestsTabText); Assign(controller, "feedbackText", feedback);
         Assign(controller, "friendsView", friendsView); Assign(controller, "requestsView", requestsView); Assign(controller, "receivedRequestsView", receivedRequestsView); Assign(controller, "sentRequestsView", sentRequestsView); Assign(controller, "requestNotification", rightTop.gameObject); Assign(controller, "emptyFriendsState", emptyFriends.gameObject); Assign(controller, "emptyRequestsState", emptyRequests.gameObject); Assign(controller, "otherProfile", FindSceneObject<OtherProfileController>()); Assign(controller, "sendRequestButton", send);
-        UnityEventTools.AddPersistentListener(friendsTab.onClick, controller.ShowFriends);
-        UnityEventTools.AddPersistentListener(requestsTab.onClick, controller.ShowRequests);
-        UnityEventTools.AddPersistentListener(openRequests.onClick, controller.ShowRequests);
+        // FriendsUI owns its own PanelNavigatorController. Its tabs are deliberately
+        // left unbound here so the scene can wire them to that local navigator.
         UnityEventTools.AddPersistentListener(receivedTab.onClick, controller.ShowReceivedRequests);
         UnityEventTools.AddPersistentListener(sentTab.onClick, controller.ShowSentRequests);
         UnityEventTools.AddPersistentListener(sentReceivedTab.onClick, controller.ShowReceivedRequests);
