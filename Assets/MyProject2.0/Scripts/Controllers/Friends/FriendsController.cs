@@ -1,78 +1,217 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
-/// <summary>Controller for FriendsUI. Each instantiated prefab owns its own serialized visual references.</summary>
+/// <summary>
+/// Controls the two main areas of FriendsUI: the friends list and the request list.
+/// RequestSummary and AddFriend remain children of FriendsPanel and keep their own layout.
+/// </summary>
 public sealed class FriendsController : MonoBehaviour
 {
-    [SerializeField] private FriendsService friendsService;
-    [SerializeField] private Transform friendsContent, receivedContent, sentContent;
-    [SerializeField] private FriendRowController friendRowPrefab;
-    [SerializeField] private FriendRequestRowController receivedRequestPrefab, sentRequestPrefab;
-    [SerializeField] private TMP_InputField addFriendInput;
-    [SerializeField] private TMP_Text friendsTabText, requestsTabText, feedbackText;
-    [SerializeField] private GameObject friendsView, requestsView, receivedRequestsView, sentRequestsView, requestNotification, emptyFriendsState, emptyRequestsState;
-    [SerializeField] private OtherProfileController otherProfile;
-    [SerializeField] private Button sendRequestButton;
-    private readonly List<GameObject> spawned = new();
+    private enum RequestTab { Received, Sent }
 
-    private void Awake() { if (friendsService == null) friendsService = ServiceHub.Instance != null ? ServiceHub.Instance.Friends : FriendsService.Instance; }
-    private void OnEnable() { if (friendsService == null) return; friendsService.Changed += Rebuild; friendsService.Failed += Report; friendsService.Refresh(); }
-    private void OnDisable() { if (friendsService == null) return; friendsService.Changed -= Rebuild; friendsService.Failed -= Report; }
-    public void ShowFriends() { if (friendsView != null) friendsView.SetActive(true); if (requestsView != null) requestsView.SetActive(false); }
-    public void ShowRequests()
+    [Header("Services")]
+    [SerializeField] private FriendsService friendsService;
+    [SerializeField] private OtherProfileController otherProfile;
+
+    [Header("Main panels")]
+    [FormerlySerializedAs("friendsView")]
+    [SerializeField] private GameObject friendsPanel;
+    [FormerlySerializedAs("requestsView")]
+    [SerializeField] private GameObject requestPanel;
+
+    [Header("FriendsPanel")]
+    [SerializeField] private TMP_InputField friendSearchInput;
+    [SerializeField] private Transform friendsContent;
+    [SerializeField] private GameObject emptyFriendsState;
+    [SerializeField] private FriendRowController friendRowPrefab;
+    [Tooltip("Optional badge or summary inside FriendsPanel. The controller only toggles it when there are received requests.")]
+    [SerializeField] private GameObject requestNotification;
+
+    [Header("RequestPanel")]
+    [SerializeField] private TMP_InputField requestSearchInput;
+    [SerializeField] private Transform requestContent;
+    [SerializeField] private GameObject emptyRequestsState;
+    [SerializeField] private FriendRequestRowController receivedRequestPrefab;
+    [SerializeField] private FriendRequestRowController sentRequestPrefab;
+
+    [Header("Add friend sidebar (inside FriendsPanel)")]
+    [SerializeField] private TMP_InputField addFriendInput;
+    [SerializeField] private Button sendRequestButton;
+    [SerializeField] private TMP_Text feedbackText;
+
+    private readonly List<GameObject> spawnedFriends = new();
+    private readonly List<GameObject> spawnedRequests = new();
+    private RequestTab activeRequestTab = RequestTab.Received;
+
+    private void Awake()
     {
-        if (friendsView != null) friendsView.SetActive(false);
-        if (requestsView != null) requestsView.SetActive(true);
+        if (friendsService == null)
+            friendsService = ServiceHub.Instance != null ? ServiceHub.Instance.Friends : FriendsService.Instance;
+    }
+
+    private void OnEnable()
+    {
+        if (friendsService != null)
+        {
+            friendsService.Changed += Rebuild;
+            friendsService.Failed += Report;
+        }
+
+        if (friendSearchInput != null) friendSearchInput.onValueChanged.AddListener(OnFriendSearchChanged);
+        if (requestSearchInput != null) requestSearchInput.onValueChanged.AddListener(OnRequestSearchChanged);
+        ShowFriendsPanel();
+        friendsService?.Refresh();
+    }
+
+    private void OnDisable()
+    {
+        if (friendsService != null)
+        {
+            friendsService.Changed -= Rebuild;
+            friendsService.Failed -= Report;
+        }
+
+        if (friendSearchInput != null) friendSearchInput.onValueChanged.RemoveListener(OnFriendSearchChanged);
+        if (requestSearchInput != null) requestSearchInput.onValueChanged.RemoveListener(OnRequestSearchChanged);
+    }
+
+    public void ShowFriendsPanel()
+    {
+        SetPanelVisible(friendsPanel, true);
+        SetPanelVisible(requestPanel, false);
+        RebuildFriends();
+    }
+
+    public void ShowRequestPanel()
+    {
+        SetPanelVisible(friendsPanel, false);
+        SetPanelVisible(requestPanel, true);
         ShowReceivedRequests();
     }
+
+    // Existing button bindings keep working while the scene moves to the new panel names.
+    public void ShowFriends() => ShowFriendsPanel();
+    public void ShowRequests() => ShowRequestPanel();
+
     public void ShowReceivedRequests()
     {
-        if (receivedRequestsView != null) receivedRequestsView.SetActive(true);
-        if (sentRequestsView != null) sentRequestsView.SetActive(false);
+        activeRequestTab = RequestTab.Received;
+        RebuildRequests();
     }
+
     public void ShowSentRequests()
     {
-        if (receivedRequestsView != null) receivedRequestsView.SetActive(false);
-        if (sentRequestsView != null) sentRequestsView.SetActive(true);
+        activeRequestTab = RequestTab.Sent;
+        RebuildRequests();
     }
+
     public void Refresh() => friendsService?.Refresh();
+
     public void SendRequest()
     {
         if (friendsService == null || addFriendInput == null) return;
         SetBusy(true);
-        friendsService.Send(addFriendInput.text, () => { if (addFriendInput != null) addFriendInput.text = string.Empty; SetBusy(false); Report("Solicitação enviada."); });
+        friendsService.Send(addFriendInput.text, () =>
+        {
+            if (addFriendInput != null) addFriendInput.text = string.Empty;
+            Report("Solicitação enviada.");
+        });
     }
+
+    private void OnFriendSearchChanged(string _) => RebuildFriends();
+    private void OnRequestSearchChanged(string _) => RebuildRequests();
+
     private void Rebuild()
     {
-        Clear(); if (friendsService == null) return;
-        foreach (FriendsService.FriendSummary friend in friendsService.Friends)
-        {
-            if (friendRowPrefab == null || friendsContent == null) continue;
-            FriendRowController row = Instantiate(friendRowPrefab, friendsContent); spawned.Add(row.gameObject); row.Bind(friend, () => otherProfile?.Open(friend.playerId));
-        }
-        foreach (FriendsService.FriendRequestSummary request in friendsService.Incoming)
-        {
-            if (receivedRequestPrefab == null || receivedContent == null) continue;
-            FriendRequestRowController row = Instantiate(receivedRequestPrefab, receivedContent); spawned.Add(row.gameObject);
-            row.Bind(request, () => friendsService.Accept(request.requestId), () => friendsService.Reject(request.requestId), null);
-        }
-        foreach (FriendsService.FriendRequestSummary request in friendsService.Outgoing)
-        {
-            if (sentRequestPrefab == null || sentContent == null) continue;
-            FriendRequestRowController row = Instantiate(sentRequestPrefab, sentContent); spawned.Add(row.gameObject);
-            row.Bind(request, null, null, () => friendsService.Cancel(request.requestId));
-        }
-        if (friendsTabText != null) friendsTabText.text = "Amigos · " + friendsService.Friends.Count;
-        int count = friendsService.Incoming.Count + friendsService.Outgoing.Count;
-        if (requestsTabText != null) requestsTabText.text = "Solicitações · " + count;
-        if (requestNotification != null) requestNotification.SetActive(friendsService.Incoming.Count > 0);
-        if (emptyFriendsState != null) emptyFriendsState.SetActive(friendsService.Friends.Count == 0);
-        if (emptyRequestsState != null) emptyRequestsState.SetActive(friendsService.Incoming.Count == 0 && friendsService.Outgoing.Count == 0);
+        RebuildFriends();
+        RebuildRequests();
+        if (requestNotification != null && friendsService != null)
+            requestNotification.SetActive(friendsService.Incoming.Count > 0);
         SetBusy(false);
     }
-    private void SetBusy(bool busy) { if (sendRequestButton != null) sendRequestButton.interactable = !busy; }
-    private void Report(string message) { if (feedbackText != null) feedbackText.text = message; else Debug.LogWarning(message, this); SetBusy(false); }
-    private void Clear() { foreach (GameObject item in spawned) if (item != null) Destroy(item); spawned.Clear(); }
+
+    private void RebuildFriends()
+    {
+        Clear(spawnedFriends);
+        if (friendsService == null || friendsContent == null || friendRowPrefab == null) return;
+
+        string filter = friendSearchInput != null ? friendSearchInput.text : string.Empty;
+        int visibleCount = 0;
+        foreach (FriendsService.FriendSummary friend in friendsService.Friends)
+        {
+            if (!Matches(filter, friend.nickname, friend.playerId)) continue;
+            FriendRowController row = Instantiate(friendRowPrefab, friendsContent);
+            spawnedFriends.Add(row.gameObject);
+            row.Bind(friend, () => otherProfile?.Open(friend.playerId));
+            visibleCount++;
+        }
+
+        if (emptyFriendsState != null) emptyFriendsState.SetActive(visibleCount == 0);
+    }
+
+    private void RebuildRequests()
+    {
+        Clear(spawnedRequests);
+        if (friendsService == null || requestContent == null) return;
+
+        string filter = requestSearchInput != null ? requestSearchInput.text : string.Empty;
+        IReadOnlyList<FriendsService.FriendRequestSummary> source = activeRequestTab == RequestTab.Received
+            ? friendsService.Incoming
+            : friendsService.Outgoing;
+        FriendRequestRowController prefab = activeRequestTab == RequestTab.Received
+            ? receivedRequestPrefab
+            : sentRequestPrefab;
+        int visibleCount = 0;
+
+        if (prefab != null)
+        {
+            foreach (FriendsService.FriendRequestSummary request in source)
+            {
+                if (!Matches(filter, request.nickname, request.playerId)) continue;
+                FriendRequestRowController row = Instantiate(prefab, requestContent);
+                spawnedRequests.Add(row.gameObject);
+                if (activeRequestTab == RequestTab.Received)
+                    row.Bind(request, () => friendsService.Accept(request.requestId), () => friendsService.Reject(request.requestId), null);
+                else
+                    row.Bind(request, null, null, () => friendsService.Cancel(request.requestId));
+                visibleCount++;
+            }
+        }
+
+        if (emptyRequestsState != null) emptyRequestsState.SetActive(visibleCount == 0);
+    }
+
+    private static bool Matches(string filter, string nickname, string playerId)
+    {
+        if (string.IsNullOrWhiteSpace(filter)) return true;
+        return (!string.IsNullOrWhiteSpace(nickname) && nickname.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0)
+               || (!string.IsNullOrWhiteSpace(playerId) && playerId.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0);
+    }
+
+    private static void SetPanelVisible(GameObject panel, bool visible)
+    {
+        if (panel != null && panel.activeSelf != visible) panel.SetActive(visible);
+    }
+
+    private void SetBusy(bool busy)
+    {
+        if (sendRequestButton != null) sendRequestButton.interactable = !busy;
+    }
+
+    private void Report(string message)
+    {
+        if (feedbackText != null) feedbackText.text = message;
+        else Debug.LogWarning(message, this);
+        SetBusy(false);
+    }
+
+    private static void Clear(List<GameObject> rows)
+    {
+        foreach (GameObject row in rows) if (row != null) Destroy(row);
+        rows.Clear();
+    }
 }
