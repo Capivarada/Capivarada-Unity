@@ -40,7 +40,7 @@ public class MatchUI : MonoBehaviour
     [SerializeField] private RoundManager roundManager;
     [SerializeField] private MatchManager matchManager;
     [SerializeField] private PlayFabMatchManager playFabMatchManager;
-    
+
     private PlayerController humanPlayer;
     private PlayerMatchData playerData;
     private PlayerDeath humanDeath;
@@ -293,7 +293,7 @@ public class MatchUI : MonoBehaviour
             Mathf.FloorToInt(Time.realtimeSinceStartup - matchStartedAt)
         );
     }
-    
+
     private void OnMatchProcessed(
         MatchProcessResult result)
     {
@@ -306,7 +306,7 @@ public class MatchUI : MonoBehaviour
 
         LoadLobby();
     }
-    
+
     private void OnMatchProcessError(string error)
     {
         UnsubscribePlayFabEvents();
@@ -321,7 +321,7 @@ public class MatchUI : MonoBehaviour
         // 2. mostra erro
         // 3. permite voltar mesmo assim
     }
-    
+
     private void UnsubscribePlayFabEvents()
     {
         if (playFabMatchManager == null)
@@ -375,7 +375,7 @@ public class MatchUI : MonoBehaviour
         titleAnimationPlayedWhileVisible = true;
         displayedTitle = title;
         if (titleContainerAnimator != null) { titleContainerAnimator.Rebind(); titleContainerAnimator.Play(0, 0, 0f); }
-       
+
     }
 
     private void UpdateCountdown(float time)
