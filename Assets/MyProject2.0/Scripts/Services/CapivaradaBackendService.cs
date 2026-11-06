@@ -31,13 +31,19 @@ public sealed class CapivaradaBackendService : MonoBehaviour
 
     public void Post<TRequest, TResponse>(string route, TRequest body, Action<TResponse> succeeded, Action<string> failed)
     {
-        StartCoroutine(Send("POST", route, JsonUtility.ToJson(body), succeeded, failed));
+        StartCoroutine(Send("POST", route, JsonUtility.ToJson(body), succeeded, failed, true));
     }
 
-    private IEnumerator Send<T>(string method, string route, string json, Action<T> succeeded, Action<string> failed)
+    /// <summary>Only for public endpoints that must run before an authenticated session exists.</summary>
+    public void PostPublic<TRequest, TResponse>(string route, TRequest body, Action<TResponse> succeeded, Action<string> failed)
+    {
+        StartCoroutine(Send("POST", route, JsonUtility.ToJson(body), succeeded, failed, false));
+    }
+
+    private IEnumerator Send<T>(string method, string route, string json, Action<T> succeeded, Action<string> failed, bool requiresAuthentication = true)
     {
         string ticket = PlayFabSettings.staticPlayer.ClientSessionTicket;
-        if (string.IsNullOrWhiteSpace(ticket))
+        if (requiresAuthentication && string.IsNullOrWhiteSpace(ticket))
         {
             failed?.Invoke("Você precisa estar autenticado para usar este serviço.");
             yield break;
@@ -50,13 +56,13 @@ public sealed class CapivaradaBackendService : MonoBehaviour
         };
 
         request.SetRequestHeader("Accept", "application/json");
-        request.SetRequestHeader("X-PlayFab-SessionTicket", ticket);
-        if (!string.IsNullOrWhiteSpace(PlayFabSettings.staticPlayer.EntityToken))
-            request.SetRequestHeader("X-PlayFab-EntityToken", PlayFabSettings.staticPlayer.EntityToken);
-        if (!string.IsNullOrWhiteSpace(PlayFabSettings.staticPlayer.EntityId))
-            request.SetRequestHeader("X-PlayFab-EntityId", PlayFabSettings.staticPlayer.EntityId);
-        if (!string.IsNullOrWhiteSpace(PlayFabSettings.staticPlayer.EntityType))
-            request.SetRequestHeader("X-PlayFab-EntityType", PlayFabSettings.staticPlayer.EntityType);
+        if (requiresAuthentication)
+        {
+            request.SetRequestHeader("X-PlayFab-SessionTicket", ticket);
+            if (!string.IsNullOrWhiteSpace(PlayFabSettings.staticPlayer.EntityToken)) request.SetRequestHeader("X-PlayFab-EntityToken", PlayFabSettings.staticPlayer.EntityToken);
+            if (!string.IsNullOrWhiteSpace(PlayFabSettings.staticPlayer.EntityId)) request.SetRequestHeader("X-PlayFab-EntityId", PlayFabSettings.staticPlayer.EntityId);
+            if (!string.IsNullOrWhiteSpace(PlayFabSettings.staticPlayer.EntityType)) request.SetRequestHeader("X-PlayFab-EntityType", PlayFabSettings.staticPlayer.EntityType);
+        }
         if (!string.IsNullOrWhiteSpace(json))
         {
             request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
