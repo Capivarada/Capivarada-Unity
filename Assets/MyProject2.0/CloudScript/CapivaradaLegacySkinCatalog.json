@@ -1,0 +1,986 @@
+{
+    "CatalogVersion": "CapivaradaSkins",
+    "SetAsDefaultCatalog": false,
+    "Catalog": [
+        {
+            "ItemId": "ameixa",
+            "DisplayName": "Ameixa",
+            "Description": "Skin de capivara: Ameixa",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "areia",
+            "DisplayName": "Areia",
+            "Description": "Skin de capivara: Areia",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "argila",
+            "DisplayName": "Argila",
+            "Description": "Skin de capivara: Argila",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "avela",
+            "DisplayName": "Avela",
+            "Description": "Skin de capivara: Avela",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "azul",
+            "DisplayName": "Azul",
+            "Description": "Skin de capivara: Azul",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "barro",
+            "DisplayName": "Barro",
+            "Description": "Skin de capivara: Barro",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "baunilha",
+            "DisplayName": "Baunilha",
+            "Description": "Skin de capivara: Baunilha",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "brisa",
+            "DisplayName": "Brisa",
+            "Description": "Skin de capivara: Brisa",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "cacau",
+            "DisplayName": "Cacau",
+            "Description": "Skin de capivara: Cacau",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "cafe",
+            "DisplayName": "Cafe",
+            "Description": "Skin de capivara: Cafe",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "canela",
+            "DisplayName": "Canela",
+            "Description": "Skin de capivara: Canela",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "ceu",
+            "DisplayName": "Ceu",
+            "Description": "Skin de capivara: Ceu",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "chuva",
+            "DisplayName": "Chuva",
+            "Description": "Skin de capivara: Chuva",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "cobre",
+            "DisplayName": "Cobre",
+            "Description": "Skin de capivara: Cobre",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "coral",
+            "DisplayName": "Coral",
+            "Description": "Skin de capivara: Coral",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "creme",
+            "DisplayName": "Creme",
+            "Description": "Skin de capivara: Creme",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "folha",
+            "DisplayName": "Folha",
+            "Description": "Skin de capivara: Folha",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "lago",
+            "DisplayName": "Lago",
+            "Description": "Skin de capivara: Lago",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "lima",
+            "DisplayName": "Lima",
+            "Description": "Skin de capivara: Lima",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "mel",
+            "DisplayName": "Mel",
+            "Description": "Skin de capivara: Mel",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "musgo",
+            "DisplayName": "Musgo",
+            "Description": "Skin de capivara: Musgo",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "noz",
+            "DisplayName": "Noz",
+            "Description": "Skin de capivara: Noz",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "oliva",
+            "DisplayName": "Oliva",
+            "Description": "Skin de capivara: Oliva",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "padrao",
+            "DisplayName": "Padrão",
+            "Description": "Skin de capivara: Padrão",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "pessego",
+            "DisplayName": "Pessego",
+            "Description": "Skin de capivara: Pessego",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "porDoSol",
+            "DisplayName": "Por do Sol",
+            "Description": "Skin de capivara: Por do Sol",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "rosa",
+            "DisplayName": "Rosa",
+            "Description": "Skin de capivara: Rosa",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "roxo",
+            "DisplayName": "Roxo",
+            "Description": "Skin de capivara: Roxo",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "verde",
+            "DisplayName": "Verde",
+            "Description": "Skin de capivara: Verde",
+            "Tags": [
+                "skin",
+                "Comum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "abobora",
+            "DisplayName": "Abobora",
+            "Description": "Skin de capivara: Abobora",
+            "Tags": [
+                "skin",
+                "Incomum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "ametista",
+            "DisplayName": "Ametista",
+            "Description": "Skin de capivara: Ametista",
+            "Tags": [
+                "skin",
+                "Incomum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "aurora",
+            "DisplayName": "Aurora",
+            "Description": "Skin de capivara: Aurora",
+            "Tags": [
+                "skin",
+                "Incomum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "basalto",
+            "DisplayName": "Basalto",
+            "Description": "Skin de capivara: Basalto",
+            "Tags": [
+                "skin",
+                "Incomum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "cereja",
+            "DisplayName": "Cereja",
+            "Description": "Skin de capivara: Cereja",
+            "Tags": [
+                "skin",
+                "Incomum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "granada",
+            "DisplayName": "Granada",
+            "Description": "Skin de capivara: Granada",
+            "Tags": [
+                "skin",
+                "Incomum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "hortensia",
+            "DisplayName": "Hortensia",
+            "Description": "Skin de capivara: Hortensia",
+            "Tags": [
+                "skin",
+                "Incomum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "jade",
+            "DisplayName": "Jade",
+            "Description": "Skin de capivara: Jade",
+            "Tags": [
+                "skin",
+                "Incomum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "laguna",
+            "DisplayName": "Laguna",
+            "Description": "Skin de capivara: Laguna",
+            "Tags": [
+                "skin",
+                "Incomum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "menta",
+            "DisplayName": "Menta",
+            "Description": "Skin de capivara: Menta",
+            "Tags": [
+                "skin",
+                "Incomum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "oceano",
+            "DisplayName": "Oceano",
+            "Description": "Skin de capivara: Oceano",
+            "Tags": [
+                "skin",
+                "Incomum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "onix",
+            "DisplayName": "Onix",
+            "Description": "Skin de capivara: Onix",
+            "Tags": [
+                "skin",
+                "Incomum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "orquidea",
+            "DisplayName": "Orquidea",
+            "Description": "Skin de capivara: Orquidea",
+            "Tags": [
+                "skin",
+                "Incomum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "quartzo",
+            "DisplayName": "Quartzo",
+            "Description": "Skin de capivara: Quartzo",
+            "Tags": [
+                "skin",
+                "Incomum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "safira",
+            "DisplayName": "Safira",
+            "Description": "Skin de capivara: Safira",
+            "Tags": [
+                "skin",
+                "Incomum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "salvia",
+            "DisplayName": "Salvia",
+            "Description": "Skin de capivara: Salvia",
+            "Tags": [
+                "skin",
+                "Incomum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "tempestade",
+            "DisplayName": "Tempestade",
+            "Description": "Skin de capivara: Tempestade",
+            "Tags": [
+                "skin",
+                "Incomum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "topazio",
+            "DisplayName": "Topazio",
+            "Description": "Skin de capivara: Topazio",
+            "Tags": [
+                "skin",
+                "Incomum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "turquesa",
+            "DisplayName": "Turquesa",
+            "Description": "Skin de capivara: Turquesa",
+            "Tags": [
+                "skin",
+                "Incomum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "vinho",
+            "DisplayName": "Vinho",
+            "Description": "Skin de capivara: Vinho",
+            "Tags": [
+                "skin",
+                "Incomum"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "abyssal",
+            "DisplayName": "Abyssal",
+            "Description": "Skin de capivara: Abyssal",
+            "Tags": [
+                "skin",
+                "Raro"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "amanhecer",
+            "DisplayName": "Amanhecer",
+            "Description": "Skin de capivara: Amanhecer",
+            "Tags": [
+                "skin",
+                "Raro"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "aquaReal",
+            "DisplayName": "Aqua Real",
+            "Description": "Skin de capivara: Aqua Real",
+            "Tags": [
+                "skin",
+                "Raro"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "auroraBoreal",
+            "DisplayName": "Aurora Boreal",
+            "Description": "Skin de capivara: Aurora Boreal",
+            "Tags": [
+                "skin",
+                "Raro"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "cometa",
+            "DisplayName": "Cometa",
+            "Description": "Skin de capivara: Cometa",
+            "Tags": [
+                "skin",
+                "Raro"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "cristal",
+            "DisplayName": "Cristal",
+            "Description": "Skin de capivara: Cristal",
+            "Tags": [
+                "skin",
+                "Raro"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "eclipse",
+            "DisplayName": "Eclipse",
+            "Description": "Skin de capivara: Eclipse",
+            "Tags": [
+                "skin",
+                "Raro"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "fenix",
+            "DisplayName": "Fenix",
+            "Description": "Skin de capivara: Fenix",
+            "Tags": [
+                "skin",
+                "Raro"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "fosforo",
+            "DisplayName": "Fosforo",
+            "Description": "Skin de capivara: Fosforo",
+            "Tags": [
+                "skin",
+                "Raro"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "galaxia",
+            "DisplayName": "Galaxia",
+            "Description": "Skin de capivara: Galaxia",
+            "Tags": [
+                "skin",
+                "Raro"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "glacial",
+            "DisplayName": "Glacial",
+            "Description": "Skin de capivara: Glacial",
+            "Tags": [
+                "skin",
+                "Raro"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "jardimLunar",
+            "DisplayName": "Jardim Lunar",
+            "Description": "Skin de capivara: Jardim Lunar",
+            "Tags": [
+                "skin",
+                "Raro"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "mareAlta",
+            "DisplayName": "Mare Alta",
+            "Description": "Skin de capivara: Mare Alta",
+            "Tags": [
+                "skin",
+                "Raro"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "miragem",
+            "DisplayName": "Miragem",
+            "Description": "Skin de capivara: Miragem",
+            "Tags": [
+                "skin",
+                "Raro"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "nebulosa",
+            "DisplayName": "Nebulosa",
+            "Description": "Skin de capivara: Nebulosa",
+            "Tags": [
+                "skin",
+                "Raro"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "plasma",
+            "DisplayName": "Plasma",
+            "Description": "Skin de capivara: Plasma",
+            "Tags": [
+                "skin",
+                "Raro"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "raioAzul",
+            "DisplayName": "Raio Azul",
+            "Description": "Skin de capivara: Raio Azul",
+            "Tags": [
+                "skin",
+                "Raro"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "sereia",
+            "DisplayName": "Sereia",
+            "Description": "Skin de capivara: Sereia",
+            "Tags": [
+                "skin",
+                "Raro"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "sombraVioleta",
+            "DisplayName": "Sombra Violeta",
+            "Description": "Skin de capivara: Sombra Violeta",
+            "Tags": [
+                "skin",
+                "Raro"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "vulcao",
+            "DisplayName": "Vulcao",
+            "Description": "Skin de capivara: Vulcao",
+            "Tags": [
+                "skin",
+                "Raro"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "astral",
+            "DisplayName": "Astral",
+            "Description": "Skin de capivara: Astral",
+            "Tags": [
+                "skin",
+                "Epico"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "cavaleiroCobalto",
+            "DisplayName": "Cavaleiro Cobalto",
+            "Description": "Skin de capivara: Cavaleiro Cobalto",
+            "Tags": [
+                "skin",
+                "Epico"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "chamaEsmeralda",
+            "DisplayName": "Chama Esmeralda",
+            "Description": "Skin de capivara: Chama Esmeralda",
+            "Tags": [
+                "skin",
+                "Epico"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "cometaRubi",
+            "DisplayName": "Cometa Rubi",
+            "Description": "Skin de capivara: Cometa Rubi",
+            "Tags": [
+                "skin",
+                "Epico"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "coroaSolar",
+            "DisplayName": "Coroa Solar",
+            "Description": "Skin de capivara: Coroa Solar",
+            "Tags": [
+                "skin",
+                "Epico"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "dragaoDeJade",
+            "DisplayName": "Dragao de Jade",
+            "Description": "Skin de capivara: Dragao de Jade",
+            "Tags": [
+                "skin",
+                "Epico"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "florestaEncantada",
+            "DisplayName": "Floresta Encantada",
+            "Description": "Skin de capivara: Floresta Encantada",
+            "Tags": [
+                "skin",
+                "Epico"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "guardiaoPolar",
+            "DisplayName": "Guardiao Polar",
+            "Description": "Skin de capivara: Guardiao Polar",
+            "Tags": [
+                "skin",
+                "Epico"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "imperatrizLilas",
+            "DisplayName": "Imperatriz Lilas",
+            "Description": "Skin de capivara: Imperatriz Lilas",
+            "Tags": [
+                "skin",
+                "Epico"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "lendaDourada",
+            "DisplayName": "Lenda Dourada",
+            "Description": "Skin de capivara: Lenda Dourada",
+            "Tags": [
+                "skin",
+                "Epico"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "lotusObsidiana",
+            "DisplayName": "Lotus Obsidiana",
+            "Description": "Skin de capivara: Lotus Obsidiana",
+            "Tags": [
+                "skin",
+                "Epico"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "noiteNeon",
+            "DisplayName": "Noite Neon",
+            "Description": "Skin de capivara: Noite Neon",
+            "Tags": [
+                "skin",
+                "Epico"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "prata",
+            "DisplayName": "Prata",
+            "Description": "Skin de capivara: Prata",
+            "Tags": [
+                "skin",
+                "Epico"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "reinoCoral",
+            "DisplayName": "Reino Coral",
+            "Description": "Skin de capivara: Reino Coral",
+            "Tags": [
+                "skin",
+                "Epico"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "tempestadeReal",
+            "DisplayName": "Tempestade Real",
+            "Description": "Skin de capivara: Tempestade Real",
+            "Tags": [
+                "skin",
+                "Epico"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "ventoArcano",
+            "DisplayName": "Vento Arcano",
+            "Description": "Skin de capivara: Vento Arcano",
+            "Tags": [
+                "skin",
+                "Epico"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "auroraSuprema",
+            "DisplayName": "Aurora Suprema",
+            "Description": "Skin de capivara: Aurora Suprema",
+            "Tags": [
+                "skin",
+                "Lendario"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "fenixImperial",
+            "DisplayName": "Fenix Imperial",
+            "Description": "Skin de capivara: Fenix Imperial",
+            "Tags": [
+                "skin",
+                "Lendario"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "herdeiroDasEstrelas",
+            "DisplayName": "Herdeiro das Estrelas",
+            "Description": "Skin de capivara: Herdeiro das Estrelas",
+            "Tags": [
+                "skin",
+                "Lendario"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "imperadorOnix",
+            "DisplayName": "Imperador Onix",
+            "Description": "Skin de capivara: Imperador Onix",
+            "Tags": [
+                "skin",
+                "Lendario"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "leviata",
+            "DisplayName": "Leviata",
+            "Description": "Skin de capivara: Leviata",
+            "Tags": [
+                "skin",
+                "Lendario"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "oraculo",
+            "DisplayName": "Oraculo",
+            "Description": "Skin de capivara: Oraculo",
+            "Tags": [
+                "skin",
+                "Lendario"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "reiMidas",
+            "DisplayName": "Rei Midas",
+            "Description": "Skin de capivara: Rei Midas",
+            "Tags": [
+                "skin",
+                "Lendario"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "serpenteCeleste",
+            "DisplayName": "Serpente Celeste",
+            "Description": "Skin de capivara: Serpente Celeste",
+            "Tags": [
+                "skin",
+                "Lendario"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "solsticio",
+            "DisplayName": "Solsticio",
+            "Description": "Skin de capivara: Solsticio",
+            "Tags": [
+                "skin",
+                "Lendario"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "titanioReal",
+            "DisplayName": "Titanio Real",
+            "Description": "Skin de capivara: Titanio Real",
+            "Tags": [
+                "skin",
+                "Lendario"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "capivaraCosmica",
+            "DisplayName": "Capivara Cosmica",
+            "Description": "Skin de capivara: Capivara Cosmica",
+            "Tags": [
+                "skin",
+                "Mitico"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "deusaDoRio",
+            "DisplayName": "Deusa do Rio",
+            "Description": "Skin de capivara: Deusa do Rio",
+            "Tags": [
+                "skin",
+                "Mitico"
+            ],
+            "CanBecomeCharacter": false
+        },
+        {
+            "ItemId": "lendaPrimordial",
+            "DisplayName": "Lenda Primordial",
+            "Description": "Skin de capivara: Lenda Primordial",
+            "Tags": [
+                "skin",
+                "Mitico"
+            ],
+            "CanBecomeCharacter": false
+        }
+    ]
+}

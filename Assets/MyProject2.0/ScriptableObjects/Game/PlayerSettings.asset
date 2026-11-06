@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9315cbc01201b9eb8c959629ddbd3c8, type: 3}
+  m_Name: PlayerSettings
+  m_EditorClassIdentifier: 
+  minCharge: 0
+  maxCharge: 5
+  impulseForce: 4.5
+  rotationSpeed: 15
+  minimumImpactVelocity: 0.1
+  collisionCooldown: 0.05
+  knockbackMultiplier: 1
+  maxKnockbackVelocity: 12

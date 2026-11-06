@@ -1,0 +1,214 @@
+// PlayFab CloudScript v1. Publish this entire file manually in Game Manager.
+// Important: classic CloudScript + User ReadOnly Data has no transaction/CAS across fields.
+// Receipts make responses recoverable, but do not provide strong exactly-once settlement under concurrent execution.
+// Authoritative config must be set in Title Internal Data key "CapivaradaEconomyConfig".
+// Export Assets/MyProject/CloudScript/CapivaradaEconomyConfig.json from Unity after changing the SkinCatalog or boxes.
+// Expected JSON schema (replace every <...> with an actual stable asset ID):
+// {"boxes":[{"id":"<BOX_ID>","price":100,"available":true,"drops":[{"rarity":"Comum","chance":100,"skinIds":["<SKIN_ID>"]}]}],
+//  "duplicatePoints":{"Comum":10,"Incomum":20,"Raro":40,"Epico":80,"Lendario":160,"Mitico":320}}
+
+var DATA_KEYS = { points: "Points", equipped: "EquippedSkinId", xp: "CurrentXP", level: "Level", matches: "ProcessedMatchIds", playTime: "PlayTimeSeconds", lifetime: "LifetimeStats" };
+var INTERNAL_KEYS = { requests: "EconomyRequestReceipts", activeMatch: "ActiveMatchState" };
+var DEFAULT_SKIN_ID = "padrao"; // Skin_Default asset ContentId
+var LEGACY_CATALOG_VERSION = "CapivaradaSkins";
+var MAX_RECEIPTS = 40;
+var MAX_MATCH_HISTORY = 3;
+var MAX_MATCH_DURATION_SECONDS = 14400;
+var MAX_MATCH_ROUNDS = 10;
+var MAX_MATCH_KILLS = 8;
+
+function readData(keys) {
+    var response = server.GetUserReadOnlyData({ PlayFabId: currentPlayerId, Keys: keys });
+    return response.Data || {};
+}
+function readInternal(keys) { var response = server.GetUserInternalData({ PlayFabId: currentPlayerId, Keys: keys }); return response.Data || {}; }
+function readString(data, key, fallback) { return data[key] && data[key].Value !== undefined ? data[key].Value : fallback; }
+function readNumber(data, key, fallback) { var n = Number(readString(data, key, fallback)); return isFinite(n) ? n : fallback; }
+function readJson(data, key, fallback) { try { return JSON.parse(readString(data, key, JSON.stringify(fallback))); } catch (e) { return fallback; } }
+function uniqueStrings(values) { var output = [], seen = {}; (values || []).forEach(function (v) { if (typeof v === "string" && v && !seen[v]) { seen[v] = true; output.push(v); } }); return output; }
+function playerEconomy() {
+    var data = readData([DATA_KEYS.points, DATA_KEYS.equipped]);
+    var internal = readInternal([INTERNAL_KEYS.requests]);
+    var inventory = server.GetUserInventory({ PlayFabId: currentPlayerId });
+    var skins = uniqueStrings((inventory.Inventory || []).filter(function (item) { return item.CatalogVersion === LEGACY_CATALOG_VERSION; }).map(function (item) { return item.ItemId; }));
+    if (skins.indexOf(DEFAULT_SKIN_ID) < 0) { server.GrantItemsToUser({ PlayFabId: currentPlayerId, CatalogVersion: LEGACY_CATALOG_VERSION, ItemIds: [DEFAULT_SKIN_ID] }); skins.unshift(DEFAULT_SKIN_ID); }
+    var equipped = readString(data, DATA_KEYS.equipped, DEFAULT_SKIN_ID);
+    if (skins.indexOf(equipped) < 0) equipped = DEFAULT_SKIN_ID;
+    return { data: data, internal: internal, points: Math.max(0, readNumber(data, DATA_KEYS.points, 0)), skins: skins, equipped: equipped };
+}
+function saveEconomy(economy) {
+    server.UpdateUserReadOnlyData({ PlayFabId: currentPlayerId, Data: {
+        Points: String(Math.max(0, economy.points)), EquippedSkinId: economy.equipped
+    }});
+}
+function saveEconomyWithPurchaseReceipt(economy, receipts) {
+    server.UpdateUserReadOnlyData({ PlayFabId: currentPlayerId, Data: {
+        Points: String(Math.max(0, economy.points)), EquippedSkinId: economy.equipped
+    }});
+    server.UpdateUserInternalData({ PlayFabId: currentPlayerId, Data: { EconomyRequestReceipts: JSON.stringify(receipts) } });
+}
+function getConfig() {
+    var response = server.GetTitleInternalData({ Keys: ["CapivaradaEconomyConfig"] });
+    if (!response.Data || !response.Data.CapivaradaEconomyConfig) throw "Configuração de economia ausente.";
+    try { return JSON.parse(response.Data.CapivaradaEconomyConfig); }
+    catch (e) { throw "Configuração de economia inválida."; }
+}
+// Content IDs are human-readable camelCase (for example, "azul" and "roxo").
+// Do not require a UUID-length identifier here.
+function isValidId(value) { return typeof value === "string" && /^[a-zA-Z0-9_-]{1,128}$/.test(value); }
+function trimReceipts(receipts) { return (receipts || []).slice(-MAX_RECEIPTS); }
+function trimHistory(history) { return (history || []).slice(-MAX_MATCH_HISTORY); }
+function receipt(data, key, id) { var values = readJson(data, key, []); for (var i = 0; i < values.length; i++) if (values[i].id === id) return values[i]; return null; }
+function appendReceipt(data, key, value) { var values = readJson(data, key, []); values.push(value); return trimReceipts(values); }
+function updateReceipts(key, values) { var d = {}; d[key] = JSON.stringify(values); server.UpdateUserInternalData({ PlayFabId: currentPlayerId, Data: d }); }
+function chooseReward(box) {
+    var eligible = [], total = 0;
+    (box.drops || []).forEach(function (drop) {
+        var skins = uniqueStrings(drop.skinIds || []);
+        var chance = Number(drop.chance);
+        if (chance > 0 && skins.length) { eligible.push({ rarity: String(drop.rarity), chance: chance, skinIds: skins }); total += chance; }
+    });
+    if (total <= 0) throw "Caixa sem recompensas válidas.";
+    var roll = Math.random() * total, selected = eligible[eligible.length - 1];
+    for (var i = 0; i < eligible.length; i++) { roll -= eligible[i].chance; if (roll <= 0) { selected = eligible[i]; break; } }
+    return { rarity: selected.rarity, skinId: selected.skinIds[Math.floor(Math.random() * selected.skinIds.length)] };
+}
+
+handlers.GetPlayerEconomy = function () {
+    var economy = playerEconomy();
+    // Writes the permanent default only when it was missing.
+    if (!economy.data[DATA_KEYS.equipped]) saveEconomy(economy);
+    return { success: true, points: economy.points, ownedSkinIds: economy.skins, equippedSkinId: economy.equipped };
+};
+
+handlers.EquipSkin = function (args) {
+    if (!args || !isValidId(args.skinId)) throw "Skin inválida.";
+    var economy = playerEconomy();
+    if (economy.skins.indexOf(args.skinId) < 0) throw "A skin não pertence ao jogador.";
+    economy.equipped = args.skinId;
+    saveEconomy(economy);
+    return { success: true, equippedSkinId: economy.equipped, ownedSkinIds: economy.skins, points: economy.points };
+};
+
+handlers.PurchaseSkinBox = function (args) {
+    try {
+    if (!args || !isValidId(args.boxId) || !isValidId(args.requestId)) throw "Pedido de compra inválido.";
+    var economy = playerEconomy();
+    var previous = receipt(economy.internal, INTERNAL_KEYS.requests, args.requestId);
+    if (previous) return previous.result;
+
+    var config = getConfig(), box = null;
+    (config.boxes || []).forEach(function (candidate) { if (candidate && candidate.id === args.boxId) box = candidate; });
+    if (!box || box.available === false) throw "Caixa indisponível.";
+    var price = Number(box.price);
+    if (!isFinite(price) || price < 0) throw "Preço de caixa inválido.";
+    if (economy.points < price) throw "Pontos insuficientes.";
+
+    var reward = chooseReward(box);
+    economy.points -= price;
+    var duplicate = economy.skins.indexOf(reward.skinId) >= 0;
+    var duplicatePoints = duplicate ? Number((config.duplicatePoints || {})[reward.rarity] || 0) : 0;
+    if (!isFinite(duplicatePoints) || duplicatePoints < 0) throw "Conversão de duplicata inválida.";
+    if (duplicate) economy.points += duplicatePoints; else { server.GrantItemsToUser({ PlayFabId: currentPlayerId, CatalogVersion: LEGACY_CATALOG_VERSION, ItemIds: [reward.skinId] }); economy.skins.push(reward.skinId); }
+    var result = { success: true, requestId: args.requestId, skinId: reward.skinId, rarity: reward.rarity, isDuplicate: duplicate, duplicatePoints: duplicatePoints, points: economy.points };
+    saveEconomyWithPurchaseReceipt(economy, appendReceipt(economy.internal, INTERNAL_KEYS.requests, { id: args.requestId, result: result }));
+    return result;
+    } catch (error) { return { success: false, error: "Compra falhou: " + error }; }
+};
+
+// Recovery endpoint: querying this must never start or repeat a purchase.
+handlers.GetPurchaseResult = function (args) {
+    if (!args || !isValidId(args.requestId)) throw "Pedido de compra inválido.";
+    var data = readInternal([INTERNAL_KEYS.requests]);
+    var previous = receipt(data, INTERNAL_KEYS.requests, args.requestId);
+    if (previous && previous.result) {
+        previous.result.found = true;
+        return previous.result;
+    }
+    return { success: true, found: false, requestId: args.requestId };
+};
+
+// Match progress is recorded while the match is running. The final settlement
+// therefore reads kills and survived rounds from the server state, not from the
+// final client payload. Calls must be queued by the game client.
+handlers.StartMatchTracking = function (args) {
+    if (!args || !isValidId(args.matchId)) throw "Partida inválida.";
+    var data = readData([DATA_KEYS.matches]); var internal = readInternal([INTERNAL_KEYS.activeMatch]);
+    if (receipt(data, DATA_KEYS.matches, args.matchId)) return { success: true, completed: true };
+    var active = readJson(internal, INTERNAL_KEYS.activeMatch, null);
+    if (active && active.id && active.id !== args.matchId) throw "Já existe uma partida ativa.";
+    if (!active || active.id !== args.matchId) {
+        active = { id: args.matchId, kills: 0, rounds: 0, startedAt: Date.now() };
+        server.UpdateUserInternalData({ PlayFabId: currentPlayerId, Data: { ActiveMatchState: JSON.stringify(active) } });
+    }
+    return { success: true, matchId: active.id, kills: active.kills, roundsSurvived: active.rounds };
+};
+
+handlers.RecordMatchEvent = function (args) {
+    if (!args || !isValidId(args.matchId) || (args.type !== "kill" && args.type !== "round")) throw "Evento de partida inválido.";
+    var data = readInternal([INTERNAL_KEYS.activeMatch]);
+    var active = readJson(data, INTERNAL_KEYS.activeMatch, null);
+    if (!active || active.id !== args.matchId) throw "Partida ativa não encontrada.";
+    if (args.type === "kill") active.kills = Math.min(MAX_MATCH_KILLS, Math.max(0, Number(active.kills) || 0) + 1);
+    else active.rounds = Math.min(MAX_MATCH_ROUNDS, Math.max(0, Number(active.rounds) || 0) + 1);
+    server.UpdateUserInternalData({ PlayFabId: currentPlayerId, Data: { ActiveMatchState: JSON.stringify(active) } });
+    return { success: true, matchId: active.id, kills: active.kills, roundsSurvived: active.rounds };
+};
+
+handlers.ProcessMatchResult = function (args) {
+    if (!args || !isValidId(args.matchId)) throw "Resultado de partida inválido.";
+    var placement = Number(args.placement), duration = args.durationSeconds === undefined ? 0 : Number(args.durationSeconds), won = args.won === true;
+    if (!isFinite(placement) || placement < 1 || !isFinite(duration) || duration < 0 || duration > MAX_MATCH_DURATION_SECONDS) throw "Resultado de partida inválido.";
+    placement = Math.floor(placement); duration = Math.floor(duration);
+    var data = readData([DATA_KEYS.xp, DATA_KEYS.level, DATA_KEYS.points, DATA_KEYS.playTime, DATA_KEYS.matches, DATA_KEYS.lifetime]); var internal = readInternal([INTERNAL_KEYS.activeMatch]);
+    var previous = receipt(data, DATA_KEYS.matches, args.matchId);
+    if (previous) return previous.result;
+
+    var active = readJson(internal, INTERNAL_KEYS.activeMatch, null);
+    if (!active || active.id !== args.matchId) throw "Partida ativa não encontrada.";
+    var kills = Math.min(MAX_MATCH_KILLS, Math.max(0, Math.floor(Number(active.kills) || 0)));
+    var rounds = Math.min(MAX_MATCH_ROUNDS, Math.max(0, Math.floor(Number(active.rounds) || 0)));
+
+    // Existing XP formula is preserved exactly.
+    var placementXP = placement === 1 ? 400 : placement === 2 ? 300 : placement === 3 ? 200 : 100;
+    var earnedXP = placementXP + kills * 50 + rounds * 20;
+    var previousXP = Math.max(0, readNumber(data, DATA_KEYS.xp, 0));
+    var previousLevel = Math.max(1, readNumber(data, DATA_KEYS.level, 1));
+    var totalXP = previousXP + earnedXP;
+    var currentLevel = Math.floor(totalXP / 1500) + 1;
+    var levelsGained = Math.max(0, currentLevel - previousLevel);
+    var matchPoints = 10, victoryPoints = won ? 15 : 0, levelPoints = levelsGained * 150, totalPoints = matchPoints + victoryPoints + levelPoints;
+    var newPoints = Math.max(0, readNumber(data, DATA_KEYS.points, 0)) + totalPoints;
+    var playTime = Math.max(0, readNumber(data, DATA_KEYS.playTime, 0)) + duration;
+    var lifetime = readJson(data, DATA_KEYS.lifetime, null);
+    if (!lifetime) {
+        var statResponse = server.GetPlayerStatistics({ PlayFabId: args.playerId });
+        var stats = {}; (statResponse.Statistics || []).forEach(function (stat) { stats[stat.StatisticName] = Number(stat.Value) || 0; });
+        lifetime = { matches: stats.Matches || 0, eliminations: stats.Eliminations || 0, wins: stats.Wins || 0, playTimeSeconds: stats.PlayTimeSeconds || readNumber(data, DATA_KEYS.playTime, 0) };
+    }
+    var matches = Math.max(0, Number(lifetime.matches) || 0) + 1, eliminations = Math.max(0, Number(lifetime.eliminations) || 0) + kills, wins = Math.max(0, Number(lifetime.wins) || 0) + (won ? 1 : 0);
+    server.UpdatePlayerStatistics({ PlayFabId: currentPlayerId, Statistics: [
+        { StatisticName: "Matches", Value: matches }, { StatisticName: "Eliminations", Value: eliminations }, { StatisticName: "Wins", Value: wins }, { StatisticName: "Level", Value: currentLevel }, { StatisticName: "PlayTimeSeconds", Value: playTime }
+    ]});
+    var result = { success: true, won: won, placement: placement,
+        xp: { placement: placementXP, kills: kills * 50, rounds: rounds * 20, earned: earnedXP, previous: previousXP, total: totalXP, required: 1500 },
+        level: { previous: previousLevel, current: currentLevel }, match: { kills: kills, roundsSurvived: rounds },
+        coins: { match: matchPoints, victoryBonus: victoryPoints, levelUp: levelPoints, total: totalPoints, points: newPoints },
+        statistics: { matches: matches, eliminations: eliminations, wins: wins, playTimeSeconds: playTime } };
+    var matchReceipts = trimHistory(appendReceipt(data, DATA_KEYS.matches, { id: args.matchId, result: result, playedAt: new Date().toISOString() }));
+    var permanent = { matches: matches, eliminations: eliminations, wins: wins, playTimeSeconds: playTime };
+    server.UpdateUserReadOnlyData({ PlayFabId: currentPlayerId, Data: { CurrentXP: String(totalXP), Level: String(currentLevel), Points: String(newPoints), PlayTimeSeconds: String(playTime), LifetimeStats: JSON.stringify(permanent), ProcessedMatchIds: JSON.stringify(matchReceipts) } });
+    server.UpdateUserInternalData({ PlayFabId: currentPlayerId, Data: { ActiveMatchState: "" } });
+    return result;
+};
+
+// Safe server-side source for OtherProfile and complete leaderboard rows.
+handlers.GetPublicPlayerProfile = function (args) {
+    if (!args || !isValidId(args.playerId)) throw "Jogador inválido.";
+    var profileData = server.GetUserData({ PlayFabId: args.playerId, Keys: ["profile"] }).Data || {};
+    var profile = readJson(profileData, "profile", {});
+    var data = server.GetUserReadOnlyData({ PlayFabId: args.playerId, Keys: [DATA_KEYS.xp, DATA_KEYS.level, DATA_KEYS.playTime, DATA_KEYS.lifetime, DATA_KEYS.matches, DATA_KEYS.equipped] }).Data || {};
+    var lifetime = readJson(data, DATA_KEYS.lifetime, null);
+    if (!lifetime) { var response = server.GetPlayerStatistics({ PlayFabId: args.playerId }); var stats = {}; (response.Statistics || []).forEach(function (stat) { stats[stat.StatisticName] = Number(stat.Value) || 0; }); lifetime = { matches: stats.Matches || 0, eliminations: stats.Eliminations || 0, wins: stats.Wins || 0, playTimeSeconds: stats.PlayTimeSeconds || 0 }; }
+    return { success: true, playerId: args.playerId, nickname: profile.nickname || "Capivara", avatarId: profile.avatarId || "1", equippedSkinId: readString(data, DATA_KEYS.equipped, DEFAULT_SKIN_ID), level: readNumber(data, DATA_KEYS.level, 1), experience: readNumber(data, DATA_KEYS.xp, 0), experienceToNext: 1500, playTimeSeconds: readNumber(data, DATA_KEYS.playTime, 0), matches: lifetime.matches || 0, eliminations: lifetime.eliminations || 0, wins: lifetime.wins || 0, recentMatches: readJson(data, DATA_KEYS.matches, []) };
+};

@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46b2c83a91b2315429d47e7b0f5ac418, type: 3}
+  m_Name: CommomChest
+  m_EditorClassIdentifier: Assembly-CSharp::WardrobeBox
+  boxId: bauComum
+  boxName: "Ba\xFA Comum"
+  price: 100
+  sprite: {fileID: 21300000, guid: 7541c9ffb0f4db14f9c6a2b1daee7da5, type: 3}
+  visualRarity: 0
+  isAvailable: 1
+  dropRates:
+  - rarity: 0
+    chance: 80
+  - rarity: 1
+    chance: 20

@@ -30,7 +30,7 @@ public sealed class FriendsController : MonoBehaviour
     [SerializeField] private GameObject emptyRequestsState;
     [SerializeField] private FriendRequestRowController receivedRequestPrefab;
     [SerializeField] private FriendRequestRowController sentRequestPrefab;
-
+ 
     [Header("Add friend sidebar (inside FriendsPanel)")]
     [SerializeField] private TMP_InputField addFriendInput;
     [SerializeField] private Button sendRequestButton;

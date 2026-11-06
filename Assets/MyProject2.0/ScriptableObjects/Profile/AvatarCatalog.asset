@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a33b253a7426ca0428a6b59bc345e9bb, type: 3}
+  m_Name: AvatarCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::Capivarada.Profile.AvatarCatalog
+  avatars:
+  - id: avatar1
+    displayName: Capivara 1
+    sprite: {fileID: 21300000, guid: 71dfd289432d5a2428982eeacfa5564c, type: 3}
+  - id: avatar2
+    displayName: Capivara 2
+    sprite: {fileID: 21300000, guid: 585c222e10e9f9f41881170c7e8ad0e8, type: 3}
+  - id: avatar3
+    displayName: Capivara 3
+    sprite: {fileID: 21300000, guid: 20532eebd75d49947af665f670198bb5, type: 3}
+  - id: avatar4
+    displayName: Capivara 4
+    sprite: {fileID: 21300000, guid: 6a217e3728dfacc4eb703176dfe6bcfa, type: 3}
+  - id: avatar5
+    displayName: Capivara 5
+    sprite: {fileID: 21300000, guid: c7b7e6683d57c9647930b06a3a3421dd, type: 3}

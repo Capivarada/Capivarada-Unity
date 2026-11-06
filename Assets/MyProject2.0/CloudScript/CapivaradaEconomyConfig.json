@@ -1,0 +1,1042 @@
+{
+    "boxes": [
+        {
+            "id": "caixaComum",
+            "price": 100,
+            "available": true,
+            "drops": [
+                {
+                    "rarity": "Comum",
+                    "chance": 80.0,
+                    "skinIds": [
+                        "ameixa",
+                        "areia",
+                        "argila",
+                        "avela",
+                        "azul",
+                        "barro",
+                        "baunilha",
+                        "brisa",
+                        "cacau",
+                        "cafe",
+                        "canela",
+                        "ceu",
+                        "chuva",
+                        "cobre",
+                        "coral",
+                        "creme",
+                        "folha",
+                        "lago",
+                        "lima",
+                        "mel",
+                        "musgo",
+                        "noz",
+                        "oliva",
+                        "pessego",
+                        "porDoSol",
+                        "rosa",
+                        "roxo",
+                        "verde"
+                    ]
+                },
+                {
+                    "rarity": "Incomum",
+                    "chance": 20.0,
+                    "skinIds": [
+                        "abobora",
+                        "ametista",
+                        "aurora",
+                        "basalto",
+                        "cereja",
+                        "granada",
+                        "hortensia",
+                        "jade",
+                        "laguna",
+                        "menta",
+                        "oceano",
+                        "onix",
+                        "orquidea",
+                        "quartzo",
+                        "safira",
+                        "salvia",
+                        "tempestade",
+                        "topazio",
+                        "turquesa",
+                        "vinho"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "caixaEpica",
+            "price": 850,
+            "available": true,
+            "drops": [
+                {
+                    "rarity": "Incomum",
+                    "chance": 10.0,
+                    "skinIds": [
+                        "abobora",
+                        "ametista",
+                        "aurora",
+                        "basalto",
+                        "cereja",
+                        "granada",
+                        "hortensia",
+                        "jade",
+                        "laguna",
+                        "menta",
+                        "oceano",
+                        "onix",
+                        "orquidea",
+                        "quartzo",
+                        "safira",
+                        "salvia",
+                        "tempestade",
+                        "topazio",
+                        "turquesa",
+                        "vinho"
+                    ]
+                },
+                {
+                    "rarity": "Raro",
+                    "chance": 30.0,
+                    "skinIds": [
+                        "abyssal",
+                        "amanhecer",
+                        "aquaReal",
+                        "auroraBoreal",
+                        "cometa",
+                        "cristal",
+                        "eclipse",
+                        "fenix",
+                        "fosforo",
+                        "galaxia",
+                        "glacial",
+                        "jardimLunar",
+                        "mareAlta",
+                        "miragem",
+                        "nebulosa",
+                        "plasma",
+                        "raioAzul",
+                        "sereia",
+                        "sombraVioleta",
+                        "vulcao"
+                    ]
+                },
+                {
+                    "rarity": "Epico",
+                    "chance": 50.0,
+                    "skinIds": [
+                        "astral",
+                        "cavaleiroCobalto",
+                        "chamaEsmeralda",
+                        "cometaRubi",
+                        "coroaSolar",
+                        "dragaoDeJade",
+                        "florestaEncantada",
+                        "guardiaoPolar",
+                        "imperatrizLilas",
+                        "lendaDourada",
+                        "lotusObsidiana",
+                        "noiteNeon",
+                        "prata",
+                        "reinoCoral",
+                        "tempestadeReal",
+                        "ventoArcano"
+                    ]
+                },
+                {
+                    "rarity": "Lendario",
+                    "chance": 9.899999618530273,
+                    "skinIds": [
+                        "auroraSuprema",
+                        "fenixImperial",
+                        "herdeiroDasEstrelas",
+                        "imperadorOnix",
+                        "leviata",
+                        "oraculo",
+                        "reiMidas",
+                        "serpenteCeleste",
+                        "solsticio",
+                        "titanioReal"
+                    ]
+                },
+                {
+                    "rarity": "Mitico",
+                    "chance": 0.10000000149011612,
+                    "skinIds": [
+                        "capivaraCosmica",
+                        "deusaDoRio",
+                        "lendaPrimordial"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "caixaIncomum",
+            "price": 250,
+            "available": true,
+            "drops": [
+                {
+                    "rarity": "Comum",
+                    "chance": 50.0,
+                    "skinIds": [
+                        "ameixa",
+                        "areia",
+                        "argila",
+                        "avela",
+                        "azul",
+                        "barro",
+                        "baunilha",
+                        "brisa",
+                        "cacau",
+                        "cafe",
+                        "canela",
+                        "ceu",
+                        "chuva",
+                        "cobre",
+                        "coral",
+                        "creme",
+                        "folha",
+                        "lago",
+                        "lima",
+                        "mel",
+                        "musgo",
+                        "noz",
+                        "oliva",
+                        "pessego",
+                        "porDoSol",
+                        "rosa",
+                        "roxo",
+                        "verde"
+                    ]
+                },
+                {
+                    "rarity": "Incomum",
+                    "chance": 40.0,
+                    "skinIds": [
+                        "abobora",
+                        "ametista",
+                        "aurora",
+                        "basalto",
+                        "cereja",
+                        "granada",
+                        "hortensia",
+                        "jade",
+                        "laguna",
+                        "menta",
+                        "oceano",
+                        "onix",
+                        "orquidea",
+                        "quartzo",
+                        "safira",
+                        "salvia",
+                        "tempestade",
+                        "topazio",
+                        "turquesa",
+                        "vinho"
+                    ]
+                },
+                {
+                    "rarity": "Raro",
+                    "chance": 10.0,
+                    "skinIds": [
+                        "abyssal",
+                        "amanhecer",
+                        "aquaReal",
+                        "auroraBoreal",
+                        "cometa",
+                        "cristal",
+                        "eclipse",
+                        "fenix",
+                        "fosforo",
+                        "galaxia",
+                        "glacial",
+                        "jardimLunar",
+                        "mareAlta",
+                        "miragem",
+                        "nebulosa",
+                        "plasma",
+                        "raioAzul",
+                        "sereia",
+                        "sombraVioleta",
+                        "vulcao"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "caixaLendaria",
+            "price": 1500,
+            "available": true,
+            "drops": [
+                {
+                    "rarity": "Raro",
+                    "chance": 24.0,
+                    "skinIds": [
+                        "abyssal",
+                        "amanhecer",
+                        "aquaReal",
+                        "auroraBoreal",
+                        "cometa",
+                        "cristal",
+                        "eclipse",
+                        "fenix",
+                        "fosforo",
+                        "galaxia",
+                        "glacial",
+                        "jardimLunar",
+                        "mareAlta",
+                        "miragem",
+                        "nebulosa",
+                        "plasma",
+                        "raioAzul",
+                        "sereia",
+                        "sombraVioleta",
+                        "vulcao"
+                    ]
+                },
+                {
+                    "rarity": "Epico",
+                    "chance": 55.0,
+                    "skinIds": [
+                        "astral",
+                        "cavaleiroCobalto",
+                        "chamaEsmeralda",
+                        "cometaRubi",
+                        "coroaSolar",
+                        "dragaoDeJade",
+                        "florestaEncantada",
+                        "guardiaoPolar",
+                        "imperatrizLilas",
+                        "lendaDourada",
+                        "lotusObsidiana",
+                        "noiteNeon",
+                        "prata",
+                        "reinoCoral",
+                        "tempestadeReal",
+                        "ventoArcano"
+                    ]
+                },
+                {
+                    "rarity": "Lendario",
+                    "chance": 20.0,
+                    "skinIds": [
+                        "auroraSuprema",
+                        "fenixImperial",
+                        "herdeiroDasEstrelas",
+                        "imperadorOnix",
+                        "leviata",
+                        "oraculo",
+                        "reiMidas",
+                        "serpenteCeleste",
+                        "solsticio",
+                        "titanioReal"
+                    ]
+                },
+                {
+                    "rarity": "Mitico",
+                    "chance": 1.0,
+                    "skinIds": [
+                        "capivaraCosmica",
+                        "deusaDoRio",
+                        "lendaPrimordial"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "caixaMitica",
+            "price": 2500,
+            "available": true,
+            "drops": [
+                {
+                    "rarity": "Epico",
+                    "chance": 60.0,
+                    "skinIds": [
+                        "astral",
+                        "cavaleiroCobalto",
+                        "chamaEsmeralda",
+                        "cometaRubi",
+                        "coroaSolar",
+                        "dragaoDeJade",
+                        "florestaEncantada",
+                        "guardiaoPolar",
+                        "imperatrizLilas",
+                        "lendaDourada",
+                        "lotusObsidiana",
+                        "noiteNeon",
+                        "prata",
+                        "reinoCoral",
+                        "tempestadeReal",
+                        "ventoArcano"
+                    ]
+                },
+                {
+                    "rarity": "Lendario",
+                    "chance": 35.0,
+                    "skinIds": [
+                        "auroraSuprema",
+                        "fenixImperial",
+                        "herdeiroDasEstrelas",
+                        "imperadorOnix",
+                        "leviata",
+                        "oraculo",
+                        "reiMidas",
+                        "serpenteCeleste",
+                        "solsticio",
+                        "titanioReal"
+                    ]
+                },
+                {
+                    "rarity": "Mitico",
+                    "chance": 5.0,
+                    "skinIds": [
+                        "capivaraCosmica",
+                        "deusaDoRio",
+                        "lendaPrimordial"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "caixaRara",
+            "price": 500,
+            "available": true,
+            "drops": [
+                {
+                    "rarity": "Comum",
+                    "chance": 20.0,
+                    "skinIds": [
+                        "ameixa",
+                        "areia",
+                        "argila",
+                        "avela",
+                        "azul",
+                        "barro",
+                        "baunilha",
+                        "brisa",
+                        "cacau",
+                        "cafe",
+                        "canela",
+                        "ceu",
+                        "chuva",
+                        "cobre",
+                        "coral",
+                        "creme",
+                        "folha",
+                        "lago",
+                        "lima",
+                        "mel",
+                        "musgo",
+                        "noz",
+                        "oliva",
+                        "pessego",
+                        "porDoSol",
+                        "rosa",
+                        "roxo",
+                        "verde"
+                    ]
+                },
+                {
+                    "rarity": "Incomum",
+                    "chance": 30.0,
+                    "skinIds": [
+                        "abobora",
+                        "ametista",
+                        "aurora",
+                        "basalto",
+                        "cereja",
+                        "granada",
+                        "hortensia",
+                        "jade",
+                        "laguna",
+                        "menta",
+                        "oceano",
+                        "onix",
+                        "orquidea",
+                        "quartzo",
+                        "safira",
+                        "salvia",
+                        "tempestade",
+                        "topazio",
+                        "turquesa",
+                        "vinho"
+                    ]
+                },
+                {
+                    "rarity": "Raro",
+                    "chance": 40.0,
+                    "skinIds": [
+                        "abyssal",
+                        "amanhecer",
+                        "aquaReal",
+                        "auroraBoreal",
+                        "cometa",
+                        "cristal",
+                        "eclipse",
+                        "fenix",
+                        "fosforo",
+                        "galaxia",
+                        "glacial",
+                        "jardimLunar",
+                        "mareAlta",
+                        "miragem",
+                        "nebulosa",
+                        "plasma",
+                        "raioAzul",
+                        "sereia",
+                        "sombraVioleta",
+                        "vulcao"
+                    ]
+                },
+                {
+                    "rarity": "Epico",
+                    "chance": 10.0,
+                    "skinIds": [
+                        "astral",
+                        "cavaleiroCobalto",
+                        "chamaEsmeralda",
+                        "cometaRubi",
+                        "coroaSolar",
+                        "dragaoDeJade",
+                        "florestaEncantada",
+                        "guardiaoPolar",
+                        "imperatrizLilas",
+                        "lendaDourada",
+                        "lotusObsidiana",
+                        "noiteNeon",
+                        "prata",
+                        "reinoCoral",
+                        "tempestadeReal",
+                        "ventoArcano"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "bauComum",
+            "price": 100,
+            "available": true,
+            "drops": [
+                {
+                    "rarity": "Comum",
+                    "chance": 80.0,
+                    "skinIds": [
+                        "ameixa",
+                        "areia",
+                        "argila",
+                        "avela",
+                        "azul",
+                        "barro",
+                        "baunilha",
+                        "brisa",
+                        "cacau",
+                        "cafe",
+                        "canela",
+                        "ceu",
+                        "chuva",
+                        "cobre",
+                        "coral",
+                        "creme",
+                        "folha",
+                        "lago",
+                        "lima",
+                        "mel",
+                        "musgo",
+                        "noz",
+                        "oliva",
+                        "pessego",
+                        "porDoSol",
+                        "rosa",
+                        "roxo",
+                        "verde"
+                    ]
+                },
+                {
+                    "rarity": "Incomum",
+                    "chance": 20.0,
+                    "skinIds": [
+                        "abobora",
+                        "ametista",
+                        "aurora",
+                        "basalto",
+                        "cereja",
+                        "granada",
+                        "hortensia",
+                        "jade",
+                        "laguna",
+                        "menta",
+                        "oceano",
+                        "onix",
+                        "orquidea",
+                        "quartzo",
+                        "safira",
+                        "salvia",
+                        "tempestade",
+                        "topazio",
+                        "turquesa",
+                        "vinho"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "bauEpico",
+            "price": 850,
+            "available": true,
+            "drops": [
+                {
+                    "rarity": "Incomum",
+                    "chance": 10.0,
+                    "skinIds": [
+                        "abobora",
+                        "ametista",
+                        "aurora",
+                        "basalto",
+                        "cereja",
+                        "granada",
+                        "hortensia",
+                        "jade",
+                        "laguna",
+                        "menta",
+                        "oceano",
+                        "onix",
+                        "orquidea",
+                        "quartzo",
+                        "safira",
+                        "salvia",
+                        "tempestade",
+                        "topazio",
+                        "turquesa",
+                        "vinho"
+                    ]
+                },
+                {
+                    "rarity": "Raro",
+                    "chance": 30.0,
+                    "skinIds": [
+                        "abyssal",
+                        "amanhecer",
+                        "aquaReal",
+                        "auroraBoreal",
+                        "cometa",
+                        "cristal",
+                        "eclipse",
+                        "fenix",
+                        "fosforo",
+                        "galaxia",
+                        "glacial",
+                        "jardimLunar",
+                        "mareAlta",
+                        "miragem",
+                        "nebulosa",
+                        "plasma",
+                        "raioAzul",
+                        "sereia",
+                        "sombraVioleta",
+                        "vulcao"
+                    ]
+                },
+                {
+                    "rarity": "Epico",
+                    "chance": 50.0,
+                    "skinIds": [
+                        "astral",
+                        "cavaleiroCobalto",
+                        "chamaEsmeralda",
+                        "cometaRubi",
+                        "coroaSolar",
+                        "dragaoDeJade",
+                        "florestaEncantada",
+                        "guardiaoPolar",
+                        "imperatrizLilas",
+                        "lendaDourada",
+                        "lotusObsidiana",
+                        "noiteNeon",
+                        "prata",
+                        "reinoCoral",
+                        "tempestadeReal",
+                        "ventoArcano"
+                    ]
+                },
+                {
+                    "rarity": "Lendario",
+                    "chance": 9.899999618530273,
+                    "skinIds": [
+                        "auroraSuprema",
+                        "fenixImperial",
+                        "herdeiroDasEstrelas",
+                        "imperadorOnix",
+                        "leviata",
+                        "oraculo",
+                        "reiMidas",
+                        "serpenteCeleste",
+                        "solsticio",
+                        "titanioReal"
+                    ]
+                },
+                {
+                    "rarity": "Mitico",
+                    "chance": 0.10000000149011612,
+                    "skinIds": [
+                        "capivaraCosmica",
+                        "deusaDoRio",
+                        "lendaPrimordial"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "bauIncomum",
+            "price": 250,
+            "available": true,
+            "drops": [
+                {
+                    "rarity": "Comum",
+                    "chance": 50.0,
+                    "skinIds": [
+                        "ameixa",
+                        "areia",
+                        "argila",
+                        "avela",
+                        "azul",
+                        "barro",
+                        "baunilha",
+                        "brisa",
+                        "cacau",
+                        "cafe",
+                        "canela",
+                        "ceu",
+                        "chuva",
+                        "cobre",
+                        "coral",
+                        "creme",
+                        "folha",
+                        "lago",
+                        "lima",
+                        "mel",
+                        "musgo",
+                        "noz",
+                        "oliva",
+                        "pessego",
+                        "porDoSol",
+                        "rosa",
+                        "roxo",
+                        "verde"
+                    ]
+                },
+                {
+                    "rarity": "Incomum",
+                    "chance": 40.0,
+                    "skinIds": [
+                        "abobora",
+                        "ametista",
+                        "aurora",
+                        "basalto",
+                        "cereja",
+                        "granada",
+                        "hortensia",
+                        "jade",
+                        "laguna",
+                        "menta",
+                        "oceano",
+                        "onix",
+                        "orquidea",
+                        "quartzo",
+                        "safira",
+                        "salvia",
+                        "tempestade",
+                        "topazio",
+                        "turquesa",
+                        "vinho"
+                    ]
+                },
+                {
+                    "rarity": "Raro",
+                    "chance": 10.0,
+                    "skinIds": [
+                        "abyssal",
+                        "amanhecer",
+                        "aquaReal",
+                        "auroraBoreal",
+                        "cometa",
+                        "cristal",
+                        "eclipse",
+                        "fenix",
+                        "fosforo",
+                        "galaxia",
+                        "glacial",
+                        "jardimLunar",
+                        "mareAlta",
+                        "miragem",
+                        "nebulosa",
+                        "plasma",
+                        "raioAzul",
+                        "sereia",
+                        "sombraVioleta",
+                        "vulcao"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "bauLendario",
+            "price": 1500,
+            "available": true,
+            "drops": [
+                {
+                    "rarity": "Raro",
+                    "chance": 24.0,
+                    "skinIds": [
+                        "abyssal",
+                        "amanhecer",
+                        "aquaReal",
+                        "auroraBoreal",
+                        "cometa",
+                        "cristal",
+                        "eclipse",
+                        "fenix",
+                        "fosforo",
+                        "galaxia",
+                        "glacial",
+                        "jardimLunar",
+                        "mareAlta",
+                        "miragem",
+                        "nebulosa",
+                        "plasma",
+                        "raioAzul",
+                        "sereia",
+                        "sombraVioleta",
+                        "vulcao"
+                    ]
+                },
+                {
+                    "rarity": "Epico",
+                    "chance": 55.0,
+                    "skinIds": [
+                        "astral",
+                        "cavaleiroCobalto",
+                        "chamaEsmeralda",
+                        "cometaRubi",
+                        "coroaSolar",
+                        "dragaoDeJade",
+                        "florestaEncantada",
+                        "guardiaoPolar",
+                        "imperatrizLilas",
+                        "lendaDourada",
+                        "lotusObsidiana",
+                        "noiteNeon",
+                        "prata",
+                        "reinoCoral",
+                        "tempestadeReal",
+                        "ventoArcano"
+                    ]
+                },
+                {
+                    "rarity": "Lendario",
+                    "chance": 20.0,
+                    "skinIds": [
+                        "auroraSuprema",
+                        "fenixImperial",
+                        "herdeiroDasEstrelas",
+                        "imperadorOnix",
+                        "leviata",
+                        "oraculo",
+                        "reiMidas",
+                        "serpenteCeleste",
+                        "solsticio",
+                        "titanioReal"
+                    ]
+                },
+                {
+                    "rarity": "Mitico",
+                    "chance": 1.0,
+                    "skinIds": [
+                        "capivaraCosmica",
+                        "deusaDoRio",
+                        "lendaPrimordial"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "bauMitico",
+            "price": 2500,
+            "available": true,
+            "drops": [
+                {
+                    "rarity": "Epico",
+                    "chance": 60.0,
+                    "skinIds": [
+                        "astral",
+                        "cavaleiroCobalto",
+                        "chamaEsmeralda",
+                        "cometaRubi",
+                        "coroaSolar",
+                        "dragaoDeJade",
+                        "florestaEncantada",
+                        "guardiaoPolar",
+                        "imperatrizLilas",
+                        "lendaDourada",
+                        "lotusObsidiana",
+                        "noiteNeon",
+                        "prata",
+                        "reinoCoral",
+                        "tempestadeReal",
+                        "ventoArcano"
+                    ]
+                },
+                {
+                    "rarity": "Lendario",
+                    "chance": 35.0,
+                    "skinIds": [
+                        "auroraSuprema",
+                        "fenixImperial",
+                        "herdeiroDasEstrelas",
+                        "imperadorOnix",
+                        "leviata",
+                        "oraculo",
+                        "reiMidas",
+                        "serpenteCeleste",
+                        "solsticio",
+                        "titanioReal"
+                    ]
+                },
+                {
+                    "rarity": "Mitico",
+                    "chance": 5.0,
+                    "skinIds": [
+                        "capivaraCosmica",
+                        "deusaDoRio",
+                        "lendaPrimordial"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "bauRaro",
+            "price": 500,
+            "available": true,
+            "drops": [
+                {
+                    "rarity": "Comum",
+                    "chance": 20.0,
+                    "skinIds": [
+                        "ameixa",
+                        "areia",
+                        "argila",
+                        "avela",
+                        "azul",
+                        "barro",
+                        "baunilha",
+                        "brisa",
+                        "cacau",
+                        "cafe",
+                        "canela",
+                        "ceu",
+                        "chuva",
+                        "cobre",
+                        "coral",
+                        "creme",
+                        "folha",
+                        "lago",
+                        "lima",
+                        "mel",
+                        "musgo",
+                        "noz",
+                        "oliva",
+                        "pessego",
+                        "porDoSol",
+                        "rosa",
+                        "roxo",
+                        "verde"
+                    ]
+                },
+                {
+                    "rarity": "Incomum",
+                    "chance": 30.0,
+                    "skinIds": [
+                        "abobora",
+                        "ametista",
+                        "aurora",
+                        "basalto",
+                        "cereja",
+                        "granada",
+                        "hortensia",
+                        "jade",
+                        "laguna",
+                        "menta",
+                        "oceano",
+                        "onix",
+                        "orquidea",
+                        "quartzo",
+                        "safira",
+                        "salvia",
+                        "tempestade",
+                        "topazio",
+                        "turquesa",
+                        "vinho"
+                    ]
+                },
+                {
+                    "rarity": "Raro",
+                    "chance": 40.0,
+                    "skinIds": [
+                        "abyssal",
+                        "amanhecer",
+                        "aquaReal",
+                        "auroraBoreal",
+                        "cometa",
+                        "cristal",
+                        "eclipse",
+                        "fenix",
+                        "fosforo",
+                        "galaxia",
+                        "glacial",
+                        "jardimLunar",
+                        "mareAlta",
+                        "miragem",
+                        "nebulosa",
+                        "plasma",
+                        "raioAzul",
+                        "sereia",
+                        "sombraVioleta",
+                        "vulcao"
+                    ]
+                },
+                {
+                    "rarity": "Epico",
+                    "chance": 10.0,
+                    "skinIds": [
+                        "astral",
+                        "cavaleiroCobalto",
+                        "chamaEsmeralda",
+                        "cometaRubi",
+                        "coroaSolar",
+                        "dragaoDeJade",
+                        "florestaEncantada",
+                        "guardiaoPolar",
+                        "imperatrizLilas",
+                        "lendaDourada",
+                        "lotusObsidiana",
+                        "noiteNeon",
+                        "prata",
+                        "reinoCoral",
+                        "tempestadeReal",
+                        "ventoArcano"
+                    ]
+                }
+            ]
+        }
+    ],
+    "duplicatePoints": {
+        "Comum": 10,
+        "Incomum": 20,
+        "Raro": 40,
+        "Epico": 80,
+        "Lendario": 160,
+        "Mitico": 320
+    }
+}
