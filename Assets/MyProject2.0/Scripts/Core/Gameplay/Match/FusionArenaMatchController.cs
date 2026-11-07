@@ -19,19 +19,21 @@ public sealed class FusionArenaMatchController : NetworkBehaviour, IPlayerJoined
     [Networked] private NetworkBool MatchStarted { get; set; }
     [Networked] private int BotSlots { get; set; }
     private bool readyPublished;
+    private bool networkSpawned;
 
     public event Action<int, int> WaitingChanged;
     public event Action<int> BotsFilled;
     public event Action MatchReady;
-    public bool IsMatchReady => MatchStarted;
+    public bool IsNetworkSpawned => networkSpawned;
+    public bool IsMatchReady => networkSpawned && MatchStarted;
     public int RequiredSlots => requiredSlots;
     public int CurrentHumanSlots => Runner == null ? 0 : CountHumans();
-    public int CurrentBotSlots => BotSlots;
+    public int CurrentBotSlots => networkSpawned ? BotSlots : 0;
     public float RemainingWaitSeconds
     {
         get
         {
-            if (Runner == null || !StartTimer.IsRunning || MatchStarted)
+            if (!networkSpawned || Runner == null || !StartTimer.IsRunning || MatchStarted)
                 return 0f;
 
             return StartTimer.RemainingTime(Runner) ?? 0f;
@@ -40,6 +42,7 @@ public sealed class FusionArenaMatchController : NetworkBehaviour, IPlayerJoined
 
     public override void Spawned()
     {
+        networkSpawned = true;
         PublishWaiting();
         if (Object.HasStateAuthority && !StartTimer.IsRunning && !MatchStarted)
             StartTimer = TickTimer.CreateFromSeconds(Runner, waitForPlayersSeconds);
@@ -78,6 +81,11 @@ public sealed class FusionArenaMatchController : NetworkBehaviour, IPlayerJoined
             BotsFilled?.Invoke(BotSlots);
             MatchReady?.Invoke();
         }
+    }
+
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        networkSpawned = false;
     }
 
     private int CountHumans()
