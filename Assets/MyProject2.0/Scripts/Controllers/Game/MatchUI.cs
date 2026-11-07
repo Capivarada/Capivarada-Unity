@@ -271,8 +271,8 @@ public class MatchUI : MonoBehaviour
             foreach (GameObject player in matchManager.GetAlivePlayers()) if (player != null && player != humanPlayerObject && player.activeInHierarchy) spectatablePlayers.Add(player);
         else
         {
-            foreach (FusionNetworkPlayer player in FindObjectsByType<FusionNetworkPlayer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
-                if (player != null && !player.IsEliminated && player.gameObject != humanPlayerObject) spectatablePlayers.Add(player.gameObject);
+            foreach (FusionNetworkPlayer networkPlayer in FindObjectsByType<FusionNetworkPlayer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+                if (networkPlayer != null && !networkPlayer.IsEliminated && networkPlayer.gameObject != humanPlayerObject) spectatablePlayers.Add(networkPlayer.gameObject);
             foreach (FusionNetworkBot bot in FindObjectsByType<FusionNetworkBot>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
                 if (bot != null && !bot.IsEliminated) spectatablePlayers.Add(bot.gameObject);
         }
