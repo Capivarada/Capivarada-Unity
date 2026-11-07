@@ -25,13 +25,19 @@ public sealed class FusionMatchUIBridge : MonoBehaviour
         {
             case FusionRoundPhase.Countdown:
                 matchUI.ShowStartingUI();
+                matchUI.ShowNetworkPhase("A PARTIDA VAI COMEÇAR");
                 break;
             case FusionRoundPhase.Choosing:
                 matchUI.ShowChoosingUI();
+                matchUI.ShowNetworkPhase("ESCOLHA A DIREÇÃO E A FORÇA");
                 break;
             case FusionRoundPhase.Revealing:
+                matchUI.ShowRevealingUI();
+                matchUI.ShowNetworkPhase("DIREÇÕES REVELADAS");
+                break;
             case FusionRoundPhase.Moving:
                 matchUI.ShowRevealingUI();
+                matchUI.ShowNetworkPhase("MOVIMENTO!");
                 break;
         }
     }

@@ -61,7 +61,9 @@ public class MatchUI : MonoBehaviour
     private bool titleAnimationPlayedWhileVisible;
     private Coroutine powerShakeCoroutine;
     private Vector2 powerSpeedPanelBasePosition;
-    private bool IsPractice => MatchParticipationContext.IsPractice || string.Equals(SceneManager.GetActiveScene().name, "Practice_Scene", StringComparison.Ordinal);
+    private bool IsPractice =>
+        string.Equals(SceneManager.GetActiveScene().name, "Practice_Scene", StringComparison.Ordinal) ||
+        string.Equals(SceneManager.GetActiveScene().name, "Pratice_Scene", StringComparison.Ordinal);
 
     private void Awake()
     {
@@ -85,14 +87,16 @@ public class MatchUI : MonoBehaviour
     private void Start()
     {
         matchStartedAt = Time.realtimeSinceStartup;
-        if (roundManager != null)
+        // The old managers are present only for Practice_Scene. Game_Scene is
+        // driven exclusively by FusionMatchUIBridge/FusionRoundController.
+        if (IsPractice && roundManager != null)
         {
             roundManager.OnStateChanged += HandleRoundStateChanged;
             roundManager.OnRoundChanged += UpdateRound;
             roundManager.OnTimerChanged += UpdateCountdown;
             roundManager.OnTitleChanged += ShowTitle;
         }
-        if (matchManager != null)
+        if (IsPractice && matchManager != null)
         {
             matchManager.OnPlayerEliminated += HandlePlayerEliminated;
             matchManager.OnMatchFinished += HandleMatchFinished;
@@ -146,6 +150,11 @@ public class MatchUI : MonoBehaviour
     public void HideNetworkWaiting()
     {
         UpdateCountdown(0f);
+    }
+
+    public void ShowNetworkPhase(string title)
+    {
+        ShowTitle(title);
     }
     public void ShowChoosingUI()
     {
@@ -458,8 +467,8 @@ public class MatchUI : MonoBehaviour
     {
         if (returnCoroutine != null) StopCoroutine(returnCoroutine);
         StopPowerShake();
-        if (roundManager != null) { roundManager.OnStateChanged -= HandleRoundStateChanged; roundManager.OnRoundChanged -= UpdateRound; roundManager.OnTimerChanged -= UpdateCountdown; roundManager.OnTitleChanged -= ShowTitle; }
-        if (matchManager != null) { matchManager.OnPlayerEliminated -= HandlePlayerEliminated; matchManager.OnMatchFinished -= HandleMatchFinished; }
+        if (IsPractice && roundManager != null) { roundManager.OnStateChanged -= HandleRoundStateChanged; roundManager.OnRoundChanged -= UpdateRound; roundManager.OnTimerChanged -= UpdateCountdown; roundManager.OnTitleChanged -= ShowTitle; }
+        if (IsPractice && matchManager != null) { matchManager.OnPlayerEliminated -= HandlePlayerEliminated; matchManager.OnMatchFinished -= HandleMatchFinished; }
         if (spectatorUI != null) { spectatorUI.PreviousRequested -= SpectatePrevious; spectatorUI.NextRequested -= SpectateNext; spectatorUI.ReturnToLobbyRequested -= ShowResultAndReturn; }
         if (playerData != null) { playerData.OnKillsChanged -= HandleKillsChanged; playerData.OnRoundsSurvivedChanged -= HandleRoundsSurvivedChanged; }
         UnsubscribeHuman();

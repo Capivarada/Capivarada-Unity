@@ -10,7 +10,7 @@ public sealed class LobbyNavigationController : MonoBehaviour
     [SerializeField] private FusionSessionService fusion;
     [SerializeField] private string menuPanel = "Menu";
     [SerializeField] private string gameScene = "Game_Scene";
-    [SerializeField] private string trainingScene = "Practice_Scene";
+    [SerializeField] private string trainingScene = "Pratice_Scene";
     [SerializeField] private string loadingScene = "Loading_Scene";
     private bool joiningMatch;
 
@@ -37,7 +37,13 @@ public sealed class LobbyNavigationController : MonoBehaviour
     public void Training()
     {
         MatchParticipationContext.StartPractice();
-        Load(trainingScene);
+        // The project originally saved "Training_Scene" in this serialized
+        // field, while the actual scene is named "Pratice_Scene". Preserve
+        // editable configuration but always fall back to the real build scene.
+        string resolvedScene = Application.CanStreamedLevelBeLoaded(trainingScene)
+            ? trainingScene
+            : "Pratice_Scene";
+        Load(resolvedScene);
     }
 
     public void Quit() => Application.Quit();

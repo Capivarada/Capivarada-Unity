@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Central manager for the game.
@@ -60,6 +61,14 @@ public class GameManager : MonoBehaviour
     [SerializeField] private int maxPlayers = 8;
 
     private GameObject humanPlayer;
+    private static bool IsPracticeScene
+    {
+        get
+        {
+            string sceneName = SceneManager.GetActiveScene().name;
+            return sceneName == "Practice_Scene" || sceneName == "Pratice_Scene";
+        }
+    }
 
     #endregion
 
@@ -85,7 +94,10 @@ public class GameManager : MonoBehaviour
         // This legacy manager owns the fully local simulation. It remains the
         // implementation for Practice_Scene only; an online Fusion scene uses
         // FusionArenaMatchController instead and must not spawn local clones.
-        if (!MatchParticipationContext.IsPractice)
+        // Scene identity is authoritative here. Static session state can live
+        // through an Editor scene switch, so it must never make Game_Scene
+        // instantiate the old local player/bot simulation.
+        if (!IsPracticeScene)
         {
             Debug.Log("[GameManager] Online match detected. Local practice simulation is disabled.");
             return;
