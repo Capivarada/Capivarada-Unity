@@ -18,6 +18,7 @@ public class PlayerController : MonoBehaviour
     private bool hasLaunched;
     private Vector3 aimDirection;
     private Coroutine revealRotation;
+    private Coroutine visualRevealRotation;
     private PlayerCustomizationApplier customizationApplier;
     private Renderer skinRenderer;
     private Quaternion visualRootBaseLocalRotation;
@@ -148,6 +149,12 @@ public class PlayerController : MonoBehaviour
 
     public void ClearLocalAimPreview()
     {
+        if (visualRevealRotation != null)
+        {
+            StopCoroutine(visualRevealRotation);
+            visualRevealRotation = null;
+        }
+
         if (!hasVisualPreview || visualRoot == null) return;
         visualRoot.localRotation = visualRootBaseLocalRotation;
         hasVisualPreview = false;
@@ -331,17 +338,17 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// Starts the public reveal. Only the state authority changes the network
-    /// root; every other peer receives that rotation through NetworkTransform.
-    /// Keeping the Visual child neutral here prevents a proxy from applying the
-    /// same yaw twice and keeps the arrow attached to the capybara.
+    /// Starts the public network reveal on the local presentation hierarchy.
+    /// The NetworkPlayer root deliberately remains still: its CameraTarget is
+    /// a direct child and rotating that root makes Cinemachine feel locked for
+    /// the local owner. AimDirection is already replicated, so every peer can
+    /// show the same visual rotation without moving the camera target.
     /// </summary>
-    public void BeginRevealPresentation(float duration, bool rotateNetworkObject)
+    public void BeginRevealPresentation(float duration, bool _)
     {
-        if (rotateNetworkObject)
-        {
-            BeginRevealRotation(duration);
-        }
+        if (visualRoot == null) return;
+        if (visualRevealRotation != null) StopCoroutine(visualRevealRotation);
+        visualRevealRotation = StartCoroutine(RotateVisualToAimDirection(duration));
     }
 
     private System.Collections.IEnumerator RotateToAimDirection(float duration)
@@ -367,6 +374,32 @@ public class PlayerController : MonoBehaviour
 
         transform.rotation = targetRotation;
         revealRotation = null;
+    }
+
+    private System.Collections.IEnumerator RotateVisualToAimDirection(float duration)
+    {
+        Vector3 direction = GetAimDirection();
+        direction.y = 0f;
+        if (direction.sqrMagnitude <= 0.001f)
+        {
+            visualRevealRotation = null;
+            yield break;
+        }
+
+        Quaternion startRotation = visualRoot.localRotation;
+        Quaternion targetRotation = GetVisualAimRotation(direction);
+        float elapsed = 0f;
+        float safeDuration = Mathf.Max(0.01f, duration);
+        hasVisualPreview = true;
+        while (elapsed < safeDuration)
+        {
+            elapsed += Time.deltaTime;
+            visualRoot.localRotation = Quaternion.Slerp(startRotation, targetRotation, Mathf.Clamp01(elapsed / safeDuration));
+            yield return null;
+        }
+
+        visualRoot.localRotation = targetRotation;
+        visualRevealRotation = null;
     }
 
     private Quaternion GetVisualAimRotation(Vector3 direction)
