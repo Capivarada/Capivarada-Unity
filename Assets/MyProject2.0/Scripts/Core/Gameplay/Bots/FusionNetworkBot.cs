@@ -8,15 +8,22 @@ public sealed class FusionNetworkBot : NetworkBehaviour
     [SerializeField] private BotController legacyBotController;
     [SerializeField] private PlayerDeath legacyDeath;
     [SerializeField] private Rigidbody body;
-    [SerializeField] private float deathHeight = -5f;
 
     [Networked] public int BotSeed { get; private set; }
     [Networked, Capacity(24)] public string NetworkNickname { get; private set; }
+    [Networked] private Vector3 AimDirection { get; set; }
+    [Networked] private float Charge { get; set; }
     [Networked] private int DecisionRound { get; set; }
     [Networked] private int LaunchedRound { get; set; }
     [Networked] private NetworkBool Eliminated { get; set; }
 
     private FusionRoundController rounds;
+    private FusionArenaMatchController match;
+    private FusionRoundPhase presentedPhase = (FusionRoundPhase)(-1);
+    private int presentedRound = -1;
+    private bool wasEliminated;
+
+    public bool IsEliminated => Eliminated;
 
     public void SetSeed(int seed) => BotSeed = seed;
 
@@ -29,9 +36,10 @@ public sealed class FusionNetworkBot : NetworkBehaviour
         if (legacyBotController != null) legacyBotController.enabled = false;
         if (legacyDeath != null) legacyDeath.enabled = false;
         rounds = FindFirstObjectByType<FusionRoundController>();
-        FusionArenaMatchController match = FindFirstObjectByType<FusionArenaMatchController>();
+        match = FindFirstObjectByType<FusionArenaMatchController>();
         playerController?.SetConfiguration(match != null ? match.PlayerConfig : null);
         if (Object.HasStateAuthority && string.IsNullOrWhiteSpace(NetworkNickname)) NetworkNickname = CreateNickname();
+        if (Object.HasStateAuthority && AimDirection.sqrMagnitude < 0.001f) AimDirection = transform.forward;
     }
 
     public override void FixedUpdateNetwork()
@@ -40,7 +48,7 @@ public sealed class FusionNetworkBot : NetworkBehaviour
         if (rounds == null) rounds = FindFirstObjectByType<FusionRoundController>();
         if (rounds == null) return;
 
-        if (body != null && transform.position.y <= deathHeight)
+        if (body != null && transform.position.y <= (match != null ? match.DeathHeight : 2.87f))
         {
             Eliminated = true;
             body.isKinematic = true;
@@ -50,9 +58,10 @@ public sealed class FusionNetworkBot : NetworkBehaviour
         if (rounds.Phase == FusionRoundPhase.Choosing && DecisionRound != rounds.RoundIndex)
         {
             DecisionRound = rounds.RoundIndex;
-            Vector3 direction = CreateDirection(rounds.RoundIndex);
-            float charge = 2f + Mathf.Abs((BotSeed * 17 + rounds.RoundIndex * 7) % 7);
-            playerController?.ApplyNetworkSelection(direction, charge);
+            playerController?.ResetRound();
+            AimDirection = CreateDirection(rounds.RoundIndex);
+            Charge = 2f + Mathf.Abs((BotSeed * 17 + rounds.RoundIndex * 7) % 7);
+            playerController?.ApplyNetworkSelection(AimDirection, Charge);
         }
 
         if (rounds.Phase == FusionRoundPhase.Moving && LaunchedRound != rounds.RoundIndex)
@@ -64,8 +73,39 @@ public sealed class FusionNetworkBot : NetworkBehaviour
 
     public override void Render()
     {
+        playerController?.ApplyNetworkSelection(AimDirection, Charge);
         PlayerNickname nickname = GetComponent<PlayerNickname>();
         if (nickname != null && !string.IsNullOrWhiteSpace(NetworkNickname)) nickname.SetNickname(NetworkNickname);
+        if (!wasEliminated && Eliminated)
+        {
+            wasEliminated = true;
+            SetVisible(false);
+        }
+        PresentRoundPhase();
+    }
+
+    private void SetVisible(bool value)
+    {
+        foreach (Renderer renderer in GetComponentsInChildren<Renderer>(true)) renderer.enabled = value;
+        foreach (Collider collider in GetComponentsInChildren<Collider>(true)) collider.enabled = value;
+    }
+
+    private void PresentRoundPhase()
+    {
+        if (rounds == null || playerController == null) return;
+        if (presentedPhase == rounds.Phase && presentedRound == rounds.RoundIndex) return;
+
+        presentedPhase = rounds.Phase;
+        presentedRound = rounds.RoundIndex;
+        if (rounds.Phase == FusionRoundPhase.Revealing)
+        {
+            playerController.ShowIndicator();
+            if (Object.HasStateAuthority) playerController.BeginRevealRotation(rounds.RevealDuration);
+        }
+        else
+        {
+            playerController.HideIndicator();
+        }
     }
 
     private Vector3 CreateDirection(int round)

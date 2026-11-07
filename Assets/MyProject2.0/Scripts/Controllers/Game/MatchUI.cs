@@ -156,6 +156,14 @@ public class MatchUI : MonoBehaviour
     {
         ShowTitle(title);
     }
+    public void SetNetworkRoundStatus(int round, int eliminated, int total)
+    {
+        UpdateRound(Mathf.Max(1, round));
+        totalPlayers = Mathf.Max(0, total);
+        eliminatedCount = Mathf.Clamp(eliminated, 0, totalPlayers);
+        UpdateEliminatedPlayers();
+    }
+    public void SetNetworkCountdown(float seconds) => UpdateCountdown(seconds);
     public void ShowChoosingUI()
     {
         SetActive(titleContainer, true); SetActive(roundContainer, true); SetActive(powerContainer, !humanEliminated);
@@ -163,6 +171,11 @@ public class MatchUI : MonoBehaviour
     public void ShowRevealingUI()
     {
         SetActive(titleContainer, true); SetActive(roundContainer, true); SetActive(powerContainer, false);
+    }
+    public void ShowIntermissionUI()
+    {
+        SetActive(titleContainer, true); SetActive(roundContainer, true); SetActive(powerContainer, false);
+        HidePowerSpeedPanel();
     }
     public void ShowSpectatorUI()
     {

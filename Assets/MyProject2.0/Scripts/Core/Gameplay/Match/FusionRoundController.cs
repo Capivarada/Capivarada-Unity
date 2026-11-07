@@ -33,10 +33,19 @@ public sealed class FusionRoundController : NetworkBehaviour
 
     private FusionRoundPhase displayedPhase;
     private int displayedRound;
+    private bool networkSpawned;
     public event Action<FusionRoundPhase, int> PhaseChanged;
+    public bool IsNetworkSpawned => networkSpawned;
+    public float RemainingPhaseSeconds => !networkSpawned || Runner == null || !PhaseTimer.IsRunning
+        ? 0f
+        : PhaseTimer.RemainingTime(Runner) ?? 0f;
+    public float RevealDuration => match != null && match.MatchConfig != null
+        ? match.MatchConfig.RevealDuration
+        : revealSeconds;
 
     public override void Spawned()
     {
+        networkSpawned = true;
         if (match == null) match = GetComponent<FusionArenaMatchController>();
         displayedPhase = Phase;
         displayedRound = RoundIndex;
@@ -49,7 +58,7 @@ public sealed class FusionRoundController : NetworkBehaviour
 
         if (Phase == FusionRoundPhase.Waiting)
         {
-            SetPhase(FusionRoundPhase.Countdown, startCountdownSeconds);
+            SetPhase(FusionRoundPhase.Countdown, InitialCountdownSeconds);
             return;
         }
 
@@ -59,20 +68,20 @@ public sealed class FusionRoundController : NetworkBehaviour
         {
             case FusionRoundPhase.Countdown:
                 RoundIndex = 1;
-                SetPhase(FusionRoundPhase.Choosing, choosingSeconds);
+                SetPhase(FusionRoundPhase.Choosing, ChoosingSeconds);
                 break;
             case FusionRoundPhase.Choosing:
-                SetPhase(FusionRoundPhase.Revealing, revealSeconds);
+                SetPhase(FusionRoundPhase.Revealing, RevealDuration);
                 break;
             case FusionRoundPhase.Revealing:
                 SetPhase(FusionRoundPhase.Moving, movementSeconds);
                 break;
             case FusionRoundPhase.Moving:
-                SetPhase(FusionRoundPhase.Intermission, intermissionSeconds);
+                SetPhase(FusionRoundPhase.Intermission, IntermissionSeconds);
                 break;
             case FusionRoundPhase.Intermission:
                 RoundIndex++;
-                SetPhase(FusionRoundPhase.Choosing, choosingSeconds);
+                SetPhase(FusionRoundPhase.Choosing, ChoosingSeconds);
                 break;
         }
     }
@@ -85,9 +94,24 @@ public sealed class FusionRoundController : NetworkBehaviour
         PhaseChanged?.Invoke(Phase, RoundIndex);
     }
 
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        networkSpawned = false;
+    }
+
     private void SetPhase(FusionRoundPhase next, float seconds)
     {
         Phase = next;
         PhaseTimer = TickTimer.CreateFromSeconds(Runner, seconds);
     }
+
+    private float InitialCountdownSeconds => match != null && match.MatchConfig != null
+        ? match.MatchConfig.InitialCountdownDuration
+        : startCountdownSeconds;
+    private float ChoosingSeconds => match != null && match.MatchConfig != null
+        ? match.MatchConfig.ChoosingDuration
+        : choosingSeconds;
+    private float IntermissionSeconds => match != null && match.MatchConfig != null
+        ? match.MatchConfig.NextRoundCountdown
+        : intermissionSeconds;
 }

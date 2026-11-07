@@ -14,7 +14,6 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
     [SerializeField] private HumanPlayerController legacyHumanController;
     [SerializeField] private PlayerDeath legacyDeath;
     [SerializeField] private Rigidbody body;
-    [SerializeField] private float deathHeight = -5f;
 
     [Networked] public Vector3 AimDirection { get; private set; }
     [Networked] public float Charge { get; private set; }
@@ -23,9 +22,13 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
     [Networked] private int LastLaunchedRound { get; set; }
 
     private FusionRoundController rounds;
+    private FusionArenaMatchController match;
     private Camera localCamera;
     private bool wasEliminated;
     private Coroutine attachPresentationCoroutine;
+    private int preparedRound = -1;
+    private FusionRoundPhase presentedPhase = (FusionRoundPhase)(-1);
+    private int presentedRound = -1;
 
     public override void Spawned()
     {
@@ -43,7 +46,7 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
         PlayerCameraLook cameraLook = GetComponentInChildren<PlayerCameraLook>(true);
         if (cameraLook != null) cameraLook.enabled = isLocalPlayer;
         rounds = FindFirstObjectByType<FusionRoundController>();
-        FusionArenaMatchController match = FindFirstObjectByType<FusionArenaMatchController>();
+        match = FindFirstObjectByType<FusionArenaMatchController>();
         playerController?.SetConfiguration(match != null ? match.PlayerConfig : null);
 
         if (Object.HasStateAuthority)
@@ -59,7 +62,7 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
         if (rounds == null) rounds = FindFirstObjectByType<FusionRoundController>();
         if (rounds == null || !Object.HasStateAuthority || IsEliminated) return;
 
-        if (body != null && transform.position.y <= deathHeight)
+        if (body != null && transform.position.y <= (match != null ? match.DeathHeight : 2.87f))
         {
             IsEliminated = true;
             body.isKinematic = true;
@@ -67,7 +70,18 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
         }
 
         if (rounds.Phase == FusionRoundPhase.Choosing)
+        {
+            if (preparedRound != rounds.RoundIndex)
+            {
+                preparedRound = rounds.RoundIndex;
+                playerController?.ResetRound();
+            }
             ReadLocalChoice();
+        }
+        else
+        {
+            localInput?.ClearPendingChargePresses();
+        }
 
         if (rounds.Phase == FusionRoundPhase.Moving && LastLaunchedRound != rounds.RoundIndex)
         {
@@ -80,6 +94,7 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
     public override void Render()
     {
         playerController?.ApplyNetworkSelection(AimDirection, Charge);
+        PresentRoundPhase();
         PlayerNickname nickname = GetComponent<PlayerNickname>();
         if (nickname != null && !string.IsNullOrWhiteSpace(NetworkNickname)) nickname.SetNickname(NetworkNickname);
         if (!wasEliminated && IsEliminated)
@@ -100,10 +115,36 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
             if (direction.sqrMagnitude > 0.001f) AimDirection = direction.normalized;
         }
 
-        if (localInput.AddChargePressed) Charge += 0.5f;
-        if (localInput.RemoveChargePressed) Charge -= 0.5f;
+        int addPresses = localInput.ConsumeAddChargePresses();
+        int removePresses = localInput.ConsumeRemoveChargePresses();
+        Charge += addPresses * 0.5f;
+        Charge -= removePresses * 0.5f;
         playerController?.ApplyNetworkSelection(AimDirection, Charge);
         Charge = playerController != null ? playerController.CurrentCharge : Mathf.Max(0f, Charge);
+    }
+
+    private void PresentRoundPhase()
+    {
+        if (rounds == null || playerController == null) return;
+        if (presentedPhase == rounds.Phase && presentedRound == rounds.RoundIndex) return;
+
+        presentedPhase = rounds.Phase;
+        presentedRound = rounds.RoundIndex;
+        switch (rounds.Phase)
+        {
+            case FusionRoundPhase.Choosing:
+                playerController.ResetRound();
+                if (Object.HasStateAuthority) playerController.ShowIndicator();
+                else playerController.HideIndicator();
+                break;
+            case FusionRoundPhase.Revealing:
+                playerController.ShowIndicator();
+                if (Object.HasStateAuthority) playerController.BeginRevealRotation(rounds.RevealDuration);
+                break;
+            default:
+                playerController.HideIndicator();
+                break;
+        }
     }
 
     private void SetVisible(bool value)

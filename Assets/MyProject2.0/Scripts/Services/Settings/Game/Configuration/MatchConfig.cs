@@ -39,6 +39,12 @@ public class MatchConfig : ScriptableObject
 
     public int MaxRounds => maxRounds;
 
+    [Header("Arena Elimination")]
+    [SerializeField, Tooltip("World Y below which a capybara is eliminated. Each arena adapts by using this shared match rule.")]
+    private float deathHeight = 2.87f;
+
+    public float DeathHeight => deathHeight;
+
     #endregion
 
     #region Movement / Stop Detection

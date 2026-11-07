@@ -15,6 +15,7 @@ public sealed class FusionArenaMatchController : NetworkBehaviour, IPlayerJoined
     [SerializeField, Min(0f)] private float waitForPlayersSeconds = 10f;
     [SerializeField] private bool fillVacantSlotsWithBots = true;
     [SerializeField] private PlayerConfig playerConfig;
+    [SerializeField] private MatchConfig matchConfig;
 
     [Networked] private TickTimer StartTimer { get; set; }
     [Networked] private NetworkBool MatchStarted { get; set; }
@@ -31,6 +32,11 @@ public sealed class FusionArenaMatchController : NetworkBehaviour, IPlayerJoined
     public int CurrentHumanSlots => Runner == null ? 0 : CountHumans();
     public int CurrentBotSlots => networkSpawned ? BotSlots : 0;
     public PlayerConfig PlayerConfig => playerConfig;
+    public MatchConfig MatchConfig => matchConfig;
+    public int CurrentParticipantCount => networkSpawned && MatchStarted
+        ? CurrentHumanSlots + BotSlots
+        : CurrentHumanSlots;
+    public float DeathHeight => matchConfig != null ? matchConfig.DeathHeight : 2.87f;
     public float RemainingWaitSeconds
     {
         get
@@ -98,4 +104,15 @@ public sealed class FusionArenaMatchController : NetworkBehaviour, IPlayerJoined
     }
 
     private void PublishWaiting() => WaitingChanged?.Invoke(CurrentHumanSlots, requiredSlots);
+
+    /// <summary>Returns the replicated elimination total used by the online HUD.</summary>
+    public int GetEliminatedCount()
+    {
+        int eliminated = 0;
+        foreach (FusionNetworkPlayer player in FindObjectsByType<FusionNetworkPlayer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            if (player.IsEliminated) eliminated++;
+        foreach (FusionNetworkBot bot in FindObjectsByType<FusionNetworkBot>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            if (bot.IsEliminated) eliminated++;
+        return eliminated;
+    }
 }
