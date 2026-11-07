@@ -35,7 +35,9 @@ public sealed class FusionBotSpawner : NetworkBehaviour
         if (spawnedBots >= match.CurrentBotSlots) return;
 
         int botIndex = spawnedBots++;
-        Transform point = GetSpawnPoint(botIndex);
+        // Human players own slots [0..humanCount-1]. Bots are appended after
+        // those slots, so they can never spawn on a connected player.
+        Transform point = GetSpawnPoint(match.CurrentHumanSlots + botIndex);
         Vector3 position = point != null ? point.position : Vector3.zero;
         Quaternion rotation = point != null ? point.rotation : Quaternion.identity;
         Runner.Spawn(botPrefab, position, rotation, null, (runner, bot) =>

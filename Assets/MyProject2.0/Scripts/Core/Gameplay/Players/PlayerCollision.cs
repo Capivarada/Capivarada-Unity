@@ -36,11 +36,11 @@ public class PlayerCollision : MonoBehaviour
 
     private void ProcessImpact(Rigidbody otherRb)
     {
-        PlayerConfig config = GameManager.Instance.PlayerConfig;
         PlayerController player = GetComponent<PlayerController>();
+        PlayerConfig config = player != null ? player.Configuration : null;
         if (player != null && player.animator != null) player.animator.SetTrigger("Attack");
         
-        if (config == null)
+        if (config == null || rb == null || otherRb == null)
             return;
 
         if (Time.time - lastCollisionTime < config.CollisionCooldown)

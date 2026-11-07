@@ -14,6 +14,7 @@ public sealed class FusionArenaMatchController : NetworkBehaviour, IPlayerJoined
     [SerializeField, Min(1)] private int requiredSlots = 8;
     [SerializeField, Min(0f)] private float waitForPlayersSeconds = 10f;
     [SerializeField] private bool fillVacantSlotsWithBots = true;
+    [SerializeField] private PlayerConfig playerConfig;
 
     [Networked] private TickTimer StartTimer { get; set; }
     [Networked] private NetworkBool MatchStarted { get; set; }
@@ -29,6 +30,7 @@ public sealed class FusionArenaMatchController : NetworkBehaviour, IPlayerJoined
     public int RequiredSlots => requiredSlots;
     public int CurrentHumanSlots => Runner == null ? 0 : CountHumans();
     public int CurrentBotSlots => networkSpawned ? BotSlots : 0;
+    public PlayerConfig PlayerConfig => playerConfig;
     public float RemainingWaitSeconds
     {
         get

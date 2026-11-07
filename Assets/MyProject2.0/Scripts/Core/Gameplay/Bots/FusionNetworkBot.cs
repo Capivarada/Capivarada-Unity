@@ -29,6 +29,8 @@ public sealed class FusionNetworkBot : NetworkBehaviour
         if (legacyBotController != null) legacyBotController.enabled = false;
         if (legacyDeath != null) legacyDeath.enabled = false;
         rounds = FindFirstObjectByType<FusionRoundController>();
+        FusionArenaMatchController match = FindFirstObjectByType<FusionArenaMatchController>();
+        playerController?.SetConfiguration(match != null ? match.PlayerConfig : null);
         if (Object.HasStateAuthority && string.IsNullOrWhiteSpace(NetworkNickname)) NetworkNickname = CreateNickname();
     }
 

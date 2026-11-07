@@ -43,6 +43,8 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
         PlayerCameraLook cameraLook = GetComponentInChildren<PlayerCameraLook>(true);
         if (cameraLook != null) cameraLook.enabled = isLocalPlayer;
         rounds = FindFirstObjectByType<FusionRoundController>();
+        FusionArenaMatchController match = FindFirstObjectByType<FusionArenaMatchController>();
+        playerController?.SetConfiguration(match != null ? match.PlayerConfig : null);
 
         if (Object.HasStateAuthority)
         {

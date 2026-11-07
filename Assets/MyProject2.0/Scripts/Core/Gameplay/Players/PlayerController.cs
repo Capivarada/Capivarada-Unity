@@ -10,6 +10,7 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField]
     private Rigidbody rb;
+    [SerializeField] private PlayerConfig playerConfig;
 
     private const float ChargeStep = 0.5f;
     private float currentCharge;
@@ -28,6 +29,14 @@ public class PlayerController : MonoBehaviour
 
     public float CurrentCharge =>
         currentCharge;
+
+    public PlayerConfig Configuration => ResolveConfiguration();
+
+    public void SetConfiguration(PlayerConfig configuration)
+    {
+        if (configuration != null)
+            playerConfig = configuration;
+    }
 
     /// <summary>Applies replicated choice state without exposing mutable fields.</summary>
     public void ApplyNetworkSelection(Vector3 direction, float charge)
@@ -110,7 +119,7 @@ public class PlayerController : MonoBehaviour
         if (hasLaunched)
             return;
 
-        PlayerConfig config = GameManager.Instance.PlayerConfig;
+        PlayerConfig config = ResolveConfiguration();
         if (config == null)
             return;
 
@@ -127,7 +136,7 @@ public class PlayerController : MonoBehaviour
         if (hasLaunched)
             return;
 
-        PlayerConfig config = GameManager.Instance.PlayerConfig;
+        PlayerConfig config = ResolveConfiguration();
         if (config == null)
             return;
 
@@ -146,7 +155,7 @@ public class PlayerController : MonoBehaviour
         if (hasLaunched)
             return;
 
-        PlayerConfig config = GameManager.Instance.PlayerConfig;
+        PlayerConfig config = ResolveConfiguration();
         if (config == null)
             return;
 
@@ -168,17 +177,20 @@ public class PlayerController : MonoBehaviour
         if (currentCharge <= 0)
             return;
 
-        if(currentCharge <= 2)
-            animator.SetBool("Walk", true);
-        if(currentCharge <= 4)
-            animator.SetBool("Run", true);
-        if(currentCharge >= 5)
-            animator.SetBool("Trot", true);
+        if (animator != null)
+        {
+            if(currentCharge <= 2)
+                animator.SetBool("Walk", true);
+            if(currentCharge <= 4)
+                animator.SetBool("Run", true);
+            if(currentCharge >= 5)
+                animator.SetBool("Trot", true);
+        }
             
             
         hasLaunched = true;
 
-        PlayerConfig config = GameManager.Instance.PlayerConfig;
+        PlayerConfig config = ResolveConfiguration();
         if (config == null)
             return;
 
@@ -192,6 +204,9 @@ public class PlayerController : MonoBehaviour
         float force =
             config.ImpulseForce * 
             currentCharge;
+
+        if (rb == null)
+            return;
 
         rb.AddForce(
             direction * force,
@@ -291,8 +306,11 @@ public class PlayerController : MonoBehaviour
     {
         if (!hasLaunched)
             return;
-        PlayerConfig config = GameManager.Instance.PlayerConfig;
+        PlayerConfig config = ResolveConfiguration();
         if (config == null)
+            return;
+
+        if (rb == null)
             return;
 
         Vector3 velocity =
@@ -340,5 +358,30 @@ public class PlayerController : MonoBehaviour
         );
 
         OnChargeChanged?.Invoke(currentCharge);
+    }
+
+    private PlayerConfig ResolveConfiguration()
+    {
+        if (playerConfig != null)
+            return playerConfig;
+
+        FusionArenaMatchController fusionMatch = FindFirstObjectByType<FusionArenaMatchController>();
+        if (fusionMatch != null && fusionMatch.PlayerConfig != null)
+        {
+            playerConfig = fusionMatch.PlayerConfig;
+            return playerConfig;
+        }
+
+        if (GameManager.Instance != null && GameManager.Instance.PlayerConfig != null)
+        {
+            playerConfig = GameManager.Instance.PlayerConfig;
+            return playerConfig;
+        }
+
+        // Keeps network prototypes playable before the scene balance asset is
+        // assigned. The authored PlayerConfig still overrides this fallback.
+        playerConfig = ScriptableObject.CreateInstance<PlayerConfig>();
+        Debug.LogWarning("[PlayerController] PlayerConfig não configurado; usando os valores padrão temporários.", this);
+        return playerConfig;
     }
 }

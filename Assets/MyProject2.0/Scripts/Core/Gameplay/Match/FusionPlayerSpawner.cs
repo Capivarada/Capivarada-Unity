@@ -30,7 +30,8 @@ public sealed class FusionPlayerSpawner : NetworkBehaviour, IPlayerJoined
         if (player != Runner.LocalPlayer) return;
         localPlayerSpawned = true;
 
-        Transform point = GetSpawnPoint(player.PlayerId);
+        // PlayerRef IDs begin at 1; use a zero-based deterministic slot.
+        Transform point = GetSpawnPoint(Mathf.Max(0, player.PlayerId - 1));
         Vector3 position = point != null ? point.position : Vector3.zero;
         Quaternion rotation = point != null ? point.rotation : Quaternion.identity;
         Runner.Spawn(playerPrefab, position, rotation, player);
