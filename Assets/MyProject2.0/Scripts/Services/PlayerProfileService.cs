@@ -9,7 +9,7 @@ public class PlayerProfileData
 {
     public string playerId, nickname, email, avatarId, equippedSkinId, createdAtUtc;
     public PlayerCosmeticLoadout cosmetics = new();
-    public int level = 1, experience, experienceToNext = 1000, matches, eliminations, wins;
+    public int level = 1, experience, experienceToNext = 1500, matches, eliminations, wins;
     public float playTimeSeconds;
     public List<MatchHistoryData> recentMatches = new();
 }
@@ -87,11 +87,29 @@ public class PlayerProfileService : MonoBehaviour
         if (!string.IsNullOrEmpty(playerId) && (authentication == null || playerId != authentication.PlayFabId)) { done?.Invoke(); return; }
         PlayFabClientAPI.GetPlayerStatistics(new GetPlayerStatisticsRequest(), result => { foreach (StatisticValue stat in result.Statistics) { if (stat.StatisticName == "Matches") profile.matches = stat.Value; else if (stat.StatisticName == "Eliminations") profile.eliminations = stat.Value; else if (stat.StatisticName == "Wins") profile.wins = stat.Value; else if (stat.StatisticName == "Level") profile.level = stat.Value; else if (stat.StatisticName == "PlayTimeSeconds") profile.playTimeSeconds = stat.Value; } done?.Invoke(); }, _ => done?.Invoke());
     }
-    [Serializable] private class ProgressionResponse { public int matches, eliminations, wins, level; }
+    [Serializable]
+    private class ProgressionResponse
+    {
+        public int matches, eliminations, wins, level;
+        public int experience, experienceToNext, totalExperience, playTimeSeconds;
+    }
     private void LoadV2Progression(Action done)
     {
         if (backend == null) { done?.Invoke(); return; }
-        backend.Get<ProgressionResponse>("profiles/me/progression", result => { if (result != null) { Current.matches = result.matches; Current.eliminations = result.eliminations; Current.wins = result.wins; Current.level = Mathf.Max(1, result.level); } done?.Invoke(); }, _ => done?.Invoke());
+        backend.Get<ProgressionResponse>("profiles/me/progression", result =>
+        {
+            if (result != null)
+            {
+                Current.matches = result.matches;
+                Current.eliminations = result.eliminations;
+                Current.wins = result.wins;
+                Current.level = Mathf.Max(1, result.level);
+                Current.experience = Mathf.Max(0, result.experience);
+                Current.experienceToNext = result.experienceToNext > 0 ? result.experienceToNext : 1500;
+                Current.playTimeSeconds = Mathf.Max(0, result.playTimeSeconds);
+            }
+            done?.Invoke();
+        }, _ => done?.Invoke());
     }
     [Serializable] private class NicknameIndexInput { public string nickname; }
     private void SyncNicknameIndex()
