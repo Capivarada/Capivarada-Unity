@@ -111,8 +111,8 @@ public class PlayerController : MonoBehaviour
 
         direction.Normalize();
 
-        // Keep the arrow in front of the capybara while choosing. The player
-        // rotates only during the "Direções Reveladas" phase.
+        // The parent NetworkPlayer owns the selected facing. Its children
+        // (mesh and indicator) therefore remain aligned in one space.
         aimDirection = direction;
         impulseIndicator?.SetAimDirection(aimDirection);
     }
@@ -123,16 +123,16 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// Rotates only the local visual mesh while choosing. The NetworkObject
-    /// stays untouched, so opponents receive the actual facing only on reveal.
+    /// Presents the selection by rotating the complete NetworkPlayer. This is
+    /// the same transform used by the reveal, so the mesh and its indicator
+    /// cannot drift apart while aiming.
     /// </summary>
     public void PreviewLocalAimRotation()
     {
-        if (visualRoot == null) return;
+        if (hasLaunched) return;
         Vector3 direction = GetAimDirection();
         if (direction.sqrMagnitude <= 0.001f) return;
-        visualRoot.localRotation = GetVisualAimRotation(direction);
-        hasVisualPreview = true;
+        transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
     }
 
     public void ClearLocalAimPreview()
