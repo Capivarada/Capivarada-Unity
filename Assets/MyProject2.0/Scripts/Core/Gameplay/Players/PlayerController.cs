@@ -114,6 +114,7 @@ public class PlayerController : MonoBehaviour
         // Keep the arrow in front of the capybara while choosing. The player
         // rotates only during the "Direções Reveladas" phase.
         aimDirection = direction;
+        impulseIndicator?.SetAimDirection(aimDirection);
     }
 
     public Vector3 GetAimDirection()
@@ -258,6 +259,7 @@ public class PlayerController : MonoBehaviour
         StopMovementAnimation();
 
         currentCharge = 0f;
+        impulseIndicator?.ClearAimDirection();
         HideIndicator();
 
         UpdateIndicator();

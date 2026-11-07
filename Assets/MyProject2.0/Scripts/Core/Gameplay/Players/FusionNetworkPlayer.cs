@@ -122,14 +122,17 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
             if (direction.sqrMagnitude > 0.001f) AimDirection = direction.normalized;
         }
 
-        playerController?.PreviewLocalAimRotation();
-
         int addPresses = localInput.ConsumeAddChargePresses();
         int removePresses = localInput.ConsumeRemoveChargePresses();
         Charge += addPresses * 0.5f;
         Charge -= removePresses * 0.5f;
         playerController?.ApplyNetworkSelection(AimDirection, Charge);
         Charge = playerController != null ? playerController.CurrentCharge : Mathf.Max(0f, Charge);
+
+        // Apply the camera choice before previewing it. Previously the preview
+        // used the direction from the preceding network tick, making the mesh
+        // turn while its arrow looked fixed or one step behind.
+        playerController?.PreviewLocalAimRotation();
         if (playerController != null)
         {
             if (Charge > 0f) playerController.ShowIndicator();

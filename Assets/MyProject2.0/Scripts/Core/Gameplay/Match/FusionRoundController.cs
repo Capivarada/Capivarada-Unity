@@ -54,6 +54,16 @@ public sealed class FusionRoundController : NetworkBehaviour
         networkSpawned = true;
         if (match == null) match = GetComponent<FusionArenaMatchController>();
         if (arenaBounds == null) arenaBounds = FindFirstObjectByType<ArenaBounds>();
+
+        // A scene can be reused by Fusion after a runner restart. Restore the
+        // authored arena before the replicated target scale arrives, then let
+        // Render drive it from the networked round state.
+        if (arenaBounds != null)
+        {
+            arenaBounds.ResetArena();
+            hasRenderedArenaScale = false;
+            renderedArenaScale = Vector3.zero;
+        }
         displayedPhase = Phase;
         displayedRound = RoundIndex;
     }
@@ -161,6 +171,7 @@ public sealed class FusionRoundController : NetworkBehaviour
         ArenaStartScale = arenaBounds.CurrentArenaScale;
         ArenaTargetScale = arenaBounds.GetScaleForRound(RoundIndex + 1, shrink);
         ArenaShrinkTimer = TickTimer.CreateFromSeconds(Runner, IntermissionSeconds);
+        Debug.Log($"[FusionRoundController] Arena: rodada {RoundIndex + 1}, escala {ArenaStartScale.x:0.##} -> {ArenaTargetScale.x:0.##}.", this);
     }
 
     private void AdvanceWhenEveryoneStops()
