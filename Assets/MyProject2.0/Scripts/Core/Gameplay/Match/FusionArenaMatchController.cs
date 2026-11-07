@@ -27,6 +27,16 @@ public sealed class FusionArenaMatchController : NetworkBehaviour, IPlayerJoined
     public int RequiredSlots => requiredSlots;
     public int CurrentHumanSlots => Runner == null ? 0 : CountHumans();
     public int CurrentBotSlots => BotSlots;
+    public float RemainingWaitSeconds
+    {
+        get
+        {
+            if (Runner == null || !StartTimer.IsRunning || MatchStarted)
+                return 0f;
+
+            return StartTimer.RemainingTime(Runner) ?? 0f;
+        }
+    }
 
     public override void Spawned()
     {
