@@ -35,7 +35,11 @@ public class PlayerProfileService : MonoBehaviour
     {
         if (authentication == null || !authentication.IsLoggedIn || authentication.IsGuest) { Report("Faça login para salvar o perfil."); return; }
         Current.playerId = authentication.PlayFabId; Current.nickname = string.IsNullOrWhiteSpace(nickname) ? Current.nickname : nickname.Trim(); Current.avatarId = avatarId ?? Current.avatarId; Current.equippedSkinId = equippedSkinId ?? Current.equippedSkinId; authentication.ChangeNickname(Current.nickname);
-        PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest { Data = new Dictionary<string, string> { ["profile"] = JsonUtility.ToJson(Current) }, Permission = UserDataPermission.Public }, _ => { SyncNicknameIndex(); Publish(); done?.Invoke(); }, error => Report(error.ErrorMessage));
+        PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest { Data = new Dictionary<string, string> { ["profile"] = JsonUtility.ToJson(Current) }, Permission = UserDataPermission.Public }, _ =>
+        {
+            SyncNicknameIndex();
+            SyncLeaderboardPresentation(() => { Publish(); done?.Invoke(); });
+        }, error => Report(error.ErrorMessage));
     }
     public void SaveCosmetics(PlayerCosmeticLoadout cosmetics, Action done = null)
     {
@@ -116,6 +120,21 @@ public class PlayerProfileService : MonoBehaviour
     {
         if (backend == null || authentication == null || !authentication.IsLoggedIn || authentication.IsGuest || string.IsNullOrWhiteSpace(Current.nickname)) return;
         backend.Post<NicknameIndexInput, CapivaradaBackendService.EmptyResponse>("profiles/me/nickname-index", new NicknameIndexInput { nickname = Current.nickname.Trim() }, _ => { }, _ => { });
+    }
+    [Serializable] private class LeaderboardPresentationInput { public string nickname, avatarId; }
+    private void SyncLeaderboardPresentation(Action done)
+    {
+        if (backend == null || authentication == null || !authentication.IsLoggedIn || authentication.IsGuest)
+        {
+            done?.Invoke();
+            return;
+        }
+
+        backend.Post<LeaderboardPresentationInput, CapivaradaBackendService.EmptyResponse>(
+            "profiles/me/presentation",
+            new LeaderboardPresentationInput { nickname = Current.nickname, avatarId = Current.avatarId },
+            _ => done?.Invoke(),
+            _ => done?.Invoke());
     }
     private static int ReadInt(Dictionary<string, UserDataRecord> data, string key, int fallback) => data.TryGetValue(key, out UserDataRecord value) && int.TryParse(value.Value, out int parsed) ? parsed : fallback;
     [Serializable] private class PublicProfileResponse { public string playerId, nickname, avatarId, equippedSkinId; public int level, experience, experienceToNext, matches, eliminations, wins; public float playTimeSeconds; }
