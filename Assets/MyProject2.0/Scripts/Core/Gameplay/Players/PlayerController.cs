@@ -18,7 +18,6 @@ public class PlayerController : MonoBehaviour
     private bool hasLaunched;
     private Vector3 aimDirection;
     private Coroutine revealRotation;
-    private Coroutine visualRevealRotation;
     private PlayerCustomizationApplier customizationApplier;
     private Renderer skinRenderer;
     private Quaternion visualRootBaseLocalRotation;
@@ -76,7 +75,18 @@ public class PlayerController : MonoBehaviour
             while (visualRoot.parent != null && visualRoot.parent != transform)
                 visualRoot = visualRoot.parent;
         }
-        if (visualRoot != null) visualRootBaseLocalRotation = visualRoot.localRotation;
+        if (visualRoot != null)
+        {
+            visualRootBaseLocalRotation = visualRoot.localRotation;
+
+            // NetworkPlayer stays still until reveal, but the capybara and
+            // arrow must preview as one local presentation hierarchy.
+            if (impulseIndicator != null && impulseIndicator.transform.parent != visualRoot)
+            {
+                impulseIndicator.transform.SetParent(visualRoot, true);
+                impulseIndicator.RebasePresentationPose();
+            }
+        }
     }
 
     private void Start()
@@ -111,8 +121,8 @@ public class PlayerController : MonoBehaviour
 
         direction.Normalize();
 
-        // The parent NetworkPlayer owns the selected facing. Its children
-        // (mesh and indicator) therefore remain aligned in one space.
+        // The shared visual root owns the private choosing presentation. It
+        // intentionally does not rotate the NetworkPlayer before reveal.
         aimDirection = direction;
         impulseIndicator?.SetAimDirection(aimDirection);
     }
@@ -123,26 +133,21 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// Presents the selection by rotating the complete NetworkPlayer. This is
-    /// the same transform used by the reveal, so the mesh and its indicator
-    /// cannot drift apart while aiming.
+    /// Presents the local selection through the common visual root. Since the
+    /// indicator is a child of that root, it stays attached to the capybara
+    /// without leaking the selected direction through NetworkTransform.
     /// </summary>
     public void PreviewLocalAimRotation()
     {
-        if (hasLaunched) return;
+        if (hasLaunched || visualRoot == null) return;
         Vector3 direction = GetAimDirection();
         if (direction.sqrMagnitude <= 0.001f) return;
-        transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+        visualRoot.localRotation = GetVisualAimRotation(direction);
+        hasVisualPreview = true;
     }
 
     public void ClearLocalAimPreview()
     {
-        if (visualRevealRotation != null)
-        {
-            StopCoroutine(visualRevealRotation);
-            visualRevealRotation = null;
-        }
-
         if (!hasVisualPreview || visualRoot == null) return;
         visualRoot.localRotation = visualRootBaseLocalRotation;
         hasVisualPreview = false;
@@ -326,21 +331,17 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// Replays the reveal rotation on non-authoritative peers. It affects only
-    /// the visible mesh, while the authoritative peer rotates the NetworkObject
-    /// itself so its final physics direction still replicates through Fusion.
+    /// Starts the public reveal. Only the state authority changes the network
+    /// root; every other peer receives that rotation through NetworkTransform.
+    /// Keeping the Visual child neutral here prevents a proxy from applying the
+    /// same yaw twice and keeps the arrow attached to the capybara.
     /// </summary>
     public void BeginRevealPresentation(float duration, bool rotateNetworkObject)
     {
         if (rotateNetworkObject)
         {
             BeginRevealRotation(duration);
-            return;
         }
-
-        if (visualRoot == null) return;
-        if (visualRevealRotation != null) StopCoroutine(visualRevealRotation);
-        visualRevealRotation = StartCoroutine(RotateVisualToAimDirection(duration));
     }
 
     private System.Collections.IEnumerator RotateToAimDirection(float duration)
@@ -366,32 +367,6 @@ public class PlayerController : MonoBehaviour
 
         transform.rotation = targetRotation;
         revealRotation = null;
-    }
-
-    private System.Collections.IEnumerator RotateVisualToAimDirection(float duration)
-    {
-        Vector3 direction = GetAimDirection();
-        direction.y = 0f;
-        if (direction.sqrMagnitude <= 0.001f)
-        {
-            visualRevealRotation = null;
-            yield break;
-        }
-
-        Quaternion startRotation = visualRoot.localRotation;
-        Quaternion targetRotation = GetVisualAimRotation(direction);
-        float elapsed = 0f;
-        float safeDuration = Mathf.Max(0.01f, duration);
-        hasVisualPreview = true;
-        while (elapsed < safeDuration)
-        {
-            elapsed += Time.deltaTime;
-            visualRoot.localRotation = Quaternion.Slerp(startRotation, targetRotation, Mathf.Clamp01(elapsed / safeDuration));
-            yield return null;
-        }
-
-        visualRoot.localRotation = targetRotation;
-        visualRevealRotation = null;
     }
 
     private Quaternion GetVisualAimRotation(Vector3 direction)

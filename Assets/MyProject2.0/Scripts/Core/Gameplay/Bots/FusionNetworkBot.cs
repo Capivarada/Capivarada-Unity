@@ -71,6 +71,28 @@ public sealed class FusionNetworkBot : NetworkBehaviour
         }
     }
 
+    /// <summary>See FusionNetworkPlayer.RequestCollisionResponse.</summary>
+    public void RequestCollisionResponse(Vector3 direction, float velocityChange)
+    {
+        if (velocityChange <= 0f) return;
+        RpcApplyCollisionResponse(direction, velocityChange);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RpcApplyCollisionResponse(Vector3 direction, float velocityChange)
+    {
+        if (Eliminated || body == null) return;
+        direction.y = 0f;
+        if (direction.sqrMagnitude <= 0.001f) return;
+        direction.Normalize();
+
+        Vector3 velocity = body.linearVelocity;
+        float alongPush = Vector3.Dot(new Vector3(velocity.x, 0f, velocity.z), direction);
+        if (alongPush < 0f) velocity -= direction * alongPush;
+        body.linearVelocity = velocity;
+        body.AddForce(direction * velocityChange, ForceMode.VelocityChange);
+    }
+
     public override void Render()
     {
         playerController?.ApplyNetworkSelection(AimDirection, Charge);

@@ -15,8 +15,6 @@ public class ImpulseIndicator : MonoBehaviour
 
     private float currentCharge;
     private Color tint = Color.white;
-    private Vector3 aimDirection;
-    private bool lockToAimDirection;
 
     public float CurrentCharge => currentCharge;
 
@@ -26,12 +24,6 @@ public class ImpulseIndicator : MonoBehaviour
         originalIndicatorPosition = transform.localPosition;
         originalIndicatorRotation = transform.localRotation;
         HideArrow();
-    }
-
-    private void LateUpdate()
-    {
-        if (!lockToAimDirection || aimDirection.sqrMagnitude <= 0.001f) return;
-        transform.rotation = Quaternion.LookRotation(aimDirection.normalized, Vector3.up);
     }
 
     public void SetCharge(float charge)
@@ -53,23 +45,25 @@ public class ImpulseIndicator : MonoBehaviour
     }
 
     /// <summary>
-    /// Keeps the arrow aimed at the committed world direction. This lets the
-    /// local capybara preview its rotation during choice, and keeps the arrow
-    /// readable while the network object turns during reveal.
+    /// Direction is presented by the shared visual root. Keeping this object
+    /// local to that root makes its position and orientation follow the mesh.
     /// </summary>
     public void SetAimDirection(Vector3 direction)
     {
-        direction.y = 0f;
-        if (direction.sqrMagnitude <= 0.001f) return;
-        aimDirection = direction.normalized;
-        lockToAimDirection = true;
-        transform.rotation = Quaternion.LookRotation(aimDirection, Vector3.up);
+        // Intentionally no independent world rotation. See PlayerController.
     }
 
     public void ClearAimDirection()
     {
-        lockToAimDirection = false;
         transform.localRotation = originalIndicatorRotation;
+    }
+
+    /// <summary>Called after the indicator joins the capybara visual root.</summary>
+    public void RebasePresentationPose()
+    {
+        originalIndicatorScale = transform.localScale;
+        originalIndicatorPosition = transform.localPosition;
+        originalIndicatorRotation = transform.localRotation;
     }
 
     public void ShowArrow()

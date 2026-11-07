@@ -1,3 +1,4 @@
+using Fusion;
 using UnityEngine;
 
 public class PlayerCollision : MonoBehaviour
@@ -21,7 +22,7 @@ public class PlayerCollision : MonoBehaviour
         if (otherRb == null || otherRb == rb || otherRb.GetComponent<PlayerController>() == null)
             return;
 
-        if (gameObject.GetEntityId() > otherRb.gameObject.GetEntityId())
+        if (!AreFusionParticipants(otherRb) && gameObject.GetEntityId() > otherRb.gameObject.GetEntityId())
             return;
 
         ProcessImpact(otherRb);
@@ -41,6 +42,10 @@ public class PlayerCollision : MonoBehaviour
         if (player != null && player.animator != null) player.animator.SetTrigger("Attack");
         
         if (config == null || rb == null || otherRb == null)
+            return;
+
+        bool fusionCollision = AreFusionParticipants(otherRb);
+        if (fusionCollision && !HasFusionCollisionAuthority(otherRb))
             return;
 
         if (Time.time - lastCollisionTime < config.CollisionCooldown)
@@ -121,17 +126,16 @@ public class PlayerCollision : MonoBehaviour
         float knockbackA = response * forceB;
         float knockbackB = response * forceA;
 
-        ApplyResponse(
-            rb,
-            -direction,
-            knockbackA
-        );
-
-        ApplyResponse(
-            otherRb,
-            direction,
-            knockbackB
-        );
+        if (fusionCollision)
+        {
+            DispatchFusionResponse(rb, -direction, knockbackA);
+            DispatchFusionResponse(otherRb, direction, knockbackB);
+        }
+        else
+        {
+            ApplyResponse(rb, -direction, knockbackA);
+            ApplyResponse(otherRb, direction, knockbackB);
+        }
 
         Debug.Log(
             $"IMPACTO\n" +
@@ -148,16 +152,14 @@ public class PlayerCollision : MonoBehaviour
         Vector3 direction,
         float force)
     {
-        // Remove a velocidade que está entrando
-        // na colisão.
         Vector3 velocity =
             target.linearVelocity;
 
-        velocity -=
-            Vector3.Project(
-                velocity,
-                direction
-            );
+        // Remove only velocity aimed against the push. Keeping velocity that
+        // already points outward prevents players from feeling like bricks.
+        float alongPush = Vector3.Dot(new Vector3(velocity.x, 0f, velocity.z), direction);
+        if (alongPush < 0f)
+            velocity -= direction * alongPush;
 
         target.linearVelocity = velocity;
 
@@ -166,6 +168,34 @@ public class PlayerCollision : MonoBehaviour
             direction * force,
             ForceMode.VelocityChange
         );
+    }
+
+    private bool AreFusionParticipants(Rigidbody other)
+    {
+        return GetComponent<NetworkObject>() != null && other.GetComponent<NetworkObject>() != null &&
+               (GetComponent<FusionNetworkPlayer>() != null || GetComponent<FusionNetworkBot>() != null) &&
+               (other.GetComponent<FusionNetworkPlayer>() != null || other.GetComponent<FusionNetworkBot>() != null);
+    }
+
+    private bool HasFusionCollisionAuthority(Rigidbody other)
+    {
+        NetworkObject selfObject = GetComponent<NetworkObject>();
+        NetworkObject otherObject = other.GetComponent<NetworkObject>();
+        return selfObject != null && otherObject != null && selfObject.HasStateAuthority && selfObject.Id.Raw < otherObject.Id.Raw;
+    }
+
+    private static void DispatchFusionResponse(Rigidbody target, Vector3 direction, float force)
+    {
+        if (force <= 0f) return;
+        FusionNetworkPlayer player = target.GetComponent<FusionNetworkPlayer>();
+        if (player != null)
+        {
+            player.RequestCollisionResponse(direction, force);
+            return;
+        }
+
+        FusionNetworkBot bot = target.GetComponent<FusionNetworkBot>();
+        if (bot != null) bot.RequestCollisionResponse(direction, force);
     }
     
     private void RegisterAttacker(
