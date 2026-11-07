@@ -88,6 +88,7 @@ public class PlayerCollision : MonoBehaviour
             speedA,
             speedB
         );
+        RegisterFusionAttacker(otherRb, speedA, speedB);
         // Velocidade relativa.
         float relativeSpeed =
             speedA - speedB;
@@ -231,5 +232,21 @@ public class PlayerCollision : MonoBehaviour
                 );
             }
         }
+    }
+
+    // Legacy PlayerDeath is disabled in Fusion. Store the attacker on the
+    // authoritative NetworkObject so the server can award an elimination when
+    // that target later crosses MatchConfig.DeathHeight.
+    private void RegisterFusionAttacker(Rigidbody otherPlayer, float speedA, float speedB)
+    {
+        if (!AreFusionParticipants(otherPlayer)) return;
+        NetworkObject self = GetComponent<NetworkObject>();
+        NetworkObject other = otherPlayer.GetComponent<NetworkObject>();
+        if (self == null || other == null) return;
+
+        if (speedA > 0f)
+            otherPlayer.GetComponent<FusionNetworkPlayer>()?.RegisterAttacker(self);
+        if (speedB < 0f)
+            GetComponent<FusionNetworkPlayer>()?.RegisterAttacker(other);
     }
 }

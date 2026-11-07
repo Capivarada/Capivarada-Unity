@@ -16,6 +16,7 @@ public sealed class FusionNetworkBot : NetworkBehaviour
     [Networked] private int DecisionRound { get; set; }
     [Networked] private int LaunchedRound { get; set; }
     [Networked] private NetworkBool Eliminated { get; set; }
+    [Networked] private int RoundsSurvived { get; set; }
 
     private FusionRoundController rounds;
     private FusionArenaMatchController match;
@@ -26,6 +27,23 @@ public sealed class FusionNetworkBot : NetworkBehaviour
     public bool IsEliminated => Eliminated;
 
     public void SetSeed(int seed) => BotSeed = seed;
+
+    public void RegisterSurvivedRound()
+    {
+        if (Object != null && Object.HasStateAuthority && !Eliminated) RoundsSurvived++;
+    }
+
+    public FusionMatchResult BuildMatchResult()
+    {
+        return new FusionMatchResult
+        {
+            PlayerRef = PlayerRef.None,
+            IsBot = true,
+            IsEliminated = Eliminated,
+            Nickname = NetworkNickname,
+            RoundsSurvived = RoundsSurvived
+        };
+    }
 
     public override void Spawned()
     {

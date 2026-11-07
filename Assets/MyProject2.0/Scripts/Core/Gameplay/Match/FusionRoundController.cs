@@ -39,7 +39,11 @@ public sealed class FusionRoundController : NetworkBehaviour
     private bool hasRenderedArenaScale;
     private Vector3 renderedArenaScale;
     private readonly List<GameObject> livingParticipants = new();
+    private readonly List<FusionMatchResult> results = new();
+    private float matchStartedAt;
+    private bool matchClockStarted;
     public event Action<FusionRoundPhase, int> PhaseChanged;
+    public event Action<IReadOnlyList<FusionMatchResult>, int> MatchFinished;
     public bool IsNetworkSpawned => networkSpawned;
     public float RemainingPhaseSeconds => !networkSpawned || Runner == null || !PhaseTimer.IsRunning
         ? 0f
@@ -134,6 +138,11 @@ public sealed class FusionRoundController : NetworkBehaviour
 
     private void SetPhase(FusionRoundPhase next, float seconds)
     {
+        if (next == FusionRoundPhase.Countdown && !matchClockStarted)
+        {
+            matchClockStarted = true;
+            matchStartedAt = Runner != null ? (float)Runner.SimulationTime : 0f;
+        }
         Phase = next;
         PhaseTimer = TickTimer.CreateFromSeconds(Runner, seconds);
     }
@@ -143,6 +152,11 @@ public sealed class FusionRoundController : NetworkBehaviour
         Phase = FusionRoundPhase.Finished;
         PhaseTimer = default;
         StopTimer = default;
+        BuildResults();
+        int durationSeconds = matchClockStarted && Runner != null
+            ? Mathf.Max(0, Mathf.CeilToInt((float)Runner.SimulationTime - matchStartedAt))
+            : 0;
+        MatchFinished?.Invoke(results, durationSeconds);
         Debug.Log("[FusionRoundController] Partida encerrada: restou um ou nenhum sobrevivente.", this);
     }
 
@@ -191,8 +205,70 @@ public sealed class FusionRoundController : NetworkBehaviour
 
         if (StopTimer.Expired(Runner))
         {
+            RegisterSurvivingRound();
             BeginArenaShrinkForNextRound();
             SetPhase(FusionRoundPhase.Intermission, IntermissionSeconds);
+        }
+    }
+
+    private void RegisterSurvivingRound()
+    {
+        foreach (FusionNetworkPlayer player in FindObjectsByType<FusionNetworkPlayer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            if (player != null && !player.IsEliminated) player.RegisterSurvivedRound();
+
+        foreach (FusionNetworkBot bot in FindObjectsByType<FusionNetworkBot>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            if (bot != null && !bot.IsEliminated) bot.RegisterSurvivedRound();
+    }
+
+    private void BuildResults()
+    {
+        results.Clear();
+        List<FusionMatchResult> provisional = new();
+        foreach (FusionNetworkPlayer player in FindObjectsByType<FusionNetworkPlayer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (player == null) continue;
+            provisional.Add(player.BuildMatchResult());
+        }
+        foreach (FusionNetworkBot bot in FindObjectsByType<FusionNetworkBot>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (bot == null) continue;
+            provisional.Add(bot.BuildMatchResult());
+        }
+
+        provisional.Sort((left, right) =>
+        {
+            bool leftAlive = !left.IsEliminated;
+            bool rightAlive = !right.IsEliminated;
+            if (leftAlive != rightAlive) return leftAlive ? -1 : 1;
+            return right.RoundsSurvived.CompareTo(left.RoundsSurvived);
+        });
+
+        int rank = 1;
+        for (int index = 0; index < provisional.Count;)
+        {
+            FusionMatchResult candidate = provisional[index];
+            int next = index + 1;
+            while (next < provisional.Count && provisional[next].IsEliminated == candidate.IsEliminated && provisional[next].RoundsSurvived == candidate.RoundsSurvived) next++;
+            int placement = rank;
+            for (int member = index; member < next; member++)
+            {
+                FusionMatchResult source = provisional[member];
+                results.Add(new FusionMatchResult
+                {
+                    PlayerRef = source.PlayerRef,
+                    IsBot = source.IsBot,
+                    IsEliminated = source.IsEliminated,
+                    PlayerId = source.PlayerId,
+                    JoinToken = source.JoinToken,
+                    Nickname = source.Nickname,
+                    AvatarId = source.AvatarId,
+                    Eliminations = source.Eliminations,
+                    RoundsSurvived = source.RoundsSurvived,
+                    Placement = placement
+                });
+            }
+            rank += next - index;
+            index = next;
         }
     }
 

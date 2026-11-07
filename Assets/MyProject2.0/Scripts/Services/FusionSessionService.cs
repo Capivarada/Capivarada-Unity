@@ -134,6 +134,61 @@ public sealed class FusionSessionService : MonoBehaviour
     }
 
     /// <summary>
+    /// Enters a session hosted by a dedicated Fusion server. The caller must
+    /// first obtain the match-scoped identity from FusionMatchJoinTokenService.
+    /// Unlike Shared mode, the client never loads the gameplay scene: the
+    /// dedicated server owns the network scene transition and all match state.
+    /// </summary>
+    public async Task<bool> JoinDedicatedMatchAsync(FusionDedicatedIdentity identity)
+    {
+        if (!identity.IsValid)
+        {
+            Failed?.Invoke("A entrada da partida dedicada não foi autenticada.");
+            return false;
+        }
+        if (starting) return false;
+        PrepareRunner();
+        if (runner == null) return false;
+        if (runner.SessionInfo.IsValid)
+        {
+            Failed?.Invoke("Já existe uma sessão Fusion ativa. Saia dela antes de entrar em outra partida.");
+            return false;
+        }
+
+        starting = true;
+        FusionDedicatedMatchContext.Set(identity);
+        try
+        {
+            StartGameResult result = await runner.StartGame(new StartGameArgs
+            {
+                GameMode = GameMode.Client,
+                SessionName = identity.MatchId,
+                PlayerCount = maximumPlayers,
+                SceneManager = runner.GetComponent<NetworkSceneManagerDefault>()
+            });
+            if (!result.Ok)
+            {
+                FusionDedicatedMatchContext.Clear();
+                Failed?.Invoke($"Falha ao entrar no servidor dedicado: {result.ShutdownReason}");
+                return false;
+            }
+
+            Connected?.Invoke(runner);
+            return true;
+        }
+        catch (Exception exception)
+        {
+            FusionDedicatedMatchContext.Clear();
+            Failed?.Invoke($"Falha ao conectar ao servidor dedicado: {exception.Message}");
+            return false;
+        }
+        finally
+        {
+            starting = false;
+        }
+    }
+
+    /// <summary>
     /// Enters a random Shared session and lets the Shared Master perform the
     /// network scene transition. Other peers receive that transition from Fusion;
     /// they must never call Unity's SceneManager directly for an online match.
@@ -168,6 +223,7 @@ public sealed class FusionSessionService : MonoBehaviour
     {
         if (runner != null && runner.IsRunning) await runner.Shutdown();
         DisposeRunner();
+        FusionDedicatedMatchContext.Clear();
     }
 
     private void DisposeRunner()

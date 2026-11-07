@@ -19,6 +19,7 @@ public sealed class ServiceHub : MonoBehaviour
     [SerializeField] private BackendHealthService health;
     [Header("Realtime")]
     [SerializeField] private FusionSessionService fusion;
+    [SerializeField] private FusionMatchJoinTokenService fusionJoinTokens;
     [SerializeField] private VivoxVoiceChannelService voice;
     public PlayFabAuthManager Authentication => authentication;
     public PlayerProfileService Profile => profile;
@@ -32,6 +33,7 @@ public sealed class ServiceHub : MonoBehaviour
     public SessionAccessService Session => session;
     public BackendHealthService Health => health;
     public FusionSessionService Fusion => fusion;
+    public FusionMatchJoinTokenService FusionJoinTokens => fusionJoinTokens;
     public VivoxVoiceChannelService Voice => voice;
     private void Awake()
     {
@@ -49,6 +51,7 @@ public sealed class ServiceHub : MonoBehaviour
         if (session == null) session = GetComponent<SessionAccessService>();
         if (health == null) health = GetComponent<BackendHealthService>();
         if (fusion == null) fusion = GetComponent<FusionSessionService>();
+        if (fusionJoinTokens == null) fusionJoinTokens = GetComponent<FusionMatchJoinTokenService>();
         if (voice == null) voice = GetComponent<VivoxVoiceChannelService>();
         DontDestroyOnLoad(gameObject);
     }

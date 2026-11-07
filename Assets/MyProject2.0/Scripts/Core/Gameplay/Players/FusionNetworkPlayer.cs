@@ -19,6 +19,10 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
     [Networked] public float Charge { get; private set; }
     [Networked] public NetworkBool IsEliminated { get; private set; }
     [Networked, Capacity(32)] public string NetworkNickname { get; private set; }
+    [Networked, Capacity(32)] public string NetworkAvatarId { get; private set; }
+    [Networked, Capacity(32)] public string NetworkPlayerId { get; private set; }
+    [Networked] public int Eliminations { get; private set; }
+    [Networked] public int RoundsSurvived { get; private set; }
     [Networked] private int LastLaunchedRound { get; set; }
 
     private FusionRoundController rounds;
@@ -27,8 +31,14 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
     private bool wasEliminated;
     private Coroutine attachPresentationCoroutine;
     private int preparedRound = -1;
+    private int clientPreparedRound = -1;
     private FusionRoundPhase presentedPhase = (FusionRoundPhase)(-1);
     private int presentedRound = -1;
+    private Vector3 clientAimDirection;
+    private float clientCharge;
+    private float nextClientSubmitTime;
+    private string serverJoinToken = string.Empty;
+    private NetworkObject lastAttacker;
 
     public override void Spawned()
     {
@@ -41,7 +51,7 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
         if (legacyDeath != null) legacyDeath.enabled = false;
         // Shared Authority uses state authority as the local player's ownership.
         // InputAuthority is not assigned the same way as Client/Server sessions.
-        bool isLocalPlayer = Object.HasStateAuthority;
+        bool isLocalPlayer = HasLocalInput();
         if (localInput != null) localInput.enabled = isLocalPlayer;
         PlayerCameraLook cameraLook = GetComponentInChildren<PlayerCameraLook>(true);
         if (cameraLook != null) cameraLook.enabled = isLocalPlayer;
@@ -53,19 +63,32 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
         {
             if (AimDirection.sqrMagnitude < 0.001f) AimDirection = transform.forward;
             if (string.IsNullOrWhiteSpace(NetworkNickname)) NetworkNickname = ResolveLocalNickname();
+        }
+
+        if (isLocalPlayer)
+        {
             attachPresentationCoroutine = StartCoroutine(AttachLocalPresentation());
+            SubmitDedicatedIdentity();
         }
     }
 
     public override void FixedUpdateNetwork()
     {
         if (rounds == null) rounds = FindFirstObjectByType<FusionRoundController>();
-        if (rounds == null || !Object.HasStateAuthority || IsEliminated) return;
+        if (rounds == null || IsEliminated) return;
+
+        if (!Object.HasStateAuthority)
+        {
+            if (HasLocalInput() && rounds.Phase == FusionRoundPhase.Choosing) ReadClientChoice();
+            else if (HasLocalInput()) localInput?.ClearPendingChargePresses();
+            return;
+        }
 
         if (body != null && transform.position.y <= (match != null ? match.DeathHeight : 2.87f))
         {
             IsEliminated = true;
             body.isKinematic = true;
+            AwardEliminationToLastAttacker();
             return;
         }
 
@@ -132,7 +155,7 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
         {
             wasEliminated = true;
             SetVisible(false);
-            if (Object.HasStateAuthority)
+            if (HasLocalInput())
             {
                 PlayerCameraLook cameraLook = GetComponentInChildren<PlayerCameraLook>(true);
                 if (cameraLook != null) cameraLook.enabled = false;
@@ -168,6 +191,109 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
             if (Charge > 0f) playerController.ShowIndicator();
             else playerController.HideIndicator();
         }
+    }
+
+    private void ReadClientChoice()
+    {
+        if (!HasLocalInput() || localInput == null || rounds == null) return;
+        if (clientPreparedRound != rounds.RoundIndex)
+        {
+            clientPreparedRound = rounds.RoundIndex;
+            clientCharge = 0f;
+            clientAimDirection = AimDirection.sqrMagnitude > 0.001f ? AimDirection : transform.forward;
+            playerController?.ResetRound();
+        }
+
+        if (localCamera == null) localCamera = Camera.main;
+        if (localCamera != null)
+        {
+            Vector3 direction = localCamera.transform.forward;
+            direction.y = 0f;
+            if (direction.sqrMagnitude > 0.001f) clientAimDirection = direction.normalized;
+        }
+
+        int addPresses = localInput.ConsumeAddChargePresses();
+        int removePresses = localInput.ConsumeRemoveChargePresses();
+        clientCharge += addPresses * 0.5f;
+        clientCharge -= removePresses * 0.5f;
+        playerController?.ApplyNetworkSelection(clientAimDirection, clientCharge);
+        clientCharge = playerController != null ? playerController.CurrentCharge : Mathf.Max(0f, clientCharge);
+        playerController?.PreviewLocalAimRotation();
+        if (clientCharge > 0f) playerController?.ShowIndicator(); else playerController?.HideIndicator();
+
+        bool chargeChanged = addPresses != 0 || removePresses != 0;
+        if (chargeChanged || Time.unscaledTime >= nextClientSubmitTime)
+        {
+            nextClientSubmitTime = Time.unscaledTime + 0.1f;
+            RpcSubmitChoice(rounds.RoundIndex, clientAimDirection, clientCharge);
+        }
+    }
+
+    private bool HasLocalInput()
+    {
+        return Object != null && (Object.HasInputAuthority || (Runner != null && Runner.GameMode == GameMode.Shared && Object.HasStateAuthority));
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RpcSubmitChoice(int round, Vector3 direction, float charge)
+    {
+        if (rounds == null || rounds.Phase != FusionRoundPhase.Choosing || rounds.RoundIndex != round || IsEliminated) return;
+        direction.y = 0f;
+        if (direction.sqrMagnitude > 0.001f) AimDirection = direction.normalized;
+        PlayerConfig configuration = match != null ? match.PlayerConfig : null;
+        float maximum = configuration != null ? configuration.MaxCharge : 5f;
+        float minimum = configuration != null ? configuration.MinCharge : 0f;
+        Charge = Mathf.Round(Mathf.Clamp(charge, minimum, maximum) * 2f) * 0.5f;
+    }
+
+    private void SubmitDedicatedIdentity()
+    {
+        if (!FusionDedicatedMatchContext.TryGet(out FusionDedicatedIdentity identity)) return;
+        RpcSubmitIdentity(identity.PlayerId, identity.Nickname, identity.AvatarId, identity.JoinToken);
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RpcSubmitIdentity(string playerId, string nickname, string avatarId, string joinToken)
+    {
+        if (string.IsNullOrWhiteSpace(playerId) || string.IsNullOrWhiteSpace(joinToken)) return;
+        NetworkPlayerId = playerId.Trim();
+        NetworkNickname = string.IsNullOrWhiteSpace(nickname) ? "Capivara" : nickname.Trim();
+        NetworkAvatarId = string.IsNullOrWhiteSpace(avatarId) ? "avatar1" : avatarId.Trim();
+        serverJoinToken = joinToken;
+    }
+
+    public void RegisterSurvivedRound()
+    {
+        if (Object != null && Object.HasStateAuthority && !IsEliminated) RoundsSurvived++;
+    }
+
+    public void RegisterAttacker(NetworkObject attacker)
+    {
+        if (Object != null && Object.HasStateAuthority && attacker != null) lastAttacker = attacker;
+    }
+
+    private void AwardEliminationToLastAttacker()
+    {
+        if (lastAttacker == null || lastAttacker == Object) return;
+        FusionNetworkPlayer attacker = lastAttacker.GetComponent<FusionNetworkPlayer>();
+        if (attacker != null && attacker.Object != null && attacker.Object.HasStateAuthority && !attacker.IsEliminated)
+            attacker.Eliminations++;
+    }
+
+    public FusionMatchResult BuildMatchResult()
+    {
+        return new FusionMatchResult
+        {
+            PlayerRef = Object != null ? Object.InputAuthority : PlayerRef.None,
+            IsBot = false,
+            IsEliminated = IsEliminated,
+            PlayerId = NetworkPlayerId,
+            JoinToken = Object != null && Object.HasStateAuthority ? serverJoinToken : string.Empty,
+            Nickname = NetworkNickname,
+            AvatarId = NetworkAvatarId,
+            Eliminations = Eliminations,
+            RoundsSurvived = RoundsSurvived
+        };
     }
 
     private void PresentRoundPhase()
