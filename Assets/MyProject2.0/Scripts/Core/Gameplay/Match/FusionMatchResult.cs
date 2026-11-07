@@ -6,18 +6,18 @@ using Fusion;
 /// </summary>
 public sealed class FusionMatchResult
 {
-    public PlayerRef PlayerRef { get; init; }
-    public bool IsBot { get; init; }
-    public bool IsEliminated { get; init; }
-    public string PlayerId { get; init; } = string.Empty;
+    public PlayerRef PlayerRef { get; set; }
+    public bool IsBot { get; set; }
+    public bool IsEliminated { get; set; }
+    public string PlayerId { get; set; } = string.Empty;
     // O token não autentica PlayFab/Azure; ele só comprova que este jogador
     // autenticado entrou nesta partida específica e expira em poucos minutos.
-    public string JoinToken { get; init; } = string.Empty;
-    public string Nickname { get; init; } = "Capivara";
-    public string AvatarId { get; init; } = "avatar1";
-    public int Eliminations { get; init; }
-    public int RoundsSurvived { get; init; }
-    public int Placement { get; init; }
+    public string JoinToken { get; set; } = string.Empty;
+    public string Nickname { get; set; } = "Capivara";
+    public string AvatarId { get; set; } = "avatar1";
+    public int Eliminations { get; set; }
+    public int RoundsSurvived { get; set; }
+    public int Placement { get; set; }
 
     public bool CanPersist => !IsBot && !string.IsNullOrWhiteSpace(PlayerId) && !string.IsNullOrWhiteSpace(JoinToken);
 }
