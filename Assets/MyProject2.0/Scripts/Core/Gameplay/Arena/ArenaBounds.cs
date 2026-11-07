@@ -24,6 +24,7 @@ public class ArenaBounds : MonoBehaviour
 
     public float EdgeMargin => edgeMargin;
     public Vector3 InitialArenaScale => initialArenaScale;
+    public Vector3 CurrentArenaScale => arenaTransform != null ? arenaTransform.localScale : initialArenaScale;
 
     private void Awake()
     {
@@ -92,6 +93,17 @@ public class ArenaBounds : MonoBehaviour
     {
         if (!isInitialized) return;
         SetArenaScale(scale);
+    }
+
+    /// <summary>
+    /// Applies the replicated scale and mirrors the practice-mode behavior by
+    /// keeping living participants inside the newly reduced arena.
+    /// </summary>
+    public void ApplyNetworkScale(Vector3 scale, IEnumerable<GameObject> players)
+    {
+        if (!isInitialized) return;
+        SetArenaScale(scale);
+        KeepPlayersInside(players);
     }
 
     private void SetArenaScale(Vector3 scale)

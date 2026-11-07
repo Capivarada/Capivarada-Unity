@@ -70,7 +70,12 @@ public class PlayerController : MonoBehaviour
 
         customizationApplier = GetComponentInChildren<PlayerCustomizationApplier>(true);
         skinRenderer = GetComponentInChildren<Renderer>(true);
-        if (visualRoot == null && skinRenderer != null) visualRoot = skinRenderer.transform;
+        if (visualRoot == null && skinRenderer != null)
+        {
+            visualRoot = skinRenderer.transform;
+            while (visualRoot.parent != null && visualRoot.parent != transform)
+                visualRoot = visualRoot.parent;
+        }
         if (visualRoot != null) visualRootBaseLocalRotation = visualRoot.localRotation;
     }
 
@@ -125,7 +130,7 @@ public class PlayerController : MonoBehaviour
         if (visualRoot == null) return;
         Vector3 direction = GetAimDirection();
         if (direction.sqrMagnitude <= 0.001f) return;
-        visualRoot.rotation = Quaternion.LookRotation(direction.normalized);
+        visualRoot.localRotation = GetVisualAimRotation(direction);
         hasVisualPreview = true;
     }
 
@@ -371,20 +376,32 @@ public class PlayerController : MonoBehaviour
             yield break;
         }
 
-        Quaternion startRotation = visualRoot.rotation;
-        Quaternion targetRotation = Quaternion.LookRotation(direction.normalized);
+        Quaternion startRotation = visualRoot.localRotation;
+        Quaternion targetRotation = GetVisualAimRotation(direction);
         float elapsed = 0f;
         float safeDuration = Mathf.Max(0.01f, duration);
         hasVisualPreview = true;
         while (elapsed < safeDuration)
         {
             elapsed += Time.deltaTime;
-            visualRoot.rotation = Quaternion.Slerp(startRotation, targetRotation, Mathf.Clamp01(elapsed / safeDuration));
+            visualRoot.localRotation = Quaternion.Slerp(startRotation, targetRotation, Mathf.Clamp01(elapsed / safeDuration));
             yield return null;
         }
 
-        visualRoot.rotation = targetRotation;
+        visualRoot.localRotation = targetRotation;
         visualRevealRotation = null;
+    }
+
+    private Quaternion GetVisualAimRotation(Vector3 direction)
+    {
+        direction.y = 0f;
+        if (direction.sqrMagnitude <= 0.001f) return visualRootBaseLocalRotation;
+
+        // The imported capybara mesh has its own model-orientation offset.
+        // Applying a yaw on top of its authored local rotation preserves that
+        // offset while visibly facing the selected world direction.
+        float yaw = Vector3.SignedAngle(transform.forward, direction.normalized, Vector3.up);
+        return Quaternion.AngleAxis(yaw, Vector3.up) * visualRootBaseLocalRotation;
     }
 
     #endregion

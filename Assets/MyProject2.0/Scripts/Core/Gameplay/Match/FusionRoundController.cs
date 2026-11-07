@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Fusion;
 using UnityEngine;
 
@@ -28,11 +29,16 @@ public sealed class FusionRoundController : NetworkBehaviour
     [Networked] private TickTimer PhaseTimer { get; set; }
     [Networked] private TickTimer StopTimer { get; set; }
     [Networked] private Vector3 ArenaTargetScale { get; set; }
+    [Networked] private Vector3 ArenaStartScale { get; set; }
+    [Networked] private TickTimer ArenaShrinkTimer { get; set; }
 
     private FusionRoundPhase displayedPhase;
     private int displayedRound;
     private bool networkSpawned;
     private bool arenaScaleInitialized;
+    private bool hasRenderedArenaScale;
+    private Vector3 renderedArenaScale;
+    private readonly List<GameObject> livingParticipants = new();
     public event Action<FusionRoundPhase, int> PhaseChanged;
     public bool IsNetworkSpawned => networkSpawned;
     public float RemainingPhaseSeconds => !networkSpawned || Runner == null || !PhaseTimer.IsRunning
@@ -96,7 +102,6 @@ public sealed class FusionRoundController : NetworkBehaviour
                 break;
             case FusionRoundPhase.Intermission:
                 RoundIndex++;
-                UpdateArenaTargetScale();
                 SetPhase(FusionRoundPhase.Choosing, ChoosingSeconds);
                 break;
         }
@@ -104,9 +109,7 @@ public sealed class FusionRoundController : NetworkBehaviour
 
     public override void Render()
     {
-        if (arenaBounds == null) arenaBounds = FindFirstObjectByType<ArenaBounds>();
-        if (arenaBounds != null && ArenaTargetScale.sqrMagnitude > 0.001f)
-            arenaBounds.ApplyNetworkScale(ArenaTargetScale);
+        ApplyArenaPresentation();
 
         if (displayedPhase == Phase && displayedRound == RoundIndex) return;
         displayedPhase = Phase;
@@ -148,13 +151,16 @@ public sealed class FusionRoundController : NetworkBehaviour
         if (arenaScaleInitialized || arenaBounds == null) return;
         arenaScaleInitialized = true;
         ArenaTargetScale = arenaBounds.InitialArenaScale;
+        ArenaStartScale = ArenaTargetScale;
     }
 
-    private void UpdateArenaTargetScale()
+    private void BeginArenaShrinkForNextRound()
     {
         if (arenaBounds == null) return;
         float shrink = match != null && match.MatchConfig != null ? match.MatchConfig.ShrinkPerRound : 2.5f;
-        ArenaTargetScale = arenaBounds.GetScaleForRound(RoundIndex, shrink);
+        ArenaStartScale = arenaBounds.CurrentArenaScale;
+        ArenaTargetScale = arenaBounds.GetScaleForRound(RoundIndex + 1, shrink);
+        ArenaShrinkTimer = TickTimer.CreateFromSeconds(Runner, IntermissionSeconds);
     }
 
     private void AdvanceWhenEveryoneStops()
@@ -173,7 +179,42 @@ public sealed class FusionRoundController : NetworkBehaviour
         }
 
         if (StopTimer.Expired(Runner))
+        {
+            BeginArenaShrinkForNextRound();
             SetPhase(FusionRoundPhase.Intermission, IntermissionSeconds);
+        }
+    }
+
+    private void ApplyArenaPresentation()
+    {
+        if (arenaBounds == null) arenaBounds = FindFirstObjectByType<ArenaBounds>();
+        if (arenaBounds == null || ArenaTargetScale.sqrMagnitude <= 0.001f) return;
+
+        Vector3 scale = ArenaTargetScale;
+        if (Phase == FusionRoundPhase.Intermission && ArenaShrinkTimer.IsRunning)
+        {
+            float duration = Mathf.Max(0.01f, IntermissionSeconds);
+            float remaining = ArenaShrinkTimer.RemainingTime(Runner) ?? 0f;
+            float progress = Mathf.Clamp01(1f - remaining / duration);
+            scale = Vector3.Lerp(ArenaStartScale, ArenaTargetScale, progress);
+        }
+
+        if (hasRenderedArenaScale && (renderedArenaScale - scale).sqrMagnitude <= 0.000001f) return;
+        hasRenderedArenaScale = true;
+        renderedArenaScale = scale;
+        arenaBounds.ApplyNetworkScale(scale, GetLivingParticipants());
+    }
+
+    private IReadOnlyList<GameObject> GetLivingParticipants()
+    {
+        livingParticipants.Clear();
+        foreach (FusionNetworkPlayer player in FindObjectsByType<FusionNetworkPlayer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            if (player != null && !player.IsEliminated) livingParticipants.Add(player.gameObject);
+
+        foreach (FusionNetworkBot bot in FindObjectsByType<FusionNetworkBot>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            if (bot != null && !bot.IsEliminated) livingParticipants.Add(bot.gameObject);
+
+        return livingParticipants;
     }
 
     private bool HasRoundStarted()

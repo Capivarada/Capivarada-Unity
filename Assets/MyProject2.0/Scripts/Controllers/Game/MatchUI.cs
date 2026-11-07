@@ -179,6 +179,17 @@ public class MatchUI : MonoBehaviour
         SetActive(titleContainer, true); SetActive(roundContainer, true); SetActive(powerContainer, false);
         HidePowerSpeedPanel();
     }
+
+    /// <summary>Called by Fusion when its replicated match flow reaches Finished.</summary>
+    public void HandleNetworkMatchFinished()
+    {
+        if (IsPractice || returningToLobby) return;
+
+        returningToLobby = true;
+        SetActive(powerContainer, false);
+        HidePowerSpeedPanel();
+        StartCoroutine(ReturnOnlineMatchToLobby());
+    }
     public void ShowSpectatorUI()
     {
         SetActive(powerContainer, false);
@@ -354,6 +365,12 @@ public class MatchUI : MonoBehaviour
             Debug.Log("[Match] Practice or guest match ended. Returning without persistence.", this);
         LoadLobby();
         yield break;
+    }
+
+    private IEnumerator ReturnOnlineMatchToLobby()
+    {
+        yield return new WaitForSeconds(2f);
+        LoadLobby();
     }
 
     private void OnMatchProcessed(
