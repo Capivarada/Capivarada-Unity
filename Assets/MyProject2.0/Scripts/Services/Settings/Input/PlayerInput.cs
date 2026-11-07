@@ -56,8 +56,8 @@ public class PlayerInput : MonoBehaviour
     private void Update()
     {
         if (inputActions == null) return;
-        if (inputActions.Player.AddCharge.WasPressedThisFrame) pendingAddChargePresses++;
-        if (inputActions.Player.RemoveCharge.WasPressedThisFrame) pendingRemoveChargePresses++;
+        if (inputActions.Player.AddCharge.WasPressedThisFrame()) pendingAddChargePresses++;
+        if (inputActions.Player.RemoveCharge.WasPressedThisFrame()) pendingRemoveChargePresses++;
     }
 
     private void OnDisable()
