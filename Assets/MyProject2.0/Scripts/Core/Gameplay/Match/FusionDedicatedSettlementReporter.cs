@@ -49,11 +49,16 @@ public sealed class FusionDedicatedSettlementReporter : MonoBehaviour
     private void Submit(IReadOnlyList<FusionMatchResult> results, int durationSeconds)
     {
         if (submitted || runner == null || !runner.IsServer) return;
-        string secret = Environment.GetEnvironmentVariable("CAPIVARADA_MATCH_SERVER_SECRET");
+        // Locally we use the familiar variable name. In PlayFab MPS, a build
+        // secret named CAPIVARADA-MATCH-SERVER-SECRET is exposed with the
+        // PF_MPS_SECRET_ prefix, preserving the hyphens in its original name.
+        string secret = Environment.GetEnvironmentVariable("PF_MPS_SECRET_CAPIVARADA-MATCH-SERVER-SECRET");
+        if (string.IsNullOrWhiteSpace(secret))
+            secret = Environment.GetEnvironmentVariable("CAPIVARADA_MATCH_SERVER_SECRET");
         string matchId = runner.SessionInfo.Name;
         if (string.IsNullOrWhiteSpace(secret) || string.IsNullOrWhiteSpace(matchId))
         {
-            Debug.LogError("[FusionDedicatedSettlementReporter] Sem CAPIVARADA_MATCH_SERVER_SECRET ou MatchId; progresso não será salvo.", this);
+            Debug.LogError("[FusionDedicatedSettlementReporter] Sem segredo do MPS/local ou MatchId; progresso não será salvo.", this);
             return;
         }
 
