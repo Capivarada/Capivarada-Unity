@@ -7,6 +7,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField]
     private ImpulseIndicator impulseIndicator;
     [SerializeField] public Animator animator;
+    [SerializeField] private Transform visualRoot;
 
     [SerializeField]
     private Rigidbody rb;
@@ -19,6 +20,8 @@ public class PlayerController : MonoBehaviour
     private Coroutine revealRotation;
     private PlayerCustomizationApplier customizationApplier;
     private Renderer skinRenderer;
+    private Quaternion visualRootBaseLocalRotation;
+    private bool hasVisualPreview;
 
     public event Action<float> OnChargeChanged;
 
@@ -66,6 +69,8 @@ public class PlayerController : MonoBehaviour
 
         customizationApplier = GetComponentInChildren<PlayerCustomizationApplier>(true);
         skinRenderer = GetComponentInChildren<SkinnedMeshRenderer>(true);
+        if (visualRoot == null && skinRenderer != null) visualRoot = skinRenderer.transform;
+        if (visualRoot != null) visualRootBaseLocalRotation = visualRoot.localRotation;
     }
 
     private void Start()
@@ -108,6 +113,26 @@ public class PlayerController : MonoBehaviour
     public Vector3 GetAimDirection()
     {
         return aimDirection.sqrMagnitude > 0.001f ? aimDirection : transform.forward;
+    }
+
+    /// <summary>
+    /// Rotates only the local visual mesh while choosing. The NetworkObject
+    /// stays untouched, so opponents receive the actual facing only on reveal.
+    /// </summary>
+    public void PreviewLocalAimRotation()
+    {
+        if (visualRoot == null) return;
+        Vector3 direction = GetAimDirection();
+        if (direction.sqrMagnitude <= 0.001f) return;
+        visualRoot.rotation = Quaternion.LookRotation(direction.normalized);
+        hasVisualPreview = true;
+    }
+
+    public void ClearLocalAimPreview()
+    {
+        if (!hasVisualPreview || visualRoot == null) return;
+        visualRoot.localRotation = visualRootBaseLocalRotation;
+        hasVisualPreview = false;
     }
 
     #endregion
@@ -217,6 +242,7 @@ public class PlayerController : MonoBehaviour
         if (revealRotation != null) StopCoroutine(revealRotation);
         revealRotation = null;
         hasLaunched = false;
+        ClearLocalAimPreview();
         StopMovementAnimation();
 
         currentCharge = 0f;

@@ -31,6 +31,7 @@ public class MatchUI : MonoBehaviour
 
     [Header("End Of Match")]
     [SerializeField] private SpectatorUI spectatorUI;
+    [SerializeField] private Transform fixedSpectatorCameraTarget;
     [SerializeField] private GameObject gameUI;
     [SerializeField] private PlayerCameraController cameraController;
     [SerializeField] private string lobbySceneName = "Lobby_Scene";
@@ -76,7 +77,7 @@ public class MatchUI : MonoBehaviour
         {
             spectatorUI.PreviousRequested += SpectatePrevious;
             spectatorUI.NextRequested += SpectateNext;
-            spectatorUI.ReturnToLobbyRequested += ShowResultAndReturn;
+            spectatorUI.ReturnToLobbyRequested += ReturnToLobbyFromSpectator;
         }
         if (countdownContainer == null && countdownText != null && countdownText.transform.parent != null)
             countdownContainer = countdownText.transform.parent.gameObject;
@@ -171,6 +172,7 @@ public class MatchUI : MonoBehaviour
     public void ShowRevealingUI()
     {
         SetActive(titleContainer, true); SetActive(roundContainer, true); SetActive(powerContainer, false);
+        HidePowerSpeedPanel();
     }
     public void ShowIntermissionUI()
     {
@@ -220,13 +222,15 @@ public class MatchUI : MonoBehaviour
 
         humanEliminated = true;
         SetActive(powerContainer, false);
+        HidePowerSpeedPanel();
 
         // A morte pode acontecer antes de haver alguém para observar. O cursor
         // precisa ser liberado independentemente de o painel ser exibido.
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
-        RefreshSpectatablePlayers();
-        if (spectatablePlayers.Count > 0) BeginSpectating(0);
+        if (fixedSpectatorCameraTarget != null && cameraController != null)
+            cameraController.SetTarget(fixedSpectatorCameraTarget);
+        spectatorUI?.ShowFixed();
     }
 
     private void Update()
@@ -321,6 +325,13 @@ public class MatchUI : MonoBehaviour
 
         HideSpectatorUI();
         HideGameUI();
+    }
+
+    private void ReturnToLobbyFromSpectator()
+    {
+        if (returningToLobby) return;
+        returningToLobby = true;
+        LoadLobby();
     }
 
     private IEnumerator ReturnToLobbyCoroutine(
@@ -506,7 +517,7 @@ public class MatchUI : MonoBehaviour
         StopPowerShake();
         if (IsPractice && roundManager != null) { roundManager.OnStateChanged -= HandleRoundStateChanged; roundManager.OnRoundChanged -= UpdateRound; roundManager.OnTimerChanged -= UpdateCountdown; roundManager.OnTitleChanged -= ShowTitle; }
         if (IsPractice && matchManager != null) { matchManager.OnPlayerEliminated -= HandlePlayerEliminated; matchManager.OnMatchFinished -= HandleMatchFinished; }
-        if (spectatorUI != null) { spectatorUI.PreviousRequested -= SpectatePrevious; spectatorUI.NextRequested -= SpectateNext; spectatorUI.ReturnToLobbyRequested -= ShowResultAndReturn; }
+        if (spectatorUI != null) { spectatorUI.PreviousRequested -= SpectatePrevious; spectatorUI.NextRequested -= SpectateNext; spectatorUI.ReturnToLobbyRequested -= ReturnToLobbyFromSpectator; }
         if (playerData != null) { playerData.OnKillsChanged -= HandleKillsChanged; playerData.OnRoundsSurvivedChanged -= HandleRoundsSurvivedChanged; }
         UnsubscribeHuman();
     }

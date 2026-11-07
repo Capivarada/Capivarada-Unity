@@ -23,6 +23,7 @@ public class ArenaBounds : MonoBehaviour
         );
 
     public float EdgeMargin => edgeMargin;
+    public Vector3 InitialArenaScale => initialArenaScale;
 
     private void Awake()
     {
@@ -75,6 +76,22 @@ public class ArenaBounds : MonoBehaviour
 
         SetArenaScale(targetScale);
         KeepPlayersInside(players);
+    }
+
+    public Vector3 GetScaleForRound(int roundNumber, float reductionPerRound)
+    {
+        float reduction = Mathf.Max(0f, reductionPerRound) * Mathf.Max(0, roundNumber - 1);
+        return new Vector3(
+            Mathf.Max(0.1f, initialArenaScale.x - reduction),
+            initialArenaScale.y,
+            Mathf.Max(0.1f, initialArenaScale.z - reduction));
+    }
+
+    /// <summary>Applies a replicated Fusion arena scale on every peer.</summary>
+    public void ApplyNetworkScale(Vector3 scale)
+    {
+        if (!isInitialized) return;
+        SetArenaScale(scale);
     }
 
     private void SetArenaScale(Vector3 scale)

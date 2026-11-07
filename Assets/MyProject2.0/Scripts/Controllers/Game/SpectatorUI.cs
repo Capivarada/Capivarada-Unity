@@ -32,7 +32,22 @@ public class SpectatorUI : MonoBehaviour
         SetPlayerName(playerName);
     }
 
-    public void Hide() { if (container != null) container.SetActive(false); }
+    /// <summary>Shows the fixed spectator state: no player cycling, only exit.</summary>
+    public void ShowFixed()
+    {
+        if (container != null) container.SetActive(true);
+        if (previousButton != null) previousButton.gameObject.SetActive(false);
+        if (nextButton != null) nextButton.gameObject.SetActive(false);
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    public void Hide()
+    {
+        if (container != null) container.SetActive(false);
+        if (previousButton != null) previousButton.gameObject.SetActive(true);
+        if (nextButton != null) nextButton.gameObject.SetActive(true);
+    }
     public void SetPlayerName(string playerName) { if (spectatedPlayerNameText != null) spectatedPlayerNameText.text = playerName; }
 
     private void OnDestroy()

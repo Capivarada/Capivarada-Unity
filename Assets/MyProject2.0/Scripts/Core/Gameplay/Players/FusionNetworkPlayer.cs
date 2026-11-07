@@ -103,7 +103,11 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
             wasEliminated = true;
             SetVisible(false);
             if (Object.HasStateAuthority)
+            {
+                PlayerCameraLook cameraLook = GetComponentInChildren<PlayerCameraLook>(true);
+                if (cameraLook != null) cameraLook.enabled = false;
                 FindFirstObjectByType<MatchUI>()?.HandleNetworkLocalElimination(gameObject);
+            }
         }
     }
 
@@ -117,6 +121,8 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
             direction.y = 0f;
             if (direction.sqrMagnitude > 0.001f) AimDirection = direction.normalized;
         }
+
+        playerController?.PreviewLocalAimRotation();
 
         int addPresses = localInput.ConsumeAddChargePresses();
         int removePresses = localInput.ConsumeRemoveChargePresses();
@@ -147,10 +153,12 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
                 else playerController.HideIndicator();
                 break;
             case FusionRoundPhase.Revealing:
+                playerController.ClearLocalAimPreview();
                 playerController.ShowIndicator();
                 if (Object.HasStateAuthority) playerController.BeginRevealRotation(rounds.RevealDuration);
                 break;
             default:
+                playerController.ClearLocalAimPreview();
                 playerController.HideIndicator();
                 playerController.StopMovementAnimation();
                 break;

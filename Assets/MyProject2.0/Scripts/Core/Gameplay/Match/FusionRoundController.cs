@@ -20,20 +20,19 @@ public enum FusionRoundPhase
 /// </summary>
 public sealed class FusionRoundController : NetworkBehaviour
 {
-    [SerializeField, Min(0f)] private float startCountdownSeconds = 3f;
-    [SerializeField, Min(0.1f)] private float choosingSeconds = 8f;
-    [SerializeField, Min(0f)] private float revealSeconds = 1.5f;
-    [SerializeField, Min(0.1f)] private float movementSeconds = 8f;
-    [SerializeField, Min(0f)] private float intermissionSeconds = 2f;
     [SerializeField] private FusionArenaMatchController match;
+    [SerializeField] private ArenaBounds arenaBounds;
 
     [Networked] public FusionRoundPhase Phase { get; private set; }
     [Networked] public int RoundIndex { get; private set; }
     [Networked] private TickTimer PhaseTimer { get; set; }
+    [Networked] private TickTimer StopTimer { get; set; }
+    [Networked] private Vector3 ArenaTargetScale { get; set; }
 
     private FusionRoundPhase displayedPhase;
     private int displayedRound;
     private bool networkSpawned;
+    private bool arenaScaleInitialized;
     public event Action<FusionRoundPhase, int> PhaseChanged;
     public bool IsNetworkSpawned => networkSpawned;
     public float RemainingPhaseSeconds => !networkSpawned || Runner == null || !PhaseTimer.IsRunning
@@ -41,12 +40,13 @@ public sealed class FusionRoundController : NetworkBehaviour
         : PhaseTimer.RemainingTime(Runner) ?? 0f;
     public float RevealDuration => match != null && match.MatchConfig != null
         ? match.MatchConfig.RevealDuration
-        : revealSeconds;
+        : 1.5f;
 
     public override void Spawned()
     {
         networkSpawned = true;
         if (match == null) match = GetComponent<FusionArenaMatchController>();
+        if (arenaBounds == null) arenaBounds = FindFirstObjectByType<ArenaBounds>();
         displayedPhase = Phase;
         displayedRound = RoundIndex;
     }
@@ -55,10 +55,17 @@ public sealed class FusionRoundController : NetworkBehaviour
     {
         if (!Object.HasStateAuthority || match == null || Phase == FusionRoundPhase.Finished) return;
         if (!match.IsMatchReady) return;
+        InitializeArenaScale();
 
         if (Phase == FusionRoundPhase.Waiting)
         {
             SetPhase(FusionRoundPhase.Countdown, InitialCountdownSeconds);
+            return;
+        }
+
+        if (Phase == FusionRoundPhase.Moving)
+        {
+            AdvanceWhenEveryoneStops();
             return;
         }
 
@@ -74,13 +81,12 @@ public sealed class FusionRoundController : NetworkBehaviour
                 SetPhase(FusionRoundPhase.Revealing, RevealDuration);
                 break;
             case FusionRoundPhase.Revealing:
-                SetPhase(FusionRoundPhase.Moving, movementSeconds);
-                break;
-            case FusionRoundPhase.Moving:
-                SetPhase(FusionRoundPhase.Intermission, IntermissionSeconds);
+                SetPhase(FusionRoundPhase.Moving, 0f);
+                StopTimer = default;
                 break;
             case FusionRoundPhase.Intermission:
                 RoundIndex++;
+                UpdateArenaTargetScale();
                 SetPhase(FusionRoundPhase.Choosing, ChoosingSeconds);
                 break;
         }
@@ -88,6 +94,10 @@ public sealed class FusionRoundController : NetworkBehaviour
 
     public override void Render()
     {
+        if (arenaBounds == null) arenaBounds = FindFirstObjectByType<ArenaBounds>();
+        if (arenaBounds != null && ArenaTargetScale.sqrMagnitude > 0.001f)
+            arenaBounds.ApplyNetworkScale(ArenaTargetScale);
+
         if (displayedPhase == Phase && displayedRound == RoundIndex) return;
         displayedPhase = Phase;
         displayedRound = RoundIndex;
@@ -107,11 +117,65 @@ public sealed class FusionRoundController : NetworkBehaviour
 
     private float InitialCountdownSeconds => match != null && match.MatchConfig != null
         ? match.MatchConfig.InitialCountdownDuration
-        : startCountdownSeconds;
+        : 3f;
     private float ChoosingSeconds => match != null && match.MatchConfig != null
         ? match.MatchConfig.ChoosingDuration
-        : choosingSeconds;
+        : 8f;
     private float IntermissionSeconds => match != null && match.MatchConfig != null
         ? match.MatchConfig.NextRoundCountdown
-        : intermissionSeconds;
+        : 2f;
+
+    private void InitializeArenaScale()
+    {
+        if (arenaScaleInitialized || arenaBounds == null) return;
+        arenaScaleInitialized = true;
+        ArenaTargetScale = arenaBounds.InitialArenaScale;
+    }
+
+    private void UpdateArenaTargetScale()
+    {
+        if (arenaBounds == null) return;
+        float shrink = match != null && match.MatchConfig != null ? match.MatchConfig.ShrinkPerRound : 2.5f;
+        ArenaTargetScale = arenaBounds.GetScaleForRound(RoundIndex, shrink);
+    }
+
+    private void AdvanceWhenEveryoneStops()
+    {
+        if (!AllLivingParticipantsStopped())
+        {
+            StopTimer = default;
+            return;
+        }
+
+        if (!StopTimer.IsRunning)
+        {
+            float delay = match != null && match.MatchConfig != null ? match.MatchConfig.StopCheckDelay : 0.75f;
+            StopTimer = TickTimer.CreateFromSeconds(Runner, delay);
+            return;
+        }
+
+        if (StopTimer.Expired(Runner))
+            SetPhase(FusionRoundPhase.Intermission, IntermissionSeconds);
+    }
+
+    private bool AllLivingParticipantsStopped()
+    {
+        float threshold = match != null && match.MatchConfig != null ? match.MatchConfig.StopVelocityThreshold : 0.15f;
+        bool foundLivingParticipant = false;
+        foreach (FusionNetworkPlayer player in FindObjectsByType<FusionNetworkPlayer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (player == null || player.IsEliminated) continue;
+            foundLivingParticipant = true;
+            Rigidbody body = player.GetComponent<Rigidbody>();
+            if (body != null && new Vector2(body.linearVelocity.x, body.linearVelocity.z).magnitude > threshold) return false;
+        }
+        foreach (FusionNetworkBot bot in FindObjectsByType<FusionNetworkBot>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (bot == null || bot.IsEliminated) continue;
+            foundLivingParticipant = true;
+            Rigidbody body = bot.GetComponent<Rigidbody>();
+            if (body != null && new Vector2(body.linearVelocity.x, body.linearVelocity.z).magnitude > threshold) return false;
+        }
+        return foundLivingParticipant;
+    }
 }

@@ -39,6 +39,12 @@ public class MatchConfig : ScriptableObject
 
     public int MaxRounds => maxRounds;
 
+    [Header("Arena Shrink")]
+    [SerializeField, Min(0f), Tooltip("World-scale reduction applied to the arena after each round.")]
+    private float shrinkPerRound = 2.5f;
+
+    public float ShrinkPerRound => shrinkPerRound;
+
     [Header("Arena Elimination")]
     [SerializeField, Tooltip("World Y below which a capybara is eliminated. Each arena adapts by using this shared match rule.")]
     private float deathHeight = 2.87f;
