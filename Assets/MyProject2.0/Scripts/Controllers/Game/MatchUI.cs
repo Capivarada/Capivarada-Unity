@@ -201,6 +201,23 @@ public class MatchUI : MonoBehaviour
 
     private void HandleHumanDeath(PlayerDeath _)
     {
+        HandleLocalEliminationPresentation();
+    }
+
+    /// <summary>Called by Fusion because the legacy PlayerDeath component is disabled online.</summary>
+    public void HandleNetworkLocalElimination(GameObject eliminatedPlayer)
+    {
+        if (eliminatedPlayer == null || eliminatedPlayer != humanPlayerObject)
+            return;
+
+        HandleLocalEliminationPresentation();
+    }
+
+    private void HandleLocalEliminationPresentation()
+    {
+        if (humanEliminated)
+            return;
+
         humanEliminated = true;
         SetActive(powerContainer, false);
 
@@ -252,6 +269,13 @@ public class MatchUI : MonoBehaviour
         spectatablePlayers.Clear();
         if (matchManager != null)
             foreach (GameObject player in matchManager.GetAlivePlayers()) if (player != null && player != humanPlayerObject && player.activeInHierarchy) spectatablePlayers.Add(player);
+        else
+        {
+            foreach (FusionNetworkPlayer player in FindObjectsByType<FusionNetworkPlayer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+                if (player != null && !player.IsEliminated && player.gameObject != humanPlayerObject) spectatablePlayers.Add(player.gameObject);
+            foreach (FusionNetworkBot bot in FindObjectsByType<FusionNetworkBot>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+                if (bot != null && !bot.IsEliminated) spectatablePlayers.Add(bot.gameObject);
+        }
         if (spectatablePlayers.Count == 0) { HideSpectatorUI(); return; }
         spectatedIndex = previous != null ? Mathf.Max(0, spectatablePlayers.IndexOf(previous)) : 0;
         if (isSpectating) ApplySpectatedPlayer();

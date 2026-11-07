@@ -105,6 +105,7 @@ public sealed class FusionNetworkBot : NetworkBehaviour
         else
         {
             playerController.HideIndicator();
+            playerController.StopMovementAnimation();
         }
     }
 

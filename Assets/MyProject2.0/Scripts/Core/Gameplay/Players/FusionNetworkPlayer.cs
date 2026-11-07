@@ -74,6 +74,7 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
             if (preparedRound != rounds.RoundIndex)
             {
                 preparedRound = rounds.RoundIndex;
+                Charge = 0f;
                 playerController?.ResetRound();
             }
             ReadLocalChoice();
@@ -101,6 +102,8 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
         {
             wasEliminated = true;
             SetVisible(false);
+            if (Object.HasStateAuthority)
+                FindFirstObjectByType<MatchUI>()?.HandleNetworkLocalElimination(gameObject);
         }
     }
 
@@ -121,6 +124,11 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
         Charge -= removePresses * 0.5f;
         playerController?.ApplyNetworkSelection(AimDirection, Charge);
         Charge = playerController != null ? playerController.CurrentCharge : Mathf.Max(0f, Charge);
+        if (playerController != null)
+        {
+            if (Charge > 0f) playerController.ShowIndicator();
+            else playerController.HideIndicator();
+        }
     }
 
     private void PresentRoundPhase()
@@ -134,7 +142,8 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
         {
             case FusionRoundPhase.Choosing:
                 playerController.ResetRound();
-                if (Object.HasStateAuthority) playerController.ShowIndicator();
+                playerController.ApplyNetworkSelection(AimDirection, Charge);
+                if (Object.HasStateAuthority && Charge > 0f) playerController.ShowIndicator();
                 else playerController.HideIndicator();
                 break;
             case FusionRoundPhase.Revealing:
@@ -143,6 +152,7 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
                 break;
             default:
                 playerController.HideIndicator();
+                playerController.StopMovementAnimation();
                 break;
         }
     }

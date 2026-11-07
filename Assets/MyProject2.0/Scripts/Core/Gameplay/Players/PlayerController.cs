@@ -177,15 +177,7 @@ public class PlayerController : MonoBehaviour
         if (currentCharge <= 0)
             return;
 
-        if (animator != null)
-        {
-            if(currentCharge <= 2)
-                animator.SetBool("Walk", true);
-            if(currentCharge <= 4)
-                animator.SetBool("Run", true);
-            if(currentCharge >= 5)
-                animator.SetBool("Trot", true);
-        }
+        SetMovementAnimation(currentCharge);
             
             
         hasLaunched = true;
@@ -225,11 +217,31 @@ public class PlayerController : MonoBehaviour
         if (revealRotation != null) StopCoroutine(revealRotation);
         revealRotation = null;
         hasLaunched = false;
+        StopMovementAnimation();
 
         currentCharge = 0f;
         HideIndicator();
 
         UpdateIndicator();
+    }
+
+    /// <summary>Stops movement states whenever the capybara is not moving.</summary>
+    public void StopMovementAnimation()
+    {
+        if (animator == null) return;
+        animator.SetBool("Walk", false);
+        animator.SetBool("Run", false);
+        animator.SetBool("Trot", false);
+    }
+
+    private void SetMovementAnimation(float charge)
+    {
+        StopMovementAnimation();
+        if (animator == null) return;
+
+        if (charge <= 2f) animator.SetBool("Walk", true);
+        else if (charge <= 4f) animator.SetBool("Run", true);
+        else animator.SetBool("Trot", true);
     }
 
     public void HideIndicator()
