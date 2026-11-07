@@ -100,7 +100,7 @@ public sealed class FusionNetworkBot : NetworkBehaviour
         if (rounds.Phase == FusionRoundPhase.Revealing)
         {
             playerController.ShowIndicator();
-            if (Object.HasStateAuthority) playerController.BeginRevealRotation(rounds.RevealDuration);
+            playerController.BeginRevealPresentation(rounds.RevealDuration, Object.HasStateAuthority);
         }
         else
         {

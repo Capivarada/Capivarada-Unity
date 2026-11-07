@@ -49,6 +49,10 @@ public sealed class FusionMatchUIBridge : MonoBehaviour
                 matchUI.ShowIntermissionUI();
                 matchUI.ShowNetworkPhase("PRÓXIMA RODADA");
                 break;
+            case FusionRoundPhase.Finished:
+                matchUI.ShowIntermissionUI();
+                matchUI.ShowNetworkPhase("PARTIDA ENCERRADA");
+                break;
         }
     }
 

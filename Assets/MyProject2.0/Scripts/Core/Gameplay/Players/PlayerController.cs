@@ -18,6 +18,7 @@ public class PlayerController : MonoBehaviour
     private bool hasLaunched;
     private Vector3 aimDirection;
     private Coroutine revealRotation;
+    private Coroutine visualRevealRotation;
     private PlayerCustomizationApplier customizationApplier;
     private Renderer skinRenderer;
     private Quaternion visualRootBaseLocalRotation;
@@ -68,7 +69,7 @@ public class PlayerController : MonoBehaviour
         }
 
         customizationApplier = GetComponentInChildren<PlayerCustomizationApplier>(true);
-        skinRenderer = GetComponentInChildren<SkinnedMeshRenderer>(true);
+        skinRenderer = GetComponentInChildren<Renderer>(true);
         if (visualRoot == null && skinRenderer != null) visualRoot = skinRenderer.transform;
         if (visualRoot != null) visualRootBaseLocalRotation = visualRoot.localRotation;
     }
@@ -130,6 +131,12 @@ public class PlayerController : MonoBehaviour
 
     public void ClearLocalAimPreview()
     {
+        if (visualRevealRotation != null)
+        {
+            StopCoroutine(visualRevealRotation);
+            visualRevealRotation = null;
+        }
+
         if (!hasVisualPreview || visualRoot == null) return;
         visualRoot.localRotation = visualRootBaseLocalRotation;
         hasVisualPreview = false;
@@ -311,6 +318,24 @@ public class PlayerController : MonoBehaviour
         revealRotation = StartCoroutine(RotateToAimDirection(duration));
     }
 
+    /// <summary>
+    /// Replays the reveal rotation on non-authoritative peers. It affects only
+    /// the visible mesh, while the authoritative peer rotates the NetworkObject
+    /// itself so its final physics direction still replicates through Fusion.
+    /// </summary>
+    public void BeginRevealPresentation(float duration, bool rotateNetworkObject)
+    {
+        if (rotateNetworkObject)
+        {
+            BeginRevealRotation(duration);
+            return;
+        }
+
+        if (visualRoot == null) return;
+        if (visualRevealRotation != null) StopCoroutine(visualRevealRotation);
+        visualRevealRotation = StartCoroutine(RotateVisualToAimDirection(duration));
+    }
+
     private System.Collections.IEnumerator RotateToAimDirection(float duration)
     {
         Vector3 direction = GetAimDirection();
@@ -334,6 +359,32 @@ public class PlayerController : MonoBehaviour
 
         transform.rotation = targetRotation;
         revealRotation = null;
+    }
+
+    private System.Collections.IEnumerator RotateVisualToAimDirection(float duration)
+    {
+        Vector3 direction = GetAimDirection();
+        direction.y = 0f;
+        if (direction.sqrMagnitude <= 0.001f)
+        {
+            visualRevealRotation = null;
+            yield break;
+        }
+
+        Quaternion startRotation = visualRoot.rotation;
+        Quaternion targetRotation = Quaternion.LookRotation(direction.normalized);
+        float elapsed = 0f;
+        float safeDuration = Mathf.Max(0.01f, duration);
+        hasVisualPreview = true;
+        while (elapsed < safeDuration)
+        {
+            elapsed += Time.deltaTime;
+            visualRoot.rotation = Quaternion.Slerp(startRotation, targetRotation, Mathf.Clamp01(elapsed / safeDuration));
+            yield return null;
+        }
+
+        visualRoot.rotation = targetRotation;
+        visualRevealRotation = null;
     }
 
     #endregion

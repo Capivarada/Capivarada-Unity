@@ -155,7 +155,7 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
             case FusionRoundPhase.Revealing:
                 playerController.ClearLocalAimPreview();
                 playerController.ShowIndicator();
-                if (Object.HasStateAuthority) playerController.BeginRevealRotation(rounds.RevealDuration);
+                playerController.BeginRevealPresentation(rounds.RevealDuration, Object.HasStateAuthority);
                 break;
             default:
                 playerController.ClearLocalAimPreview();

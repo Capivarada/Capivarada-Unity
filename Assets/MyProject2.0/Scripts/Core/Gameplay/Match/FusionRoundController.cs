@@ -41,6 +41,7 @@ public sealed class FusionRoundController : NetworkBehaviour
     public float RevealDuration => match != null && match.MatchConfig != null
         ? match.MatchConfig.RevealDuration
         : 1.5f;
+    public bool IsFinished => networkSpawned && Phase == FusionRoundPhase.Finished;
 
     public override void Spawned()
     {
@@ -60,6 +61,15 @@ public sealed class FusionRoundController : NetworkBehaviour
         if (Phase == FusionRoundPhase.Waiting)
         {
             SetPhase(FusionRoundPhase.Countdown, InitialCountdownSeconds);
+            return;
+        }
+
+        // The online match has no legacy MatchManager watching PlayerDeath.
+        // Once the first playable round has started, the replicated elimination
+        // flags are the single source of truth for match completion.
+        if (HasRoundStarted() && CountLivingParticipants() <= 1)
+        {
+            FinishMatch();
             return;
         }
 
@@ -115,6 +125,14 @@ public sealed class FusionRoundController : NetworkBehaviour
         PhaseTimer = TickTimer.CreateFromSeconds(Runner, seconds);
     }
 
+    private void FinishMatch()
+    {
+        Phase = FusionRoundPhase.Finished;
+        PhaseTimer = default;
+        StopTimer = default;
+        Debug.Log("[FusionRoundController] Partida encerrada: restou um ou nenhum sobrevivente.", this);
+    }
+
     private float InitialCountdownSeconds => match != null && match.MatchConfig != null
         ? match.MatchConfig.InitialCountdownDuration
         : 3f;
@@ -156,6 +174,26 @@ public sealed class FusionRoundController : NetworkBehaviour
 
         if (StopTimer.Expired(Runner))
             SetPhase(FusionRoundPhase.Intermission, IntermissionSeconds);
+    }
+
+    private bool HasRoundStarted()
+    {
+        return Phase == FusionRoundPhase.Choosing ||
+               Phase == FusionRoundPhase.Revealing ||
+               Phase == FusionRoundPhase.Moving ||
+               Phase == FusionRoundPhase.Intermission;
+    }
+
+    private int CountLivingParticipants()
+    {
+        int alive = 0;
+        foreach (FusionNetworkPlayer player in FindObjectsByType<FusionNetworkPlayer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            if (player != null && !player.IsEliminated) alive++;
+
+        foreach (FusionNetworkBot bot in FindObjectsByType<FusionNetworkBot>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            if (bot != null && !bot.IsEliminated) alive++;
+
+        return alive;
     }
 
     private bool AllLivingParticipantsStopped()
