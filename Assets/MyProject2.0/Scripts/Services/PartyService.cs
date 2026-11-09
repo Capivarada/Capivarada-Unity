@@ -63,6 +63,7 @@ public sealed class PartyService : MonoBehaviour
         backend.Get<StateResponse>("party", ApplyState, Failed);
     }
 
+    public void Create(Action completed = null) => Execute("party/create", new CapivaradaBackendService.EmptyResponse(), completed);
     public void Invite(string playerId, Action completed = null)
     {
         if (string.IsNullOrWhiteSpace(playerId)) { Failed?.Invoke("Amigo inválido."); return; }

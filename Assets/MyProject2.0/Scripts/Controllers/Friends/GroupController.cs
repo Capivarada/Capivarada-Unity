@@ -43,7 +43,8 @@ public sealed class GroupController : MonoBehaviour
         {
             partyService.Changed += Rebuild;
             partyService.Failed += Report;
-            partyService.Refresh();
+            if (partyService.IsInParty) partyService.Refresh();
+            else partyService.Create();
         }
         Rebuild();
     }
