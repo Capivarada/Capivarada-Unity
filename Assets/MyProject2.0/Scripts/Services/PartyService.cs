@@ -35,6 +35,7 @@ public sealed class PartyService : MonoBehaviour
     private readonly List<Invitation> incoming = new();
     private readonly List<Invitation> outgoing = new();
     private string activeVoicePartyId;
+    private bool refreshInFlight;
     private const int PartyStoreMaximumMembers = 8;
 
     private string LocalPlayerId
@@ -60,7 +61,18 @@ public sealed class PartyService : MonoBehaviour
     {
         if (!CanUseParty()) return;
         if (backend == null) { Failed?.Invoke("CapivaradaBackendService não foi configurado em Services."); return; }
-        backend.Get<StateResponse>("party", ApplyState, Failed);
+        if (refreshInFlight) return;
+
+        refreshInFlight = true;
+        backend.Get<StateResponse>("party", response =>
+        {
+            refreshInFlight = false;
+            ApplyState(response);
+        }, error =>
+        {
+            refreshInFlight = false;
+            Failed?.Invoke(error);
+        });
     }
 
     public void Create(Action completed = null) => Execute("party/create", new CapivaradaBackendService.EmptyResponse(), completed);
@@ -74,7 +86,22 @@ public sealed class PartyService : MonoBehaviour
     public void Reject(string inviteId, Action completed = null) => Execute("party/invitations/reject", new InviteActionInput { inviteId = inviteId }, completed);
     public void Cancel(string inviteId, Action completed = null) => Execute("party/invitations/cancel", new InviteActionInput { inviteId = inviteId }, completed);
     public void SetReady(bool ready, Action completed = null) => Execute("party/ready", new ReadyInput { ready = ready }, completed);
-    public void Leave(Action completed = null) => Execute("party/leave", new CapivaradaBackendService.EmptyResponse(), completed);
+    public void Leave(Action completed = null)
+    {
+        if (!CanUseParty() || backend == null) return;
+
+        backend.Post<CapivaradaBackendService.EmptyResponse, CapivaradaBackendService.EmptyResponse>("party/leave", new CapivaradaBackendService.EmptyResponse(), _ =>
+        {
+            // The server has accepted the leave request. Clear only membership
+            // immediately so a reopened GroupUI creates a fresh local party
+            // instead of rendering a stale Start state while Refresh is in flight.
+            CurrentParty = null;
+            UpdateVoiceChannel();
+            Changed?.Invoke();
+            completed?.Invoke();
+            Refresh();
+        }, Failed);
+    }
     public void Kick(string playerId, Action completed = null) => Execute("party/kick", new InviteInput { playerId = playerId }, completed);
 
     public bool Contains(string playerId)

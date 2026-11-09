@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Threading.Tasks;
 using Unity.Services.Core;
 using Unity.Services.Vivox;
@@ -59,31 +60,59 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
     public async Task JoinPartyAsync(string partyId)
     {
         if (!await InitializeForCurrentSessionAsync() || string.IsNullOrWhiteSpace(partyId)) return;
-        await LeaveMatchAsync();
-        string requestedChannel = $"party:{partyId}";
+        string requestedChannel = BuildChannelName("party", partyId);
         if (string.Equals(partyChannel, requestedChannel, StringComparison.Ordinal)) return;
-        await LeavePartyAsync();
-        partyChannel = requestedChannel;
-        await VivoxService.Instance.JoinGroupChannelAsync(partyChannel, ChatCapability.TextAndAudio);
+        try
+        {
+            await LeaveMatchAsync();
+            await LeavePartyAsync();
+            await VivoxService.Instance.JoinGroupChannelAsync(requestedChannel, ChatCapability.TextAndAudio);
+            partyChannel = requestedChannel;
+        }
+        catch (Exception exception)
+        {
+            partyChannel = null;
+            Failed?.Invoke($"Não foi possível entrar no canal do grupo: {exception.Message}");
+        }
     }
 
     public async void JoinGlobalChat(string channelName) => await JoinGlobalChatAsync(channelName);
     public async Task JoinGlobalChatAsync(string channelName)
     {
         if (!await InitializeForCurrentSessionAsync() || string.IsNullOrWhiteSpace(channelName)) return;
-        if (string.Equals(globalChatChannel, channelName, StringComparison.Ordinal)) return;
-        await LeaveGlobalChatAsync();
-        globalChatChannel = channelName;
-        await VivoxService.Instance.JoinGroupChannelAsync(globalChatChannel, ChatCapability.TextOnly);
+        // Keep the global identifier stable because ChatService uses the same
+        // configured value to route received messages into its global feed.
+        string requestedChannel = BuildChannelName(string.Empty, channelName);
+        if (string.Equals(globalChatChannel, requestedChannel, StringComparison.Ordinal)) return;
+        try
+        {
+            await LeaveGlobalChatAsync();
+            await VivoxService.Instance.JoinGroupChannelAsync(requestedChannel, ChatCapability.TextOnly);
+            globalChatChannel = requestedChannel;
+        }
+        catch (Exception exception)
+        {
+            globalChatChannel = null;
+            Failed?.Invoke($"Não foi possível entrar no chat global: {exception.Message}");
+        }
     }
 
     public async void JoinMatch(string matchId) => await JoinMatchAsync(matchId);
     public async Task JoinMatchAsync(string matchId)
     {
         if (!await InitializeForCurrentSessionAsync() || string.IsNullOrWhiteSpace(matchId)) return;
-        await LeavePartyAsync();
-        matchChannel = $"match:{matchId}";
-        await VivoxService.Instance.JoinPositionalChannelAsync(matchChannel, ChatCapability.AudioOnly, new Channel3DProperties(Mathf.RoundToInt(audibleDistance), Mathf.RoundToInt(conversationalDistance), 1f, AudioFadeModel.InverseByDistance));
+        string requestedChannel = BuildChannelName("match", matchId);
+        try
+        {
+            await LeavePartyAsync();
+            await VivoxService.Instance.JoinPositionalChannelAsync(requestedChannel, ChatCapability.AudioOnly, new Channel3DProperties(Mathf.RoundToInt(audibleDistance), Mathf.RoundToInt(conversationalDistance), 1f, AudioFadeModel.InverseByDistance));
+            matchChannel = requestedChannel;
+        }
+        catch (Exception exception)
+        {
+            matchChannel = null;
+            Failed?.Invoke($"Não foi possível entrar no canal da partida: {exception.Message}");
+        }
     }
 
     public async Task LeavePartyAsync()
@@ -120,6 +149,20 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
     }
 
     private void ForwardChannelMessage(VivoxMessage message) => ChannelMessageReceived?.Invoke(message);
+
+    private static string BuildChannelName(string prefix, string value)
+    {
+        const int maximumLength = 160;
+        StringBuilder builder = new();
+        if (!string.IsNullOrWhiteSpace(prefix)) builder.Append(prefix).Append('-');
+        foreach (char character in value)
+        {
+            if (char.IsLetterOrDigit(character) || character == '-' || character == '_') builder.Append(character);
+            else builder.Append('-');
+            if (builder.Length >= maximumLength) break;
+        }
+        return builder.ToString();
+    }
 
     private void OnDestroy()
     {

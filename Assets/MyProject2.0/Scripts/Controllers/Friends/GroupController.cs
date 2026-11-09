@@ -26,6 +26,7 @@ public sealed class GroupController : MonoBehaviour
     [Tooltip("The PanelNavigatorController on this GroupUI. Invite slots use it to open the configured Invite panel.")]
     [SerializeField] private PanelNavigatorController panelNavigator;
     [SerializeField] private string invitePanelId = "Invite";
+    [SerializeField] private LobbyNavigationController lobbyNavigation;
 
     [Header("Actions")]
     [SerializeField] private Button readyButton;
@@ -40,6 +41,7 @@ public sealed class GroupController : MonoBehaviour
     {
         if (partyService == null) partyService = ServiceHub.Instance != null ? ServiceHub.Instance.Party : PartyService.Instance;
         if (profileService == null) profileService = ServiceHub.Instance != null ? ServiceHub.Instance.Profile : PlayerProfileService.Instance;
+        if (lobbyNavigation == null) lobbyNavigation = GetComponentInParent<LobbyNavigationController>();
     }
 
     private void OnEnable()
@@ -71,7 +73,11 @@ public sealed class GroupController : MonoBehaviour
         partyService.SetReady(!local.ready);
     }
 
-    public void LeaveParty() => partyService?.Leave();
+    public void LeaveParty()
+    {
+        if (partyService == null) return;
+        partyService.Leave(() => lobbyNavigation?.BackToMenu());
+    }
 
     /// <summary>Called by the Start button. Queue ownership remains in the matchmaking service.</summary>
     public void RequestStartMatchmaking()

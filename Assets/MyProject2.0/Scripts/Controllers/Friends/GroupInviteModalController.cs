@@ -19,7 +19,18 @@ public sealed class GroupInviteModalController : MonoBehaviour
 
     private void Awake()
     {
-        if (partyService == null) partyService = ServiceHub.Instance != null ? ServiceHub.Instance.Party : PartyService.Instance;
+        ResolveService();
+    }
+
+    private void OnEnable() => BindLatest();
+
+    /// <summary>Shows this independent modal over the currently open Lobby panel.</summary>
+    public void PresentLatest()
+    {
+        ResolveService();
+        if (partyService == null || partyService.Incoming.Count == 0) return;
+        gameObject.SetActive(true);
+        BindLatest();
     }
 
     public void BindLatest()
@@ -44,14 +55,29 @@ public sealed class GroupInviteModalController : MonoBehaviour
     {
         if (currentInvite == null || partyService == null) return;
         SetButtons(false);
-        partyService.Accept(currentInvite.inviteId, () => { if (feedbackText != null) feedbackText.text = "Você entrou no grupo."; });
+        partyService.Accept(currentInvite.inviteId, () =>
+        {
+            if (feedbackText != null) feedbackText.text = "Você entrou no grupo.";
+            Close();
+        });
     }
 
     public void Reject()
     {
         if (currentInvite == null || partyService == null) return;
         SetButtons(false);
-        partyService.Reject(currentInvite.inviteId, () => { if (feedbackText != null) feedbackText.text = "Convite recusado."; });
+        partyService.Reject(currentInvite.inviteId, () =>
+        {
+            if (feedbackText != null) feedbackText.text = "Convite recusado.";
+            Close();
+        });
+    }
+
+    public void Close() => gameObject.SetActive(false);
+
+    private void ResolveService()
+    {
+        if (partyService == null) partyService = ServiceHub.Instance != null ? ServiceHub.Instance.Party : PartyService.Instance;
     }
 
     private void SetButtons(bool value)

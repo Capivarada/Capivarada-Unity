@@ -8,16 +8,43 @@ public sealed class LobbyNavigationController : MonoBehaviour
     [SerializeField] private PanelNavigatorController panels;
     [SerializeField] private SessionAccessService session;
     [SerializeField] private FusionSessionService fusion;
+    [Header("Party invitations")]
+    [SerializeField] private PartyService partyService;
+    [SerializeField] private GroupInviteModalController groupInviteModal;
+    [SerializeField, Min(1f)] private float partyRefreshIntervalSeconds = 3f;
     [SerializeField] private string menuPanel = "Menu";
     [SerializeField] private string gameScene = "Game_Scene";
     [SerializeField] private string trainingScene = "Pratice_Scene";
     [SerializeField] private string loadingScene = "Loading_Scene";
     private bool joiningMatch;
+    private float nextPartyRefreshAt;
+    private string lastPresentedInviteId;
 
     private void Awake()
     {
         if (session == null) session = ServiceHub.Instance != null ? ServiceHub.Instance.Session : SessionAccessService.Instance;
         if (fusion == null) fusion = ServiceHub.Instance != null ? ServiceHub.Instance.Fusion : FusionSessionService.Instance;
+        if (partyService == null) partyService = ServiceHub.Instance != null ? ServiceHub.Instance.Party : PartyService.Instance;
+        if (groupInviteModal == null) groupInviteModal = UnityEngine.Object.FindFirstObjectByType<GroupInviteModalController>(FindObjectsInactive.Include);
+    }
+
+    private void OnEnable()
+    {
+        if (partyService == null) return;
+        partyService.Changed += OnPartyChanged;
+        partyService.Refresh();
+    }
+
+    private void OnDisable()
+    {
+        if (partyService != null) partyService.Changed -= OnPartyChanged;
+    }
+
+    private void Update()
+    {
+        if (partyService == null || Time.unscaledTime < nextPartyRefreshAt) return;
+        nextPartyRefreshAt = Time.unscaledTime + Mathf.Max(1f, partyRefreshIntervalSeconds);
+        partyService.Refresh();
     }
 
     public void Open(string panelId) => panels?.Show(panelId);
@@ -47,6 +74,23 @@ public sealed class LobbyNavigationController : MonoBehaviour
     }
 
     public void Quit() => Application.Quit();
+
+    private void OnPartyChanged()
+    {
+        if (partyService == null || partyService.Incoming.Count == 0) return;
+        PartyService.Invitation invitation = partyService.Incoming[0];
+        if (invitation == null || string.IsNullOrWhiteSpace(invitation.inviteId) || invitation.inviteId == lastPresentedInviteId) return;
+
+        if (groupInviteModal == null) groupInviteModal = UnityEngine.Object.FindFirstObjectByType<GroupInviteModalController>(FindObjectsInactive.Include);
+        if (groupInviteModal == null)
+        {
+            Debug.LogWarning("[Lobby] GroupInviteModalController não foi encontrado na Lobby_Scene.", this);
+            return;
+        }
+
+        lastPresentedInviteId = invitation.inviteId;
+        groupInviteModal.PresentLatest();
+    }
 
     private IEnumerator JoinOnlineMatch()
     {
