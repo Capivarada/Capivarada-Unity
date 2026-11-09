@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,20 +13,19 @@ public sealed class ChatMessagePrefabController : MonoBehaviour
     [SerializeField] private TMP_Text timeText;
     [SerializeField] private Button profileButton;
 
-    public void Bind(ChatService.Message message)
+    public void Bind(ChatService.Message message, Action<string> openProfile)
     {
         if (message == null) return;
         if (nicknameText != null) nicknameText.text = message.senderName;
         if (messageText != null) messageText.text = message.text;
         if (timeText != null) timeText.text = message.receivedAtUtc.ToLocalTime().ToString("HH:mm");
-        if (avatarImage != null && avatarCatalog != null) avatarImage.sprite = avatarCatalog.Default != null ? avatarCatalog.Default.Sprite : null;
+        AvatarDefinition avatar = avatarCatalog != null ? avatarCatalog.Find(message.avatarId) ?? avatarCatalog.Default : null;
+        if (avatarImage != null) avatarImage.sprite = avatar != null ? avatar.Sprite : null;
         if (profileButton != null)
         {
             profileButton.onClick.RemoveAllListeners();
-            // Vivox exposes the Unity Authentication account ID. It is not a PlayFab ID,
-            // so opening OtherProfile with it would be incorrect until the title enables
-            // a verified account mapping in the chat metadata/backend.
-            profileButton.interactable = false;
+            profileButton.interactable = !string.IsNullOrWhiteSpace(message.senderId);
+            profileButton.onClick.AddListener(() => openProfile?.Invoke(message.senderId));
         }
     }
 }

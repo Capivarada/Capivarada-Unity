@@ -16,6 +16,7 @@ public sealed class ChatService : MonoBehaviour
     {
         public string senderId;
         public string senderName;
+        public string avatarId;
         public string text;
         public string channel;
         public DateTime receivedAtUtc;
@@ -27,6 +28,7 @@ public sealed class ChatService : MonoBehaviour
     [SerializeField] private VivoxVoiceChannelService voice;
     [SerializeField] private PartyService party;
     [SerializeField] private SessionAccessService session;
+    [SerializeField] private PlayerProfileService profile;
     [SerializeField] private string globalChannelName = "global-br";
     [SerializeField, Min(10)] private int maximumMessagesPerChannel = 100;
 
@@ -49,6 +51,7 @@ public sealed class ChatService : MonoBehaviour
         if (voice == null) voice = GetComponent<VivoxVoiceChannelService>();
         if (party == null) party = GetComponent<PartyService>();
         if (session == null) session = GetComponent<SessionAccessService>();
+        if (profile == null) profile = GetComponent<PlayerProfileService>();
         DontDestroyOnLoad(gameObject);
     }
 
@@ -109,7 +112,14 @@ public sealed class ChatService : MonoBehaviour
             Report("Canal de chat indisponível.");
             return;
         }
-        _ = voice.SendTextAsync(channel, text);
+        PlayerProfileData current = profile != null ? profile.Current : null;
+        string metadata = JsonUtility.ToJson(new MessageMetadata
+        {
+            playFabId = current != null ? current.playerId : string.Empty,
+            avatarId = current != null ? current.avatarId : string.Empty,
+            nickname = current != null ? current.nickname : string.Empty
+        });
+        _ = voice.SendTextAsync(channel, text, metadata);
     }
 
     private void OnPartyChanged()
@@ -127,10 +137,12 @@ public sealed class ChatService : MonoBehaviour
         else if (voice != null && string.Equals(vivoxMessage.ChannelName, voice.PartyChannel, StringComparison.Ordinal)) destination = partyMessages;
         else return;
 
+        MessageMetadata metadata = ParseMetadata(vivoxMessage.Metadata);
         destination.Add(new Message
         {
-            senderId = vivoxMessage.SenderPlayerId,
-            senderName = vivoxMessage.SenderDisplayName,
+            senderId = !string.IsNullOrWhiteSpace(metadata.playFabId) ? metadata.playFabId : vivoxMessage.SenderPlayerId,
+            senderName = !string.IsNullOrWhiteSpace(metadata.nickname) ? metadata.nickname : vivoxMessage.SenderDisplayName,
+            avatarId = metadata.avatarId,
             text = vivoxMessage.MessageText,
             channel = vivoxMessage.ChannelName,
             receivedAtUtc = vivoxMessage.ReceivedTime.ToUniversalTime(),
@@ -139,6 +151,21 @@ public sealed class ChatService : MonoBehaviour
         int maximum = Mathf.Max(10, maximumMessagesPerChannel);
         while (destination.Count > maximum) destination.RemoveAt(0);
         Changed?.Invoke();
+    }
+
+    [Serializable]
+    private sealed class MessageMetadata
+    {
+        public string playFabId;
+        public string avatarId;
+        public string nickname;
+    }
+
+    private static MessageMetadata ParseMetadata(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return new MessageMetadata();
+        try { return JsonUtility.FromJson<MessageMetadata>(json) ?? new MessageMetadata(); }
+        catch { return new MessageMetadata(); }
     }
 
     private bool CanUseChat()

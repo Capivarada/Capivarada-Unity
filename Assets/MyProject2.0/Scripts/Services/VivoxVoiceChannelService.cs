@@ -104,13 +104,14 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
         globalChatChannel = null;
     }
 
-    public async Task SendTextAsync(string channelName, string message)
+    /// <summary>Sends text with optional title-controlled metadata for UI identity mapping.</summary>
+    public async Task SendTextAsync(string channelName, string message, string metadata = null)
     {
         if (string.IsNullOrWhiteSpace(channelName) || string.IsNullOrWhiteSpace(message)) return;
         if (!await InitializeForCurrentSessionAsync()) return;
         try
         {
-            await VivoxService.Instance.SendChannelTextMessageAsync(channelName, message.Trim());
+            await VivoxService.Instance.SendChannelTextMessageAsync(channelName, message.Trim(), new MessageOptions { Metadata = metadata });
         }
         catch (Exception exception)
         {

@@ -76,7 +76,7 @@ public sealed class ChatController : MonoBehaviour
         {
             ChatMessagePrefabController row = Instantiate(messagePrefab, messagesContent);
             spawned.Add(row.gameObject);
-            row.Bind(message);
+            row.Bind(message, playerId => otherProfile?.Open(playerId));
             count++;
         }
         if (emptyState != null) emptyState.SetActive(count == 0);
