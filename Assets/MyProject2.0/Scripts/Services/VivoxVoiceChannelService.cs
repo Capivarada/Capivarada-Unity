@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using System.Threading.Tasks;
+using Unity.Services.Authentication;
 using Unity.Services.Core;
 using Unity.Services.Vivox;
 using UnityEngine;
@@ -38,6 +39,12 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
         try
         {
             await UnityServices.InitializeAsync();
+            // This anonymous UGS identity is intentionally scoped to Vivox token issuance.
+            // PlayFab remains the authoritative identity, profile and progression backend.
+            if (!AuthenticationService.Instance.IsSignedIn)
+            {
+                await AuthenticationService.Instance.SignInAnonymouslyAsync();
+            }
             await VivoxService.Instance.InitializeAsync();
             string nickname = authentication != null && !string.IsNullOrWhiteSpace(authentication.Nickname) ? authentication.Nickname : "Capivara";
             // When Unity Authentication is active, Vivox owns the immutable player ID.
