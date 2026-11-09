@@ -13,8 +13,13 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
     [SerializeField] private float conversationalDistance = 7f;
     private string partyChannel;
     private string matchChannel;
+    private string globalChatChannel;
     private bool initialized;
     public event Action<string> Failed;
+    public event Action<VivoxMessage> ChannelMessageReceived;
+
+    public string PartyChannel => partyChannel;
+    public string GlobalChatChannel => globalChatChannel;
 
     private void Awake()
     {
@@ -34,7 +39,12 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
             await UnityServices.InitializeAsync();
             await VivoxService.Instance.InitializeAsync();
             string nickname = authentication != null && !string.IsNullOrWhiteSpace(authentication.Nickname) ? authentication.Nickname : "Capivara";
+            // When Unity Authentication is active, Vivox owns the immutable player ID.
+            // The display name is presentation only; profile clicks resolve through PlayFab IDs
+            // supplied by the UI/service layer where available.
             await VivoxService.Instance.LoginAsync(new LoginOptions { DisplayName = nickname });
+            VivoxService.Instance.ChannelMessageReceived -= ForwardChannelMessage;
+            VivoxService.Instance.ChannelMessageReceived += ForwardChannelMessage;
             initialized = true;
             return true;
         }
@@ -50,8 +60,21 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
     {
         if (!await InitializeForCurrentSessionAsync() || string.IsNullOrWhiteSpace(partyId)) return;
         await LeaveMatchAsync();
-        partyChannel = $"party:{partyId}";
-        await VivoxService.Instance.JoinGroupChannelAsync(partyChannel, ChatCapability.AudioOnly);
+        string requestedChannel = $"party:{partyId}";
+        if (string.Equals(partyChannel, requestedChannel, StringComparison.Ordinal)) return;
+        await LeavePartyAsync();
+        partyChannel = requestedChannel;
+        await VivoxService.Instance.JoinGroupChannelAsync(partyChannel, ChatCapability.TextAndAudio);
+    }
+
+    public async void JoinGlobalChat(string channelName) => await JoinGlobalChatAsync(channelName);
+    public async Task JoinGlobalChatAsync(string channelName)
+    {
+        if (!await InitializeForCurrentSessionAsync() || string.IsNullOrWhiteSpace(channelName)) return;
+        if (string.Equals(globalChatChannel, channelName, StringComparison.Ordinal)) return;
+        await LeaveGlobalChatAsync();
+        globalChatChannel = channelName;
+        await VivoxService.Instance.JoinGroupChannelAsync(globalChatChannel, ChatCapability.TextOnly);
     }
 
     public async void JoinMatch(string matchId) => await JoinMatchAsync(matchId);
@@ -73,5 +96,33 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
     {
         if (VivoxService.Instance.IsLoggedIn && !string.IsNullOrWhiteSpace(matchChannel)) await VivoxService.Instance.LeaveChannelAsync(matchChannel);
         matchChannel = null;
+    }
+
+    public async Task LeaveGlobalChatAsync()
+    {
+        if (VivoxService.Instance.IsLoggedIn && !string.IsNullOrWhiteSpace(globalChatChannel)) await VivoxService.Instance.LeaveChannelAsync(globalChatChannel);
+        globalChatChannel = null;
+    }
+
+    public async Task SendTextAsync(string channelName, string message)
+    {
+        if (string.IsNullOrWhiteSpace(channelName) || string.IsNullOrWhiteSpace(message)) return;
+        if (!await InitializeForCurrentSessionAsync()) return;
+        try
+        {
+            await VivoxService.Instance.SendChannelTextMessageAsync(channelName, message.Trim());
+        }
+        catch (Exception exception)
+        {
+            Failed?.Invoke($"Não foi possível enviar a mensagem: {exception.Message}");
+        }
+    }
+
+    private void ForwardChannelMessage(VivoxMessage message) => ChannelMessageReceived?.Invoke(message);
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+        if (initialized && VivoxService.Instance != null) VivoxService.Instance.ChannelMessageReceived -= ForwardChannelMessage;
     }
 }

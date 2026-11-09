@@ -27,6 +27,7 @@ public sealed class PartyService : MonoBehaviour
     public IReadOnlyList<Invitation> Outgoing => outgoing;
     public bool IsInParty => CurrentParty != null && !string.IsNullOrWhiteSpace(CurrentParty.partyId);
     public bool IsLeader => IsInParty && string.Equals(CurrentParty.leaderPlayerId, LocalPlayerId, StringComparison.Ordinal);
+    public bool CanInvite => !IsInParty || (IsLeader && CurrentParty.members != null && CurrentParty.members.Length < PartyStoreMaximumMembers);
     public bool CanStart => IsLeader && CurrentParty.members != null && Array.TrueForAll(CurrentParty.members, member => member.isLeader || member.ready);
     public event Action Changed;
     public event Action<string> Failed;
@@ -34,6 +35,7 @@ public sealed class PartyService : MonoBehaviour
     private readonly List<Invitation> incoming = new();
     private readonly List<Invitation> outgoing = new();
     private string activeVoicePartyId;
+    private const int PartyStoreMaximumMembers = 8;
 
     private string LocalPlayerId
     {

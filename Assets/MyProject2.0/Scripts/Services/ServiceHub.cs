@@ -15,6 +15,7 @@ public sealed class ServiceHub : MonoBehaviour
     [SerializeField] private LeaderboardV2Service leaderboardV2;
     [SerializeField] private FriendsService friends;
     [SerializeField] private PartyService party;
+    [SerializeField] private ChatService chat;
     [Header("Session and availability")]
     [SerializeField] private SessionAccessService session;
     [SerializeField] private BackendHealthService health;
@@ -32,6 +33,7 @@ public sealed class ServiceHub : MonoBehaviour
     public LeaderboardV2Service LeaderboardV2 => leaderboardV2;
     public FriendsService Friends => friends;
     public PartyService Party => party;
+    public ChatService Chat => chat;
     public SessionAccessService Session => session;
     public BackendHealthService Health => health;
     public FusionSessionService Fusion => fusion;
@@ -51,6 +53,7 @@ public sealed class ServiceHub : MonoBehaviour
         if (leaderboardV2 == null) leaderboardV2 = GetComponent<LeaderboardV2Service>();
         if (friends == null) friends = GetComponent<FriendsService>();
         if (party == null) party = GetComponent<PartyService>();
+        if (chat == null) chat = GetComponent<ChatService>();
         if (session == null) session = GetComponent<SessionAccessService>();
         if (health == null) health = GetComponent<BackendHealthService>();
         if (fusion == null) fusion = GetComponent<FusionSessionService>();
