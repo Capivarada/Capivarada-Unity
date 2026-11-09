@@ -22,6 +22,11 @@ public sealed class GroupController : MonoBehaviour
     [SerializeField] private GroupInvitePrefabController inviteGroupPrefab;
     [SerializeField, Min(1)] private int groupCapacity = 8;
 
+    [Header("Navigation")]
+    [Tooltip("The PanelNavigatorController on this GroupUI. Invite slots use it to open the configured Invite panel.")]
+    [SerializeField] private PanelNavigatorController panelNavigator;
+    [SerializeField] private string invitePanelId = "Invite";
+
     [Header("Actions")]
     [SerializeField] private Button readyButton;
     [SerializeField] private TMP_Text readyButtonText;
@@ -100,7 +105,11 @@ public sealed class GroupController : MonoBehaviour
             if (inviteGroupPrefab == null || gridContent == null) break;
             GroupInvitePrefabController slot = Instantiate(inviteGroupPrefab, gridContent);
             spawned.Add(slot.gameObject);
-            if (slot.InviteButton != null) slot.InviteButton.interactable = partyService == null || partyService.CanInvite;
+            if (slot.InviteButton == null) continue;
+
+            slot.InviteButton.onClick.RemoveAllListeners();
+            slot.InviteButton.onClick.AddListener(OpenInvitePanel);
+            slot.InviteButton.interactable = partyService != null && partyService.CanInvite && panelNavigator != null && !string.IsNullOrWhiteSpace(invitePanelId);
         }
 
         PartyService.Member local = FindLocalMember();
@@ -108,6 +117,27 @@ public sealed class GroupController : MonoBehaviour
         if (readyButton != null) readyButton.gameObject.SetActive(party != null && !leader);
         if (readyButtonText != null && local != null) readyButtonText.text = local.ready ? "Cancelar pronto" : "Pronto";
         if (startButton != null) startButton.interactable = partyService != null && partyService.CanStart;
+    }
+
+    /// <summary>
+    /// Opens the Invite entry through the GroupUI navigator. This does not own
+    /// panel visibility: the PanelNavigatorController remains the sole owner.
+    /// </summary>
+    public void OpenInvitePanel()
+    {
+        if (panelNavigator == null)
+        {
+            Report("Configure o PanelNavigatorController do GroupUI no GroupController.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(invitePanelId))
+        {
+            Report("Configure o ID do painel de convite no GroupController.");
+            return;
+        }
+
+        panelNavigator.Show(invitePanelId);
     }
 
     private PartyService.Member FindLocalMember()
