@@ -27,7 +27,8 @@ public sealed class PartyService : MonoBehaviour
     public IReadOnlyList<Invitation> Outgoing => outgoing;
     public bool IsInParty => CurrentParty != null && !string.IsNullOrWhiteSpace(CurrentParty.partyId);
     public bool IsLeader => IsInParty && string.Equals(CurrentParty.leaderPlayerId, LocalPlayerId, StringComparison.Ordinal);
-    public bool CanInvite => !IsInParty || (IsLeader && CurrentParty.members != null && CurrentParty.members.Length < PartyStoreMaximumMembers);
+    /// <summary>Every party member may invite their own friends while a vacancy exists.</summary>
+    public bool CanInvite => !IsInParty || (CurrentParty.members != null && CurrentParty.members.Length < PartyStoreMaximumMembers);
     public bool CanStart => IsLeader && CurrentParty.members != null && Array.TrueForAll(CurrentParty.members, member => member.isLeader || member.ready);
     public event Action Changed;
     public event Action<string> Failed;

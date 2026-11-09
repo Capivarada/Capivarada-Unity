@@ -32,6 +32,7 @@ public sealed class GroupController : MonoBehaviour
     [SerializeField] private Button readyButton;
     [SerializeField] private TMP_Text readyButtonText;
     [SerializeField] private Button startButton;
+    [SerializeField] private Button groupChatButton;
     [SerializeField] private TMP_Text feedbackText;
     [SerializeField] private UnityEvent startMatchmakingRequested;
 
@@ -123,6 +124,7 @@ public sealed class GroupController : MonoBehaviour
         if (readyButton != null) readyButton.gameObject.SetActive(party != null && !leader);
         if (readyButtonText != null && local != null) readyButtonText.text = local.ready ? "Cancelar pronto" : "Pronto";
         if (startButton != null) startButton.interactable = partyService != null && partyService.CanStart;
+        if (groupChatButton != null) groupChatButton.interactable = partyService != null && partyService.IsInParty;
     }
 
     /// <summary>
