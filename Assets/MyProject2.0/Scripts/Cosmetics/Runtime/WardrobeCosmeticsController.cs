@@ -98,7 +98,7 @@ public sealed class WardrobeCosmeticsController : MonoBehaviour
     /// <summary>Returns the editable draft to its base capybara state. Press SaveAll to persist it.</summary>
     public void RestoreDefaults()
     {
-        workingLoadout = new PlayerCosmeticLoadout();
+        workingLoadout = CreateMaterialDefaults();
         BindControls(workingLoadout);
         RefreshSpectra();
         ApplyWorkingPreview();
@@ -112,7 +112,8 @@ public sealed class WardrobeCosmeticsController : MonoBehaviour
     private void RefreshFromSavedLoadout()
     {
         if (profile == null) return;
-        workingLoadout = (profile.Current.cosmetics ?? new PlayerCosmeticLoadout()).Copy();
+        PlayerCosmeticLoadout saved = CapybaraGameplayCosmetics.ResolveLoadout(profile.Current.cosmetics);
+        workingLoadout = saved != null ? saved.Copy() : CreateMaterialDefaults();
         BindControls(workingLoadout);
         RefreshSpectra();
         ApplyWorkingPreview();
@@ -136,9 +137,13 @@ public sealed class WardrobeCosmeticsController : MonoBehaviour
     private void EnsureWorkingLoadout()
     {
         if (workingLoadout != null) return;
-        workingLoadout = profile != null && profile.Current.cosmetics != null
-            ? profile.Current.cosmetics.Copy()
-            : new PlayerCosmeticLoadout();
+        PlayerCosmeticLoadout saved = profile != null ? CapybaraGameplayCosmetics.ResolveLoadout(profile.Current.cosmetics) : null;
+        workingLoadout = saved != null ? saved.Copy() : CreateMaterialDefaults();
+    }
+
+    private PlayerCosmeticLoadout CreateMaterialDefaults()
+    {
+        return preview != null ? preview.CreateDefaultLoadoutFromMaterials() : new PlayerCosmeticLoadout();
     }
 
     private void ConfigureColorSpectra()

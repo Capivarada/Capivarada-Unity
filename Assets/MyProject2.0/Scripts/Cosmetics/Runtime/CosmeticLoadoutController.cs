@@ -9,7 +9,7 @@ public sealed class CosmeticLoadoutController : MonoBehaviour
     private void Awake() { if (profile == null) profile = PlayerProfileService.Instance; if (appearance == null) appearance = GetComponent<CapybaraAppearanceApplier>(); }
     private void OnEnable() { if (profile != null) profile.Changed += Apply; Apply(profile != null ? profile.Current : null); }
     private void OnDisable() { if (profile != null) profile.Changed -= Apply; }
-    private void Apply(PlayerProfileData data) => appearance?.Apply(data != null ? data.cosmetics : new PlayerCosmeticLoadout(), catalog);
+    private void Apply(PlayerProfileData data) => appearance?.Apply(CapybaraGameplayCosmetics.ResolveLoadout(data != null ? data.cosmetics : null), catalog);
     public void PreviewColor(CapybaraColorSlot slot, float hue, float saturation) { PlayerCosmeticLoadout value = profile != null ? profile.Current.cosmetics : new PlayerCosmeticLoadout(); value.Set(slot, new CapybaraColorSelection(hue, saturation)); appearance?.Apply(value, catalog); }
     public void EquipExpression(string itemId) { if (profile == null) return; profile.Current.cosmetics.expressionId = itemId; profile.SaveCosmetics(profile.Current.cosmetics); }
     public void EquipHeadAccessory(string itemId) { if (profile == null) return; profile.Current.cosmetics.headAccessoryId = itemId; profile.SaveCosmetics(profile.Current.cosmetics); }
