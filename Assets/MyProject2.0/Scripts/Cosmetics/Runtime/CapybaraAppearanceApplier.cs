@@ -32,6 +32,37 @@ public sealed class CapybaraAppearanceApplier : MonoBehaviour
 
     public PlayerCosmeticLoadout AppliedLoadout { get; private set; } = new PlayerCosmeticLoadout();
 
+    /// <summary>
+    /// Returns the colour currently authored for a cosmetic slot, retaining the
+    /// source material's value/brightness. This is deliberately the same
+    /// calculation used by <see cref="Apply"/>, so UI and gameplay effects
+    /// (such as the impulse arrow) always match the rendered capybara.
+    /// </summary>
+    public Color GetAppliedColor(CapybaraColorSlot slot)
+    {
+        EnsureMaterialSlots();
+
+        foreach (MaterialSlot item in materialSlots)
+        {
+            if (item == null || item.Slot != slot || item.Renderer == null ||
+                item.MaterialIndex < 0 || item.MaterialIndex >= item.Renderer.sharedMaterials.Length)
+                continue;
+
+            Material material = item.Renderer.sharedMaterials[item.MaterialIndex];
+            if (material == null)
+                continue;
+
+            Color.RGBToHSV(ReadMaterialColor(material), out _, out _, out float sourceValue);
+            CapybaraColorSelection choice = AppliedLoadout.Get(slot);
+            return Color.HSVToRGB(
+                Mathf.Repeat(choice.Hue, 1f),
+                Mathf.Clamp01(choice.Saturation),
+                Mathf.Max(.02f, sourceValue * choice.EffectiveBrightness));
+        }
+
+        return Color.white;
+    }
+
     public void Apply(PlayerCosmeticLoadout loadout, CosmeticCatalog catalog)
     {
         EnsureMaterialSlots();
@@ -46,9 +77,7 @@ public sealed class CapybaraAppearanceApplier : MonoBehaviour
             if (material == null)
                 continue;
 
-            Color.RGBToHSV(ReadMaterialColor(material), out _, out _, out float sourceValue);
-            CapybaraColorSelection choice = AppliedLoadout.Get(item.Slot);
-            Color color = Color.HSVToRGB(Mathf.Repeat(choice.Hue, 1f), Mathf.Clamp01(choice.Saturation), Mathf.Max(.02f, sourceValue * choice.EffectiveBrightness));
+            Color color = GetAppliedColor(item.Slot);
 
             MaterialPropertyBlock block;
             if (!blocks.TryGetValue(item.Renderer, out block))

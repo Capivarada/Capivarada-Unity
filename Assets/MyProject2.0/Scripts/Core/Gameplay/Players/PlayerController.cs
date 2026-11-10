@@ -19,7 +19,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 aimDirection;
     private Coroutine revealRotation;
     private Coroutine visualRevealRotation;
-    private PlayerCustomizationApplier customizationApplier;
+    private CapybaraAppearanceApplier appearanceApplier;
     private Renderer skinRenderer;
     private Quaternion visualRootBaseLocalRotation;
     private bool hasVisualPreview;
@@ -68,7 +68,7 @@ public class PlayerController : MonoBehaviour
                 GetComponent<Rigidbody>();
         }
 
-        customizationApplier = GetComponentInChildren<PlayerCustomizationApplier>(true);
+        appearanceApplier = GetComponentInChildren<CapybaraAppearanceApplier>(true);
         skinRenderer = GetComponentInChildren<Renderer>(true);
         if (visualRoot == null && skinRenderer != null)
         {
@@ -308,18 +308,23 @@ public class PlayerController : MonoBehaviour
     {
         if (impulseIndicator != null)
         {
-            impulseIndicator.SetTint(GetSkinColor());
+            RefreshIndicatorTint();
             impulseIndicator.ShowArrow();
         }
     }
 
+    /// <summary>Refreshes the visual indicator after a cosmetic loadout changes.</summary>
+    public void RefreshIndicatorTint()
+    {
+        impulseIndicator?.SetTint(GetSkinColor());
+    }
+
     private Color GetSkinColor()
     {
-        if (customizationApplier == null)
-            customizationApplier = GetComponentInChildren<PlayerCustomizationApplier>(true);
-        WardrobeSkin skin = customizationApplier != null ? customizationApplier.AppliedSkin : null;
-        SkinColorData skinColor = skin != null ? skin.GetColorData(SkinColorSlot.Skin) : null;
-        if (skinColor != null) return skinColor.color;
+        if (appearanceApplier == null)
+            appearanceApplier = GetComponentInChildren<CapybaraAppearanceApplier>(true);
+        if (appearanceApplier != null)
+            return appearanceApplier.GetAppliedColor(CapybaraColorSlot.Body);
 
         if (skinRenderer != null && skinRenderer.sharedMaterials.Length > 0)
         {

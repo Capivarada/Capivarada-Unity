@@ -61,6 +61,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private int maxPlayers = 8;
 
     private GameObject humanPlayer;
+    private PlayerProfileService cosmeticProfile;
     private static bool IsPracticeScene
     {
         get
@@ -263,7 +264,7 @@ public class GameManager : MonoBehaviour
 
         humanPlayer.name = "Player";
 
-        CapybaraGameplayCosmetics.ApplySavedPlayer(humanPlayer);
+        BindCurrentPlayerCosmetics();
 
         // Set nickname
         PlayerNickname nickname = humanPlayer.GetComponent<PlayerNickname>();
@@ -319,6 +320,31 @@ public class GameManager : MonoBehaviour
         }
 
         Debug.Log($"[GameManager] Human player spawned at {spawnPoint.name}");
+    }
+
+    /// <summary>
+    /// The profile request can finish after Practice_Scene has spawned its
+    /// local capybara. Keep the spawned object subscribed so that delayed
+    /// profile data replaces the temporary material defaults immediately.
+    /// </summary>
+    private void BindCurrentPlayerCosmetics()
+    {
+        if (cosmeticProfile == null)
+            cosmeticProfile = PlayerProfileService.Instance;
+
+        if (cosmeticProfile != null)
+        {
+            cosmeticProfile.Changed -= ApplyCurrentPlayerCosmetics;
+            cosmeticProfile.Changed += ApplyCurrentPlayerCosmetics;
+        }
+
+        ApplyCurrentPlayerCosmetics(cosmeticProfile != null ? cosmeticProfile.Current : null);
+    }
+
+    private void ApplyCurrentPlayerCosmetics(PlayerProfileData _)
+    {
+        if (humanPlayer != null)
+            CapybaraGameplayCosmetics.ApplySavedPlayer(humanPlayer);
     }
 
     private void SpawnBots(int count)
@@ -402,7 +428,8 @@ public class GameManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        // Cleanup if needed
+        if (cosmeticProfile != null)
+            cosmeticProfile.Changed -= ApplyCurrentPlayerCosmetics;
     }
 
     #endregion

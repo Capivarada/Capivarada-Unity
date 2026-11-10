@@ -58,7 +58,7 @@ public class PlayerProfileService : MonoBehaviour
         backend.GetPublic<PublicProfileResponse>("profiles/" + Uri.EscapeDataString(playerId), result =>
         {
             if (result == null) { Report("Resposta pública de perfil inválida."); return; }
-            done?.Invoke(new PlayerProfileData
+            PlayerProfileData profile = new PlayerProfileData
             {
                 playerId = result.playerId,
                 nickname = result.nickname,
@@ -71,8 +71,37 @@ public class PlayerProfileService : MonoBehaviour
                 eliminations = result.eliminations,
                 wins = result.wins,
                 playTimeSeconds = result.playTimeSeconds
-            });
+            };
+            LoadPublicCosmetics(playerId, profile, done);
         }, error => Report("Perfil público: " + error));
+    }
+
+    /// <summary>
+    /// Cosmetics live in the public profile record. The backend endpoint owns
+    /// progression values, while this direct PlayFab read adds the visible
+    /// four-colour loadout without exposing private account fields.
+    /// </summary>
+    private static void LoadPublicCosmetics(string playerId, PlayerProfileData profile, Action<PlayerProfileData> done)
+    {
+        PlayFabClientAPI.GetUserData(new GetUserDataRequest
+        {
+            PlayFabId = playerId,
+            Keys = new List<string> { "profile" }
+        }, result =>
+        {
+            if (result.Data != null && result.Data.TryGetValue("profile", out UserDataRecord data))
+            {
+                PlayerProfileData publicProfile = JsonUtility.FromJson<PlayerProfileData>(data.Value);
+                if (publicProfile != null)
+                {
+                    profile.cosmetics = publicProfile.cosmetics ?? new PlayerCosmeticLoadout();
+                    if (string.IsNullOrWhiteSpace(profile.nickname)) profile.nickname = publicProfile.nickname;
+                    if (string.IsNullOrWhiteSpace(profile.avatarId)) profile.avatarId = publicProfile.avatarId;
+                }
+            }
+
+            done?.Invoke(profile);
+        }, _ => done?.Invoke(profile));
     }
     private void LoadAccountCreation(Action done)
     {

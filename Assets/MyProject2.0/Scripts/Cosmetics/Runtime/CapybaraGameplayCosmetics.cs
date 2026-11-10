@@ -13,6 +13,7 @@ public static class CapybaraGameplayCosmetics
             appearance = capybara.AddComponent<CapybaraAppearanceApplier>();
 
         appearance.Apply(ResolveLoadout(loadout), catalog);
+        capybara.GetComponent<PlayerController>()?.RefreshIndicatorTint();
     }
 
     public static void ApplySavedPlayer(GameObject capybara, CosmeticCatalog catalog = null)
