@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Fusion;
+using Fusion.Sockets;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 #if ENABLE_PLAYFABSERVER_API
@@ -17,6 +18,7 @@ public sealed class FusionDedicatedServerBootstrap : MonoBehaviour
     [SerializeField] private NetworkRunner runnerPrefab;
     [SerializeField] private string gameScenePath = "Assets/MyProject2.0/Scenes/Game_Scene.unity";
     [SerializeField, Min(1)] private int maximumPlayers = 8;
+    [SerializeField, Min(1)] private ushort fallbackGamePort = 30003;
     private bool starting;
 
     private async void Start()
@@ -46,7 +48,8 @@ public sealed class FusionDedicatedServerBootstrap : MonoBehaviour
             Debug.LogError("[FusionDedicatedServerBootstrap] CAPIVARADA_MATCH_ID não foi definido. Para teste local, defina essa variável antes de iniciar o servidor.", this);
             return;
         }
-        await StartServerAsync(matchId.Trim());
+        ushort port = ushort.TryParse(Environment.GetEnvironmentVariable("CAPIVARADA_GAME_PORT"), out ushort value) ? value : fallbackGamePort;
+        await StartServerAsync(matchId.Trim(), port, null);
     }
 
 #if ENABLE_PLAYFABSERVER_API
@@ -67,7 +70,10 @@ public sealed class FusionDedicatedServerBootstrap : MonoBehaviour
             Debug.LogError("[FusionDedicatedServerBootstrap] O GSDK ativou o servidor sem SessionId.", this);
             return;
         }
-        await StartServerAsync(matchId);
+        ushort port = fallbackGamePort;
+        if (settings.TryGetValue("game_port", out string suppliedPort) && ushort.TryParse(suppliedPort, out ushort parsedPort)) port = parsedPort;
+        settings.TryGetValue(PlayFabMultiplayerAgentAPI.PublicIpV4AddressKey, out string publicIp);
+        await StartServerAsync(matchId, port, publicIp);
     }
 
     private void OnPlayFabShutdown()
@@ -86,7 +92,7 @@ public sealed class FusionDedicatedServerBootstrap : MonoBehaviour
     }
 #endif
 
-    private async Task StartServerAsync(string matchId)
+    private async Task StartServerAsync(string matchId, ushort port, string publicIp)
     {
         if (starting) return;
         starting = true;
@@ -116,6 +122,8 @@ public sealed class FusionDedicatedServerBootstrap : MonoBehaviour
             GameMode = GameMode.Server,
             SessionName = matchId,
             PlayerCount = maximumPlayers,
+            Address = NetAddress.Any(port),
+            CustomPublicAddress = !string.IsNullOrWhiteSpace(publicIp) ? NetAddress.CreateFromIpPort(publicIp, port) : default,
             SceneManager = sceneManager
         });
         if (!result.Ok)

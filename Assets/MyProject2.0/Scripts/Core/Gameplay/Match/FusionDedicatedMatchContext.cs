@@ -37,8 +37,11 @@ public struct FusionDedicatedIdentity
     public string Nickname;
     public string AvatarId;
     public string JoinToken;
+    public string Address;
+    public ushort Port;
 
     public bool IsValid => !string.IsNullOrWhiteSpace(MatchId) &&
                            !string.IsNullOrWhiteSpace(PlayerId) &&
-                           !string.IsNullOrWhiteSpace(JoinToken);
+                           !string.IsNullOrWhiteSpace(JoinToken) &&
+                           !string.IsNullOrWhiteSpace(Address) && Port > 0;
 }

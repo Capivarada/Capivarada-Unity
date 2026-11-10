@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fusion;
+using Fusion.Sockets;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -159,11 +160,22 @@ public sealed class FusionSessionService : MonoBehaviour
         FusionDedicatedMatchContext.Set(identity);
         try
         {
+            // A lobby connection is a Photon-cloud session, while a MPS match
+            // is a direct Client/Server endpoint. Dispose the lobby runner
+            // first; reusing it produces an invalid mixed transport state.
+            if (runner.LobbyInfo.IsValid)
+            {
+                await runner.Shutdown();
+                DisposeRunner();
+                PrepareRunner();
+                if (runner == null) return false;
+            }
             StartGameResult result = await runner.StartGame(new StartGameArgs
             {
                 GameMode = GameMode.Client,
                 SessionName = identity.MatchId,
                 PlayerCount = maximumPlayers,
+                Address = NetAddress.CreateFromIpPort(identity.Address, identity.Port),
                 SceneManager = runner.GetComponent<NetworkSceneManagerDefault>()
             });
             if (!result.Ok)

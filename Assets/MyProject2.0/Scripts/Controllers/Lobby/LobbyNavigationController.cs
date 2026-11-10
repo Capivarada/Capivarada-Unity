@@ -8,6 +8,10 @@ public sealed class LobbyNavigationController : MonoBehaviour
     [SerializeField] private PanelNavigatorController panels;
     [SerializeField] private SessionAccessService session;
     [SerializeField] private FusionSessionService fusion;
+    [SerializeField] private FusionMatchJoinTokenService dedicatedMatch;
+    [Header("Dedicated matches")]
+    [Tooltip("Enable only after CAPIVARADA_MPS_BUILD_ID points to a deployed PlayFab MPS build.")]
+    [SerializeField] private bool useDedicatedServers;
     [Header("Party invitations")]
     [SerializeField] private PartyService partyService;
     [SerializeField] private GroupInviteModalController groupInviteModal;
@@ -24,6 +28,7 @@ public sealed class LobbyNavigationController : MonoBehaviour
     {
         if (session == null) session = ServiceHub.Instance != null ? ServiceHub.Instance.Session : SessionAccessService.Instance;
         if (fusion == null) fusion = ServiceHub.Instance != null ? ServiceHub.Instance.Fusion : FusionSessionService.Instance;
+        if (dedicatedMatch == null) dedicatedMatch = ServiceHub.Instance != null ? ServiceHub.Instance.GetComponent<FusionMatchJoinTokenService>() : FindFirstObjectByType<FusionMatchJoinTokenService>();
         if (partyService == null) partyService = ServiceHub.Instance != null ? ServiceHub.Instance.Party : PartyService.Instance;
         if (groupInviteModal == null) groupInviteModal = UnityEngine.Object.FindFirstObjectByType<GroupInviteModalController>(FindObjectsInactive.Include);
     }
@@ -102,6 +107,19 @@ public sealed class LobbyNavigationController : MonoBehaviour
             yield break;
         }
 
+        if (useDedicatedServers && session != null && session.IsAuthenticated && dedicatedMatch != null)
+        {
+            bool completed = false;
+            bool succeeded = false;
+            string error = string.Empty;
+            dedicatedMatch.AllocateAndRequest(identity => StartCoroutine(JoinDedicated(identity, value => { succeeded = value; completed = true; })), reason => { error = reason; completed = true; }, "BrazilSouth", "EastUs");
+            while (!completed) yield return null;
+            joiningMatch = false;
+            if (!succeeded) Debug.LogWarning("[Lobby] Não foi possível entrar no servidor dedicado: " + error, this);
+            else MatchParticipationContext.StartOnline(session);
+            yield break;
+        }
+
         Task<bool> join = fusion.JoinRandomMatchAndLoadAsync();
         while (!join.IsCompleted) yield return null;
         joiningMatch = false;
@@ -114,6 +132,13 @@ public sealed class LobbyNavigationController : MonoBehaviour
         MatchParticipationContext.StartOnline(session);
         // Fusion owns the online scene transition. Loading it locally here would
         // produce a disconnected copy of Game_Scene on this client.
+    }
+
+    private IEnumerator JoinDedicated(FusionDedicatedIdentity identity, System.Action<bool> completed)
+    {
+        Task<bool> join = fusion.JoinDedicatedMatchAsync(identity);
+        while (!join.IsCompleted) yield return null;
+        completed?.Invoke(join.Status == TaskStatus.RanToCompletion && join.Result);
     }
 
     private void Load(string scene)

@@ -41,17 +41,43 @@ public sealed class FusionMatchJoinTokenService : MonoBehaviour
             }
 
             PlayerProfileData current = profile != null ? profile.Current : null;
+            failed?.Invoke("A partida não informou endpoint dedicado. Use AllocateAndRequest para uma partida nova.");
+        }, failed);
+    }
+
+    /// <summary>Allocates a MPS server and returns only the short-lived direct endpoint/token needed by Fusion.</summary>
+    public void AllocateAndRequest(Action<FusionDedicatedIdentity> succeeded, Action<string> failed, params string[] preferredRegions)
+    {
+        if (backend == null || authentication == null || !authentication.IsLoggedIn || authentication.IsGuest)
+        {
+            failed?.Invoke("Entre em uma conta para participar de uma partida com progressão.");
+            return;
+        }
+
+        backend.Post<AllocateRequest, AllocateResponse>("matches/allocate", new AllocateRequest { preferredRegions = preferredRegions }, response =>
+        {
+            if (response == null || string.IsNullOrWhiteSpace(response.matchId) || string.IsNullOrWhiteSpace(response.address) || response.port <= 0 || string.IsNullOrWhiteSpace(response.token))
+            {
+                failed?.Invoke("O servidor dedicado retornou dados de conexão incompletos.");
+                return;
+            }
+
+            PlayerProfileData current = profile != null ? profile.Current : null;
             succeeded?.Invoke(new FusionDedicatedIdentity
             {
-                MatchId = matchId.Trim(),
+                MatchId = response.matchId,
                 PlayerId = authentication.PlayFabId,
                 Nickname = current != null && !string.IsNullOrWhiteSpace(current.nickname) ? current.nickname : authentication.Nickname,
                 AvatarId = current != null && !string.IsNullOrWhiteSpace(current.avatarId) ? current.avatarId : "avatar1",
-                JoinToken = response.token
+                JoinToken = response.token,
+                Address = response.address,
+                Port = (ushort)Mathf.Clamp(response.port, 1, ushort.MaxValue)
             });
         }, failed);
     }
 
     [Serializable] private sealed class JoinTokenRequest { public string matchId; }
     [Serializable] private sealed class JoinTokenResponse { public string token; public int expiresInSeconds; }
+    [Serializable] private sealed class AllocateRequest { public string[] preferredRegions; }
+    [Serializable] private sealed class AllocateResponse { public string matchId; public string address; public int port; public string token; public int expiresInSeconds; public string region; }
 }
