@@ -43,6 +43,7 @@ public sealed class GroupController : MonoBehaviour
         if (partyService == null) partyService = ServiceHub.Instance != null ? ServiceHub.Instance.Party : PartyService.Instance;
         if (profileService == null) profileService = ServiceHub.Instance != null ? ServiceHub.Instance.Profile : PlayerProfileService.Instance;
         if (lobbyNavigation == null) lobbyNavigation = GetComponentInParent<LobbyNavigationController>();
+        if (lobbyNavigation == null) lobbyNavigation = FindFirstObjectByType<LobbyNavigationController>(FindObjectsInactive.Include);
     }
 
     private void OnEnable()
