@@ -40,14 +40,16 @@ public sealed class WardrobeCosmeticsController : MonoBehaviour
 
     private readonly List<CosmeticChoiceCard> cards = new();
     private readonly List<SliderSpectrum> colorSpectra = new();
+    private readonly List<Slider> colorSliders = new();
     private PlayerCosmeticLoadout workingLoadout;
 
     private void Awake()
     {
         if (profile == null) profile = PlayerProfileService.Instance;
         if (inventory == null) inventory = GetComponent<CosmeticInventory>();
-        if (preview == null) preview = FindFirstObjectByType<CapybaraAppearanceApplier>();
+        ResolvePreview();
         ConfigureColorSpectra();
+        ConfigureColorListeners();
     }
 
     private void OnEnable()
@@ -69,11 +71,14 @@ public sealed class WardrobeCosmeticsController : MonoBehaviour
     private void OnDestroy()
     {
         foreach (SliderSpectrum spectrum in colorSpectra) spectrum.Dispose();
+        foreach (Slider slider in colorSliders)
+            if (slider != null) slider.onValueChanged.RemoveListener(OnColorSliderChanged);
     }
 
     /// <summary>Inspector-safe slider callback. This never persists the profile.</summary>
     public void PreviewColors()
     {
+        ResolvePreview();
         EnsureWorkingLoadout();
         Set(workingLoadout, CapybaraColorSlot.Body, bodyHue, bodySaturation, bodyBrightness);
         Set(workingLoadout, CapybaraColorSlot.Snout, snoutHue, snoutSaturation, snoutBrightness);
@@ -152,6 +157,45 @@ public sealed class WardrobeCosmeticsController : MonoBehaviour
         AddColorSpectra(snoutHue, snoutSaturation, snoutBrightness);
         AddColorSpectra(earsHue, earsSaturation, earsBrightness);
         AddColorSpectra(hoovesHue, hoovesSaturation, hoovesBrightness);
+    }
+
+    // Runtime registration makes the color editor resilient to duplicated/rebuilt UI
+    // panels: it no longer depends on twelve Inspector UnityEvents being preserved.
+    private void ConfigureColorListeners()
+    {
+        RegisterColorSlider(bodyHue);
+        RegisterColorSlider(bodySaturation);
+        RegisterColorSlider(bodyBrightness);
+        RegisterColorSlider(snoutHue);
+        RegisterColorSlider(snoutSaturation);
+        RegisterColorSlider(snoutBrightness);
+        RegisterColorSlider(earsHue);
+        RegisterColorSlider(earsSaturation);
+        RegisterColorSlider(earsBrightness);
+        RegisterColorSlider(hoovesHue);
+        RegisterColorSlider(hoovesSaturation);
+        RegisterColorSlider(hoovesBrightness);
+    }
+
+    private void RegisterColorSlider(Slider slider)
+    {
+        if (slider == null || colorSliders.Contains(slider)) return;
+        colorSliders.Add(slider);
+        slider.onValueChanged.AddListener(OnColorSliderChanged);
+    }
+
+    private void OnColorSliderChanged(float _) => PreviewColors();
+
+    private void ResolvePreview()
+    {
+        if (preview != null) return;
+
+        GameObject previewRoot = GameObject.Find("MainCapybaraPreview");
+        if (previewRoot != null)
+            preview = previewRoot.GetComponentInChildren<CapybaraAppearanceApplier>(true);
+
+        if (preview == null)
+            preview = FindFirstObjectByType<CapybaraAppearanceApplier>(FindObjectsInactive.Include);
     }
 
     private void AddColorSpectra(Slider hue, Slider saturation, Slider brightness)
