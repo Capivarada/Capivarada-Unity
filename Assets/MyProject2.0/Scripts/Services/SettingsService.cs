@@ -16,12 +16,16 @@ public sealed class SettingsService : MonoBehaviour
     [Tooltip("Optional. Leave blank until the mixer has a voice group exposed.")]
     [SerializeField] private string voiceParameter = "";
     public event System.Action<float> BrightnessChanged;
+    private float baseLodBias;
+    private float baseShadowDistance;
 
     private void Awake()
     {
         if (Instance == null) Instance = this;
         else if (Instance != this) { Destroy(gameObject); return; }
         DontDestroyOnLoad(gameObject);
+        baseLodBias = Mathf.Max(.01f, QualitySettings.lodBias);
+        baseShadowDistance = Mathf.Max(1f, QualitySettings.shadowDistance);
         ApplyDisplayAndGraphics();
         ApplyAudio();
     }
@@ -38,6 +42,7 @@ public sealed class SettingsService : MonoBehaviour
     {
         ApplyQuality(GetInt(Quality, QualitySettings.GetQualityLevel()));
         ApplyShadows(GetBool(Shadows, true));
+        ApplyEffects(GetInt(Effects, 1));
         ApplyFrameRate(GetInt(FpsLimit, 60), GetBool(VSync, true));
         ApplyResolution(GetInt(ResolutionIndex, -1), GetInt(DisplayMode, 0));
     }
@@ -63,6 +68,21 @@ public sealed class SettingsService : MonoBehaviour
     }
 
     public void ApplyShadows(bool enabled) => QualitySettings.shadows = enabled ? ShadowQuality.All : ShadowQuality.Disable;
+
+    /// <summary>
+    /// Applies the UI's Low / Medium / High effects choice to engine settings
+    /// which are meaningful in every current arena.  Individual VFX can later
+    /// subscribe to this value, but this already changes LOD, shadow range and
+    /// skinning quality instead of being a cosmetic PlayerPrefs-only option.
+    /// </summary>
+    public void ApplyEffects(int value)
+    {
+        int effects = Mathf.Clamp(value, 0, 2);
+        float multiplier = effects == 0 ? .55f : effects == 1 ? .78f : 1f;
+        QualitySettings.lodBias = baseLodBias * multiplier;
+        QualitySettings.shadowDistance = baseShadowDistance * multiplier;
+        QualitySettings.skinWeights = effects == 0 ? SkinWeights.OneBone : SkinWeights.FourBones;
+    }
 
     public void ApplyFrameRate(int target, bool useVSync)
     {

@@ -10,7 +10,7 @@ public sealed class SettingsController : MonoBehaviour
     [Header("Audio")] [SerializeField] private Slider master, music, sfx, voice; [SerializeField] private Toggle muteAll; [SerializeField] private TMP_Text masterValue, musicValue, sfxValue, voiceValue;
     [Header("Screen")] [SerializeField] private TMP_Dropdown resolution, displayMode; [SerializeField] private Toggle vSync; [SerializeField] private Slider brightness; [SerializeField] private TMP_Text brightnessValue;
     [Header("Graphics")] [SerializeField] private TMP_Dropdown quality, effects, fpsLimit; [SerializeField] private Toggle shadows;
-    [Header("Sensitivity")] [SerializeField] private Slider horizontal, vertical; [SerializeField] private Toggle invertHorizontal, invertVertical; [SerializeField] private TMP_Text horizontalValue, verticalValue; [SerializeField] private string trainingScene = "Practice_Scene";
+    [Header("Sensitivity")] [SerializeField] private Slider horizontal, vertical; [SerializeField] private Toggle invertHorizontal, invertVertical; [SerializeField] private TMP_Text horizontalValue, verticalValue; [SerializeField] private string trainingScene = "Pratice_Scene";
     [Header("Account")] [SerializeField] private TMP_Text emailText; [SerializeField] private Toggle publicProfile, receiveInvites; [SerializeField] private PlayFabAuthManager authentication;
 
     private void Awake()
@@ -18,6 +18,7 @@ public sealed class SettingsController : MonoBehaviour
         if (settings == null) settings = ServiceHub.Instance != null ? ServiceHub.Instance.Settings : SettingsService.Instance;
         if (authentication == null) authentication = ServiceHub.Instance != null ? ServiceHub.Instance.Authentication : PlayFabAuthManager.Instance;
         foreach (Slider slider in new[] { master, music, sfx, voice, brightness, horizontal, vertical }) if (slider != null) slider.onValueChanged.AddListener(_ => RefreshLabels());
+        if (brightness != null) brightness.onValueChanged.AddListener(value => settings?.ApplyBrightness(value));
     }
 
     private void OnEnable() => Load();
@@ -38,7 +39,7 @@ public sealed class SettingsController : MonoBehaviour
         if (settings == null) return;
         int[] options = { 240, 120, 60, 30 }; int fps = options[Mathf.Clamp(fpsLimit != null ? fpsLimit.value : 2, 0, options.Length - 1)]; int qualityIndex = quality != null ? quality.value : QualitySettings.GetQualityLevel(); bool shadowsEnabled = shadows == null || shadows.isOn;
         settings.SetInt(SettingsService.Quality, qualityIndex); settings.SetBool(SettingsService.Shadows, shadowsEnabled); settings.SetInt(SettingsService.Effects, effects != null ? effects.value : 0); settings.SetInt(SettingsService.FpsLimit, fps);
-        settings.ApplyQuality(qualityIndex); settings.ApplyShadows(shadowsEnabled); settings.ApplyFrameRate(fps, settings.GetBool(SettingsService.VSync)); settings.Save();
+        settings.ApplyQuality(qualityIndex); settings.ApplyShadows(shadowsEnabled); settings.ApplyEffects(settings.GetInt(SettingsService.Effects)); settings.ApplyFrameRate(fps, settings.GetBool(SettingsService.VSync)); settings.Save();
     }
     public void SaveControls() => settings?.Save();
     public void SaveSensitivity()
