@@ -83,7 +83,7 @@ public class OtherProfileController : MonoBehaviour
         if (friendsService == null) friendsService = ServiceHub.Instance != null ? ServiceHub.Instance.Friends : FriendsService.Instance;
         if (partyService == null) partyService = ServiceHub.Instance != null ? ServiceHub.Instance.Party : PartyService.Instance;
         if (session == null) session = ServiceHub.Instance != null ? ServiceHub.Instance.Session : SessionAccessService.Instance;
-        if (capybaraPreview == null && root != null) capybaraPreview = root.GetComponentInChildren<CapybaraAppearanceApplier>(true);
+        ResolvePreview();
     }
     private void OnEnable() { if (friendsService != null) friendsService.Changed += RefreshSocialActions; }
     private void OnDisable() { if (friendsService != null) friendsService.Changed -= RefreshSocialActions; }
@@ -94,7 +94,11 @@ public class OtherProfileController : MonoBehaviour
         if (panelNavigator != null) panelNavigator.Show(panelId); else if (root != null) root.SetActive(true);
         Bind(new PlayerProfileData { playerId = entry.playerId, nickname = entry.nickname, avatarId = entry.avatarId, level = entry.level, matches = entry.matches, eliminations = entry.eliminations, wins = entry.wins });
     }
-    public void Close() { if (panelNavigator != null) panelNavigator.Show(returnPanelId); else if (root != null) root.SetActive(false); }
+    public void Close()
+    {
+        RestoreLocalPreview();
+        if (panelNavigator != null) panelNavigator.Show(returnPanelId); else if (root != null) root.SetActive(false);
+    }
     public void SendFriendRequest()
     {
         if (string.IsNullOrWhiteSpace(viewedPlayerId) || friendsService == null) return;
@@ -117,7 +121,7 @@ public class OtherProfileController : MonoBehaviour
     {
         if (data == null) return;
         viewedPlayerId = data.playerId;
-        if (nicknameText != null) nicknameText.text = data.nickname; if (idLevelText != null) idLevelText.text = $"ID #{data.playerId} · Nível {data.level:00}"; if (statusText != null) statusText.text = ""; if (matchesText != null) matchesText.text = data.matches.ToString(); if (eliminationsText != null) eliminationsText.text = data.eliminations.ToString(); if (winsText != null) winsText.text = data.wins.ToString(); if (playTimeText != null) playTimeText.text = System.TimeSpan.FromSeconds(data.playTimeSeconds).ToString(@"h\:mm"); AvatarDefinition avatar = avatarCatalog != null ? avatarCatalog.Find(data.avatarId) ?? avatarCatalog.Default : null; if (avatarImage != null && avatar != null) avatarImage.sprite = avatar.Sprite; capybaraPreview?.Apply(CapybaraGameplayCosmetics.ResolveLoadout(data.cosmetics), cosmeticCatalog);
+        if (nicknameText != null) nicknameText.text = data.nickname; if (idLevelText != null) idLevelText.text = $"ID #{data.playerId} · Nível {data.level:00}"; if (statusText != null) statusText.text = ""; if (matchesText != null) matchesText.text = data.matches.ToString(); if (eliminationsText != null) eliminationsText.text = data.eliminations.ToString(); if (winsText != null) winsText.text = data.wins.ToString(); if (playTimeText != null) playTimeText.text = System.TimeSpan.FromSeconds(data.playTimeSeconds).ToString(@"h\:mm"); AvatarDefinition avatar = avatarCatalog != null ? avatarCatalog.Find(data.avatarId) ?? avatarCatalog.Default : null; if (avatarImage != null && avatar != null) avatarImage.sprite = avatar.Sprite; ResolvePreview(); capybaraPreview?.Apply(CapybaraGameplayCosmetics.ResolveLoadout(data.cosmetics), cosmeticCatalog);
         if (session == null || session.CanUseSocial) friendsService?.Refresh();
         RefreshSocialActions();
     }
@@ -138,5 +142,26 @@ public class OtherProfileController : MonoBehaviour
             inviteGroupButton.gameObject.SetActive(isFriend);
             inviteGroupButton.interactable = isFriend && partyService != null && partyService.CanInvite && !partyService.Contains(viewedPlayerId) && !partyService.HasOutgoingInvite(viewedPlayerId);
         }
+    }
+
+    // OtherProfile reuses the lobby's 3D preview. Resolve it at runtime so changing
+    // the capybara prefab does not require a manual scene reference.
+    private void ResolvePreview()
+    {
+        if (capybaraPreview != null) return;
+        if (root != null) capybaraPreview = root.GetComponentInChildren<CapybaraAppearanceApplier>(true);
+        if (capybaraPreview != null) return;
+
+        GameObject previewRoot = GameObject.Find("MainCapybaraPreview");
+        if (previewRoot == null) return;
+        capybaraPreview = previewRoot.GetComponentInChildren<CapybaraAppearanceApplier>(true);
+        if (capybaraPreview == null) capybaraPreview = previewRoot.AddComponent<CapybaraAppearanceApplier>();
+    }
+
+    private void RestoreLocalPreview()
+    {
+        if (profileService == null || profileService.Current == null) return;
+        ResolvePreview();
+        capybaraPreview?.Apply(CapybaraGameplayCosmetics.ResolveLoadout(profileService.Current.cosmetics), cosmeticCatalog);
     }
 }
