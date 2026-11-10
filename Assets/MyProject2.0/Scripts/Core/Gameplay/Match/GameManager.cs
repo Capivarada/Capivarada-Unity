@@ -66,7 +66,25 @@ public class GameManager : MonoBehaviour
         get
         {
             string sceneName = SceneManager.GetActiveScene().name;
-            return sceneName == "Practice_Scene" || sceneName == "Pratice_Scene";
+            return string.Equals(sceneName, "Practice_Scene", System.StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(sceneName, "Pratice_Scene", System.StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    /// <summary>
+    /// Practice is a completely local scene. Scene names are convenient for
+    /// routing but not a reliable runtime contract after duplication/renaming,
+    /// so confirm its local match stack as well. Game_Scene owns a
+    /// FusionArenaMatchController and never passes this test.
+    /// </summary>
+    private bool UsesLocalPracticeSimulation
+    {
+        get
+        {
+            if (IsPracticeScene) return true;
+            return GetComponent<MatchManager>() != null &&
+                   GetComponent<RoundManager>() != null &&
+                   FindFirstObjectByType<FusionArenaMatchController>(FindObjectsInactive.Include) == null;
         }
     }
 
@@ -97,11 +115,13 @@ public class GameManager : MonoBehaviour
         // Scene identity is authoritative here. Static session state can live
         // through an Editor scene switch, so it must never make Game_Scene
         // instantiate the old local player/bot simulation.
-        if (!IsPracticeScene)
+        if (!UsesLocalPracticeSimulation)
         {
             Debug.Log("[GameManager] Online match detected. Local practice simulation is disabled.");
             return;
         }
+
+        Debug.Log($"[GameManager] Starting local practice simulation in '{SceneManager.GetActiveScene().name}'.");
 
         arenaBounds = FindObjectOfType<ArenaBounds>();
 
