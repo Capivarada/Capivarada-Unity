@@ -90,6 +90,20 @@ public sealed class CapybaraAppearanceApplier : MonoBehaviour
             if (material.HasProperty("_BaseColor")) block.SetColor("_BaseColor", color);
             else if (material.HasProperty("_Color")) block.SetColor("_Color", color);
             item.Renderer.SetPropertyBlock(block, item.MaterialIndex);
+
+            // Some imported model shaders do not render per-submesh property blocks
+            // consistently. Keep the isolated renderer material in sync so previews
+            // and instantiated players always show the selected colour.
+            Material[] runtimeMaterials = item.Renderer.materials;
+            if (item.MaterialIndex < runtimeMaterials.Length)
+            {
+                Material runtimeMaterial = runtimeMaterials[item.MaterialIndex];
+                if (runtimeMaterial != null)
+                {
+                    if (runtimeMaterial.HasProperty("_BaseColor")) runtimeMaterial.SetColor("_BaseColor", color);
+                    else if (runtimeMaterial.HasProperty("_Color")) runtimeMaterial.SetColor("_Color", color);
+                }
+            }
         }
 
         if (catalog == null)
