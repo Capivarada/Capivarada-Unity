@@ -29,7 +29,22 @@ public sealed class PartyService : MonoBehaviour
     public bool IsLeader => IsInParty && string.Equals(CurrentParty.leaderPlayerId, LocalPlayerId, StringComparison.Ordinal);
     /// <summary>Every party member may invite their own friends while a vacancy exists.</summary>
     public bool CanInvite => !IsInParty || (CurrentParty.members != null && CurrentParty.members.Length < PartyStoreMaximumMembers);
-    public bool CanStart => IsLeader && CurrentParty.members != null && Array.TrueForAll(CurrentParty.members, member => member.isLeader || member.ready);
+    /// <summary>
+    /// Only the party leader starts matchmaking. The leader is implicitly ready;
+    /// every other occupied slot must explicitly be ready first.
+    /// </summary>
+    public bool CanStart
+    {
+        get
+        {
+            if (!IsLeader || CurrentParty?.members == null || CurrentParty.members.Length == 0) return false;
+            foreach (Member member in CurrentParty.members)
+            {
+                if (member == null || (!member.isLeader && !member.ready)) return false;
+            }
+            return true;
+        }
+    }
     public event Action Changed;
     public event Action<string> Failed;
 

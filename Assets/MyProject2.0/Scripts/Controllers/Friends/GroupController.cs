@@ -88,7 +88,13 @@ public sealed class GroupController : MonoBehaviour
             Report("Aguarde todos os integrantes ficarem prontos.");
             return;
         }
-        startMatchmakingRequested?.Invoke();
+        // Existing scenes can still bind this event in the Inspector. The
+        // navigation fallback makes the button functional even before that
+        // binding is added or after a scene rebuild.
+        if (startMatchmakingRequested != null && startMatchmakingRequested.GetPersistentEventCount() > 0)
+            startMatchmakingRequested.Invoke();
+        else
+            lobbyNavigation?.Play();
     }
 
     private void Rebuild()
@@ -123,7 +129,14 @@ public sealed class GroupController : MonoBehaviour
         bool leader = partyService != null && partyService.IsLeader;
         if (readyButton != null) readyButton.gameObject.SetActive(party != null && !leader);
         if (readyButtonText != null && local != null) readyButtonText.text = local.ready ? "Cancelar pronto" : "Pronto";
-        if (startButton != null) startButton.interactable = partyService != null && partyService.CanStart;
+        if (startButton != null)
+        {
+            // Leaving and re-entering GroupUI must not leave the Start button
+            // hidden by an old panel state. It is visible for an active party;
+            // readiness only controls interactivity.
+            startButton.gameObject.SetActive(party != null);
+            startButton.interactable = partyService != null && partyService.CanStart;
+        }
         if (groupChatButton != null) groupChatButton.interactable = partyService != null && partyService.IsInParty;
     }
 
