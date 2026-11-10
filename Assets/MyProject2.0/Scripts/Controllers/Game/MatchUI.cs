@@ -62,9 +62,21 @@ public class MatchUI : MonoBehaviour
     private bool titleAnimationPlayedWhileVisible;
     private Coroutine powerShakeCoroutine;
     private Vector2 powerSpeedPanelBasePosition;
-    private bool IsPractice =>
-        string.Equals(SceneManager.GetActiveScene().name, "Practice_Scene", StringComparison.Ordinal) ||
-        string.Equals(SceneManager.GetActiveScene().name, "Pratice_Scene", StringComparison.Ordinal);
+    private bool IsPractice
+    {
+        get
+        {
+            string sceneName = SceneManager.GetActiveScene().name;
+            if (string.Equals(sceneName, "Practice_Scene", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(sceneName, "Pratice_Scene", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // Keep local UI bound to the local round flow if the training
+            // scene is duplicated or renamed. Game_Scene always owns Fusion.
+            return roundManager != null && matchManager != null &&
+                   FindFirstObjectByType<FusionArenaMatchController>(FindObjectsInactive.Include) == null;
+        }
+    }
 
     private void Awake()
     {
