@@ -219,10 +219,8 @@ public class RoundManager : MonoBehaviour
                     break;
                 }
 
-                PlayerController p = player.GetComponent<PlayerController>();
-                p.animator.SetBool("Walk", false);
-                p.animator.SetBool("Run", false);
-                p.animator.SetBool("Trot", false);
+                PlayerController controller = player.GetComponent<PlayerController>();
+                controller?.StopMovementAnimation();
             }
 
             if (stopped)
@@ -260,7 +258,16 @@ public class RoundManager : MonoBehaviour
     private void BeginLivingPlayerRevealRotations()
     {
         foreach (GameObject player in matchManager.GetAlivePlayers())
-            player.GetComponent<PlayerController>()?.BeginRevealRotation(matchConfig.RevealDuration);
+        {
+            PlayerController controller = player.GetComponent<PlayerController>();
+            if (controller == null)
+                continue;
+
+            // The human's mesh had a private rotation during Choosing. Reset
+            // it before rotating the public root, preventing double yaw.
+            controller.ClearLocalAimPreview();
+            controller.BeginRevealRotation(matchConfig.RevealDuration);
+        }
     }
 
     private IEnumerator WaitForLivingPlayerRevealRotations()

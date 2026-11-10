@@ -23,6 +23,7 @@ public sealed class FusionNetworkBot : NetworkBehaviour
     private FusionRoundPhase presentedPhase = (FusionRoundPhase)(-1);
     private int presentedRound = -1;
     private bool wasEliminated;
+    private int appliedCosmeticSeed = int.MinValue;
 
     public bool IsEliminated => Eliminated;
 
@@ -113,6 +114,7 @@ public sealed class FusionNetworkBot : NetworkBehaviour
 
     public override void Render()
     {
+        ApplyCosmeticsIfNeeded();
         playerController?.ApplyNetworkSelection(AimDirection, Charge);
         PlayerNickname nickname = GetComponent<PlayerNickname>();
         if (nickname != null && !string.IsNullOrWhiteSpace(NetworkNickname)) nickname.SetNickname(NetworkNickname);
@@ -122,6 +124,15 @@ public sealed class FusionNetworkBot : NetworkBehaviour
             SetVisible(false);
         }
         PresentRoundPhase();
+    }
+
+    private void ApplyCosmeticsIfNeeded()
+    {
+        if (appliedCosmeticSeed == BotSeed)
+            return;
+
+        appliedCosmeticSeed = BotSeed;
+        CapybaraGameplayCosmetics.Apply(gameObject, CapybaraGameplayCosmetics.CreateBotLoadout(BotSeed));
     }
 
     private void SetVisible(bool value)

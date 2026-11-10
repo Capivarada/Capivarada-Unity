@@ -39,6 +39,7 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
     private float nextClientSubmitTime;
     private string serverJoinToken = string.Empty;
     private NetworkObject lastAttacker;
+    private PlayerProfileService cosmeticProfile;
 
     public override void Spawned()
     {
@@ -67,6 +68,13 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
 
         if (isLocalPlayer)
         {
+            cosmeticProfile = PlayerProfileService.Instance;
+            if (cosmeticProfile != null)
+            {
+                cosmeticProfile.Changed += HandleLocalProfileChanged;
+                HandleLocalProfileChanged(cosmeticProfile.Current);
+            }
+
             attachPresentationCoroutine = StartCoroutine(AttachLocalPresentation());
             SubmitDedicatedIdentity();
         }
@@ -361,8 +369,17 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
 
     public override void Despawned(NetworkRunner runner, bool hasState)
     {
+        if (cosmeticProfile != null)
+            cosmeticProfile.Changed -= HandleLocalProfileChanged;
+
+        cosmeticProfile = null;
         if (attachPresentationCoroutine != null)
             StopCoroutine(attachPresentationCoroutine);
+    }
+
+    private void HandleLocalProfileChanged(PlayerProfileData _)
+    {
+        CapybaraGameplayCosmetics.ApplySavedPlayer(gameObject);
     }
 
     private static string ResolveLocalNickname()

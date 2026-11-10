@@ -76,6 +76,10 @@ public class HumanPlayerController : MonoBehaviour
         playerController.SetAimDirection(
             direction
         );
+
+        // Practice has no Fusion bridge to present this private selection.
+        // Turn only the local presentation until directions are revealed.
+        playerController.PreviewLocalAimRotation();
     }
 
     private void HandleCharge()
@@ -89,5 +93,10 @@ public class HumanPlayerController : MonoBehaviour
         {
             playerController.DecreaseCharge();
         }
+
+        if (playerController.CurrentCharge > 0f)
+            playerController.ShowIndicator();
+        else
+            playerController.HideIndicator();
     }
 }

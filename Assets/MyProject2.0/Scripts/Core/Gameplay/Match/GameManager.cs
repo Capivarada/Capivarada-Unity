@@ -263,7 +263,7 @@ public class GameManager : MonoBehaviour
 
         humanPlayer.name = "Player";
 
-        ApplyCustomization(humanPlayer, null);
+        CapybaraGameplayCosmetics.ApplySavedPlayer(humanPlayer);
 
         // Set nickname
         PlayerNickname nickname = humanPlayer.GetComponent<PlayerNickname>();
@@ -347,7 +347,7 @@ public class GameManager : MonoBehaviour
 
             bot.name = $"Bot {i + 1:D2}";
 
-            ApplyCustomization(bot, null);
+            CapybaraGameplayCosmetics.Apply(bot, CapybaraGameplayCosmetics.CreateBotLoadout(i + 1));
 
             // Set nickname
             PlayerNickname nickname = bot.GetComponent<PlayerNickname>();
@@ -397,26 +397,6 @@ public class GameManager : MonoBehaviour
     }
 
     #endregion
-
-    private static void ApplyCustomization(
-        GameObject player,
-        PlayerCustomization customization)
-    {
-        if (player == null || customization == null)
-            return;
-
-        PlayerCustomizationApplier applier = player.GetComponent<PlayerCustomizationApplier>();
-        if (applier == null)
-            applier = player.GetComponentInChildren<PlayerCustomizationApplier>();
-
-        // The original Player and Bot prefabs predate customization. Add the
-        // applier at runtime so their seven SkinnedMeshRenderer materials are
-        // still customized without altering their visual prefab hierarchy.
-        if (applier == null)
-            applier = player.AddComponent<PlayerCustomizationApplier>();
-
-        applier.Apply(customization);
-    }
 
     #region Cleanup
 
