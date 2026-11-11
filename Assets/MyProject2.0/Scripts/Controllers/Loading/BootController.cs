@@ -1,4 +1,5 @@
 using System.Collections;
+using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -14,6 +15,7 @@ public sealed class BootController : MonoBehaviour
     [SerializeField] private BackendHealthService health;
     [SerializeField] private FusionSessionService fusion;
     [SerializeField] private VideoPlayer introVideo;
+    [SerializeField] private string streamingAssetsIntroFile = "Intro.mp4";
     [SerializeField] private string loadingScene = "Loading_Scene";
     [SerializeField] private string authenticationScene = "Auth_Scene";
     [SerializeField] private string noConnectionScene = "NoConnection_Scene";
@@ -53,7 +55,7 @@ public sealed class BootController : MonoBehaviour
         starting = true;
         Debug.Log("[Boot] Starting services and connectivity validation.", this);
         float startedAt = Time.realtimeSinceStartup;
-        if (introVideo != null) introVideo.Play();
+        PlayIntro();
 
         bool reachable = Application.internetReachability != NetworkReachability.NotReachable;
         bool backendReady = false;
@@ -85,5 +87,20 @@ public sealed class BootController : MonoBehaviour
         Debug.Log("[Boot] Services ready. Opening authentication through Loading_Scene.", this);
         SceneLoadRequest.Request(authenticationScene);
         SceneManager.LoadScene(loadingScene);
+    }
+
+    private void PlayIntro()
+    {
+        if (introVideo == null) return;
+
+#if UNITY_WEBGL
+        // A VideoClip reference is not reliable in a WebGL player. The MP4 is
+        // deliberately packaged in Assets/StreamingAssets and loaded by URL.
+        introVideo.source = VideoSource.Url;
+        introVideo.url = Path.Combine(Application.streamingAssetsPath, streamingAssetsIntroFile)
+            .Replace("\\", "/");
+#endif
+
+        introVideo.Play();
     }
 }
