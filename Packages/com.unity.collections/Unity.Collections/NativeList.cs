@@ -931,7 +931,12 @@ namespace Unity.Collections
         /// <returns>A read only of this list.</returns>
         public NativeArray<T>.ReadOnly AsReadOnly()
         {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             return new NativeArray<T>.ReadOnly(m_ListData->Ptr, m_ListData->Length, ref m_Safety);
+#else
+            var safety = default(AtomicSafetyHandle);
+            return new NativeArray<T>.ReadOnly(m_ListData->Ptr, m_ListData->Length, ref safety);
+#endif
         }
 
         /// <summary>
@@ -941,7 +946,12 @@ namespace Unity.Collections
 //        [Obsolete("'AsParallelReader' has been deprecated; use 'AsReadOnly' instead. (UnityUpgradable) -> AsReadOnly")]
         public NativeArray<T>.ReadOnly AsParallelReader()
         {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             return new NativeArray<T>.ReadOnly(m_ListData->Ptr, m_ListData->Length, ref m_Safety);
+#else
+            var safety = default(AtomicSafetyHandle);
+            return new NativeArray<T>.ReadOnly(m_ListData->Ptr, m_ListData->Length, ref safety);
+#endif
         }
 
         /// <summary>
