@@ -1,5 +1,6 @@
 using System.IO;
 using UnityEditor;
+using UnityEditor.Build.Reporting;
 using UnityEngine;
 
 
@@ -88,9 +89,11 @@ public class BuildAll
             options = BuildOptions.None
         };
 
-        BuildPipeline.BuildPlayer(web);
-        
-        Debug.Log("Build WebGL Concluída!");
+        BuildReport report = BuildPipeline.BuildPlayer(web);
+        if (report.summary.result == BuildResult.Succeeded)
+            Debug.Log($"Build WebGL concluída: {report.summary.outputPath}");
+        else
+            Debug.LogError($"Build WebGL falhou: {report.summary.result}. Consulte os erros acima; nenhum artefato válido foi gerado.");
     }
     
     [MenuItem("Build/7. Android")]
