@@ -11,12 +11,15 @@ public sealed class MatchResultsLobbyController : MonoBehaviour
     [SerializeField] private TMP_Text experienceEarnedText;
     [SerializeField] private TMP_Text arenaPointsEarnedText;
     [SerializeField] private TMP_Text placementBadgeText;
+    [SerializeField] private TMP_Text eliminationsBadgeText;
+    [SerializeField] private TMP_Text nicknameBadgeText;
     [SerializeField] private TMP_Text currentLevelText;
     [SerializeField] private TMP_Text nextLevelText;
     [SerializeField] private TMP_Text experienceText;
     [SerializeField] private Slider experienceBar;
     [SerializeField] private Transform rowsContent;
     [SerializeField] private MatchResultsRowController rowPrefab;
+    [SerializeField] private OtherProfileController otherProfile;
     [SerializeField, Min(0.1f)] private float animationSeconds = 1.2f;
 
     private MatchResultsContext.Snapshot snapshot;
@@ -44,6 +47,12 @@ public sealed class MatchResultsLobbyController : MonoBehaviour
             placementBadgeText.text = localEntry != null
                 ? $"{localEntry.Placement}º Lugar"
                 : string.Empty;
+        if (eliminationsBadgeText != null)
+            eliminationsBadgeText.text = localEntry != null
+                ? $"{localEntry.Eliminations} eliminações"
+                : string.Empty;
+        if (nicknameBadgeText != null)
+            nicknameBadgeText.text = localEntry != null ? localEntry.Nickname : string.Empty;
         if (experienceEarnedText != null) experienceEarnedText.text = $"+{snapshot.ExperienceEarned} XP";
         if (arenaPointsEarnedText != null) arenaPointsEarnedText.text = $"+{snapshot.ArenaPointsEarned}";
         ApplyProgress(snapshot.PreviousLevel, snapshot.PreviousExperience, snapshot.ExperienceToNext);
@@ -122,7 +131,15 @@ public sealed class MatchResultsLobbyController : MonoBehaviour
         for (int index = rowsContent.childCount - 1; index >= 0; index--)
             Destroy(rowsContent.GetChild(index).gameObject);
         foreach (MatchResultsContext.Entry entry in snapshot.Entries)
-            Instantiate(rowPrefab, rowsContent).Bind(entry);
+            Instantiate(rowPrefab, rowsContent).Bind(entry, OpenOtherProfile);
+    }
+
+    private void OpenOtherProfile(string playerId)
+    {
+        if (string.IsNullOrWhiteSpace(playerId) || profile == null ||
+            string.Equals(playerId, profile.Current.playerId, System.StringComparison.Ordinal))
+            return;
+        otherProfile?.Open(playerId);
     }
 
     private MatchResultsContext.Entry FindLocalEntry()
