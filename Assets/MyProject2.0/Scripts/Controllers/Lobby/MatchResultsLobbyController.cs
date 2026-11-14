@@ -10,6 +10,7 @@ public sealed class MatchResultsLobbyController : MonoBehaviour
     [SerializeField] private PlayerProfileService profile;
     [SerializeField] private TMP_Text experienceEarnedText;
     [SerializeField] private TMP_Text arenaPointsEarnedText;
+    [SerializeField] private TMP_Text placementBadgeText;
     [SerializeField] private TMP_Text currentLevelText;
     [SerializeField] private TMP_Text nextLevelText;
     [SerializeField] private TMP_Text experienceText;
@@ -38,6 +39,11 @@ public sealed class MatchResultsLobbyController : MonoBehaviour
         }
 
         BuildRows();
+        MatchResultsContext.Entry localEntry = FindLocalEntry();
+        if (placementBadgeText != null)
+            placementBadgeText.text = localEntry != null
+                ? $"{localEntry.Placement}º Lugar"
+                : string.Empty;
         if (experienceEarnedText != null) experienceEarnedText.text = $"+{snapshot.ExperienceEarned} XP";
         if (arenaPointsEarnedText != null) arenaPointsEarnedText.text = $"+{snapshot.ArenaPointsEarned}";
         ApplyProgress(snapshot.PreviousLevel, snapshot.PreviousExperience, snapshot.ExperienceToNext);
@@ -117,6 +123,14 @@ public sealed class MatchResultsLobbyController : MonoBehaviour
             Destroy(rowsContent.GetChild(index).gameObject);
         foreach (MatchResultsContext.Entry entry in snapshot.Entries)
             Instantiate(rowPrefab, rowsContent).Bind(entry);
+    }
+
+    private MatchResultsContext.Entry FindLocalEntry()
+    {
+        if (snapshot?.Entries == null) return null;
+        foreach (MatchResultsContext.Entry entry in snapshot.Entries)
+            if (entry != null && entry.IsLocal) return entry;
+        return null;
     }
 
     private static int ToTotalExperience(int level, int experience, int toNext) =>
