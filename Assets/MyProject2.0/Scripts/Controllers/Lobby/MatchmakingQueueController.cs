@@ -19,10 +19,14 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
     [SerializeField] private string idleText = "JOGAR";
     [SerializeField] private string cancelText = "Cancelar pareamento?";
     [SerializeField, Min(0.25f)] private float pollIntervalSeconds = 0.75f;
+    [SerializeField, Min(1f)] private float passiveObserveIntervalSeconds = 2f;
 
     private Coroutine searchRoutine;
+    private Coroutine observeRoutine;
     private bool pointerOver;
     private bool connecting;
+    private float nextPassiveObserveAt;
+    private float suppressObserveUntil;
 
     public bool IsSearching => searchRoutine != null;
 
@@ -41,6 +45,19 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
         // The persistent Services object continues polling only while this controller is active.
         pointerOver = false;
         RefreshButton(0);
+    }
+
+    private void Update()
+    {
+        // Non-leaders never create or cancel a ticket. They only discover the
+        // leader's party ticket and receive their own signed connection proof.
+        if (IsSearching || observeRoutine != null || connecting || matchmaking == null ||
+            party == null || !party.HasOtherMember || Time.unscaledTime < nextPassiveObserveAt ||
+            Time.unscaledTime < suppressObserveUntil)
+            return;
+
+        nextPassiveObserveAt = Time.unscaledTime + passiveObserveIntervalSeconds;
+        observeRoutine = StartCoroutine(ObserveExistingTicket());
     }
 
     public void Play()
@@ -70,6 +87,7 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
         StopCoroutine(searchRoutine);
         searchRoutine = null;
         connecting = false;
+        suppressObserveUntil = Time.unscaledTime + passiveObserveIntervalSeconds;
         matchmaking.Cancel(() => RefreshButton(0), ReportFailure);
         RefreshButton(0);
     }
@@ -100,6 +118,32 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
             yield break;
         }
 
+        yield return FollowTicket(status);
+    }
+
+    private IEnumerator ObserveExistingTicket()
+    {
+        bool received = false;
+        FusionMatchmakingService.Status status = null;
+        matchmaking.GetStatus(value => { status = value; received = true; }, reason =>
+        {
+            Debug.LogWarning("[Matchmaking] Consulta passiva falhou: " + reason, this);
+            received = true;
+        });
+        while (!received) yield return null;
+        observeRoutine = null;
+
+        if (status == null || string.Equals(status.state, "idle", StringComparison.OrdinalIgnoreCase))
+            yield break;
+
+        if (searchRoutine == null)
+            searchRoutine = StartCoroutine(FollowTicket(status));
+    }
+
+    private IEnumerator FollowTicket(FusionMatchmakingService.Status status)
+    {
+        bool received;
+        string error;
         while (true)
         {
             if (status != null && matchmaking.TryCreateDedicatedIdentity(status, out FusionDedicatedIdentity identity))
