@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 /// <summary>Owns the lobby button while a party ticket is waiting or cancelled.</summary>
@@ -13,9 +14,18 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
     [SerializeField] private FusionSessionService fusion;
     [SerializeField] private SessionAccessService session;
     [SerializeField] private PartyService party;
-    [Header("Button")]
-    [SerializeField] private Button playButton;
-    [SerializeField] private TMP_Text playButtonText;
+    [Header("Play buttons")]
+    [Tooltip("Botão Jogar visível para convidado online. Ele pede login antes de criar um ticket.")]
+    [SerializeField] private Button guestOnlinePlayButton;
+    [SerializeField] private TMP_Text guestOnlinePlayButtonText;
+    [Tooltip("Botão Jogar do menu de conta autenticada.")]
+    [SerializeField] private Button authenticatedOnlinePlayButton;
+    [SerializeField] private TMP_Text authenticatedOnlinePlayButtonText;
+    [Tooltip("Botão Jogar da tela de grupo.")]
+    [FormerlySerializedAs("playButton")]
+    [SerializeField] private Button groupPlayButton;
+    [FormerlySerializedAs("playButtonText")]
+    [SerializeField] private TMP_Text groupPlayButtonText;
     [SerializeField] private string idleText = "JOGAR";
     [SerializeField] private string cancelText = "Cancelar pareamento?";
     [SerializeField, Min(0.25f)] private float pollIntervalSeconds = 0.75f;
@@ -60,7 +70,24 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
         observeRoutine = StartCoroutine(ObserveExistingTicket());
     }
 
-    public void Play()
+    /// <summary>Backward-compatible group button entry point.</summary>
+    public void Play() => PlayFromGroup();
+
+    public void PlayFromGuestOnline()
+    {
+        if (session == null || session.Mode != SessionAccessMode.AuthenticatedOnline)
+        {
+            ReportFailure("Crie uma conta ou entre para jogar partidas online.");
+            return;
+        }
+        StartMatchmaking();
+    }
+
+    public void PlayFromAuthenticatedOnline() => StartMatchmaking();
+
+    public void PlayFromGroup() => StartMatchmaking();
+
+    private void StartMatchmaking()
     {
         if (connecting) return;
         if (IsSearching)
@@ -103,6 +130,11 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
         pointerOver = false;
         RefreshButton(0);
     }
+
+    // Assign these simple methods to EventTrigger entries on each button when
+    // this component lives on a persistent Lobby object rather than the button.
+    public void OnPlayButtonPointerEnter() { pointerOver = true; RefreshButton(0); }
+    public void OnPlayButtonPointerExit() { pointerOver = false; RefreshButton(0); }
 
     private IEnumerator Search()
     {
@@ -200,13 +232,22 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
 
     private void RefreshButton(int remainingSeconds)
     {
-        if (playButtonText == null) return;
+        string text;
         if (connecting)
-            playButtonText.text = "Entrando na arena...";
+            text = "Entrando na arena...";
         else if (IsSearching)
-            playButtonText.text = pointerOver ? cancelText : $"Procurando partida ({Mathf.Max(0, remainingSeconds)}s)";
+            text = pointerOver ? cancelText : $"Procurando partida ({Mathf.Max(0, remainingSeconds)}s)";
         else
-            playButtonText.text = idleText;
+            text = idleText;
+
+        SetText(guestOnlinePlayButtonText, text);
+        SetText(authenticatedOnlinePlayButtonText, text);
+        SetText(groupPlayButtonText, text);
+    }
+
+    private static void SetText(TMP_Text label, string value)
+    {
+        if (label != null) label.text = value;
     }
 
     private void ReportFailure(string reason)
