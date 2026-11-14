@@ -27,6 +27,7 @@ public sealed class GroupController : MonoBehaviour
     [SerializeField] private PanelNavigatorController panelNavigator;
     [SerializeField] private string invitePanelId = "Invite";
     [SerializeField] private LobbyNavigationController lobbyNavigation;
+    [SerializeField] private MatchmakingQueueController matchmakingQueue;
 
     [Header("Actions")]
     [SerializeField] private Button readyButton;
@@ -44,6 +45,7 @@ public sealed class GroupController : MonoBehaviour
         if (profileService == null) profileService = ServiceHub.Instance != null ? ServiceHub.Instance.Profile : PlayerProfileService.Instance;
         if (lobbyNavigation == null) lobbyNavigation = GetComponentInParent<LobbyNavigationController>();
         if (lobbyNavigation == null) lobbyNavigation = FindFirstObjectByType<LobbyNavigationController>(FindObjectsInactive.Include);
+        if (matchmakingQueue == null) matchmakingQueue = FindFirstObjectByType<MatchmakingQueueController>(FindObjectsInactive.Include);
     }
 
     private void OnEnable()
@@ -52,8 +54,10 @@ public sealed class GroupController : MonoBehaviour
         {
             partyService.Changed += Rebuild;
             partyService.Failed += Report;
-            if (partyService.IsInParty) partyService.Refresh();
-            else partyService.Create();
+            // GET /party gives a player without a stored party their own
+            // server-authoritative one-member party. Avoid a speculative
+            // Create call while that refresh is still in flight.
+            partyService.Refresh();
         }
         Rebuild();
     }
@@ -94,6 +98,8 @@ public sealed class GroupController : MonoBehaviour
         // binding is added or after a scene rebuild.
         if (startMatchmakingRequested != null && startMatchmakingRequested.GetPersistentEventCount() > 0)
             startMatchmakingRequested.Invoke();
+        else if (matchmakingQueue != null)
+            matchmakingQueue.Play();
         else
             lobbyNavigation?.Play();
     }
@@ -135,10 +141,11 @@ public sealed class GroupController : MonoBehaviour
             // Leaving and re-entering GroupUI must not leave the Start button
             // hidden by an old panel state. It is visible for an active party;
             // readiness only controls interactivity.
-            startButton.gameObject.SetActive(party != null);
-            startButton.interactable = partyService != null && partyService.CanStart;
+            // Non-leaders must not see an unusable Start button in their card.
+            startButton.gameObject.SetActive(party != null && leader);
+            startButton.interactable = leader && partyService != null && partyService.CanStart;
         }
-        if (groupChatButton != null) groupChatButton.interactable = partyService != null && partyService.IsInParty;
+        if (groupChatButton != null) groupChatButton.gameObject.SetActive(partyService != null && partyService.HasOtherMember);
     }
 
     /// <summary>
