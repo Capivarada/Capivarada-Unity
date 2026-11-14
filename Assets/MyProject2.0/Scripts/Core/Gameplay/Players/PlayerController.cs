@@ -23,16 +23,23 @@ public class PlayerController : MonoBehaviour
     private Renderer skinRenderer;
     private Quaternion visualRootBaseLocalRotation;
     private bool hasVisualPreview;
+    private bool choiceLocked;
 
     public event Action<float> OnChargeChanged;
 
-    public bool IsRevealingDirection => revealRotation != null;
+    public bool IsRevealingDirection => revealRotation != null || visualRevealRotation != null;
 
     public bool HasLaunched =>
         hasLaunched;
 
     public float CurrentCharge =>
         currentCharge;
+    public bool IsChoiceLocked => choiceLocked;
+
+    public void LockChoice()
+    {
+        if (!hasLaunched) choiceLocked = true;
+    }
 
     public PlayerConfig Configuration => ResolveConfiguration();
 
@@ -267,7 +274,11 @@ public class PlayerController : MonoBehaviour
         if (revealRotation != null) StopCoroutine(revealRotation);
         revealRotation = null;
         hasLaunched = false;
-        ClearLocalAimPreview();
+        choiceLocked = false;
+        if (visualRevealRotation != null) StopCoroutine(visualRevealRotation);
+        visualRevealRotation = null;
+        if (visualRoot != null) visualRoot.localRotation = visualRootBaseLocalRotation;
+        hasVisualPreview = false;
         StopMovementAnimation();
 
         currentCharge = 0f;
@@ -447,10 +458,15 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        Quaternion targetRotation =
-            Quaternion.LookRotation(
-                velocity.normalized
-            );
+        // The network root is owned by NetworkTransform/NetworkRigidbody. A
+        // transform write here competes with snapshot interpolation and makes
+        // the capybara snap back to its authored spawn rotation. Only rotate
+        // the presentation child; it naturally follows collisions because its
+        // target is the current replicated velocity.
+        if (visualRoot == null)
+            return;
+
+        Quaternion targetRotation = GetVisualAimRotation(velocity.normalized);
 
         float rotationAmount =
             1f -
@@ -459,9 +475,9 @@ public class PlayerController : MonoBehaviour
                 Time.deltaTime
             );
 
-        transform.rotation =
+        visualRoot.localRotation =
             Quaternion.Slerp(
-                transform.rotation,
+                visualRoot.localRotation,
                 targetRotation,
                 rotationAmount
             );

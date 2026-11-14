@@ -1,3 +1,4 @@
+using System;
 using Fusion;
 using UnityEngine;
 
@@ -21,6 +22,7 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
     [Networked, Capacity(32)] public string NetworkNickname { get; private set; }
     [Networked, Capacity(32)] public string NetworkAvatarId { get; private set; }
     [Networked, Capacity(32)] public string NetworkPlayerId { get; private set; }
+    [Networked, Capacity(512)] private string SerializedCosmetics { get; set; }
     [Networked] public int Eliminations { get; private set; }
     [Networked] public int RoundsSurvived { get; private set; }
     [Networked] private int LastLaunchedRound { get; set; }
@@ -28,6 +30,7 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
     private FusionRoundController rounds;
     private FusionArenaMatchController match;
     private Camera localCamera;
+    private PlayerCameraLook localCameraLook;
     private bool wasEliminated;
     private Coroutine attachPresentationCoroutine;
     private int preparedRound = -1;
@@ -38,6 +41,10 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
     private float clientCharge;
     private float nextClientSubmitTime;
     private string serverJoinToken = string.Empty;
+    private string presentedCosmetics = string.Empty;
+    // Spawned can be replayed while Fusion catches a client up. Do not send the
+    // identity RPC again during that replay.
+    private bool dedicatedIdentitySubmitted;
     private NetworkObject lastAttacker;
     private PlayerProfileService cosmeticProfile;
 
@@ -55,6 +62,7 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
         bool isLocalPlayer = HasLocalInput();
         if (localInput != null) localInput.enabled = isLocalPlayer;
         PlayerCameraLook cameraLook = GetComponentInChildren<PlayerCameraLook>(true);
+        localCameraLook = cameraLook;
         if (cameraLook != null) cameraLook.enabled = isLocalPlayer;
         rounds = FindFirstObjectByType<FusionRoundController>();
         match = FindFirstObjectByType<FusionArenaMatchController>();
@@ -155,7 +163,15 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
 
     public override void Render()
     {
-        playerController?.ApplyNetworkSelection(AimDirection, Charge);
+        // During local choosing, the networked value is necessarily behind the
+        // camera preview by at least one round trip. Reapplying it every render
+        // used to overwrite the direction the player had just selected.
+        bool presentingLocalChoice = HasLocalInput() && rounds != null &&
+            rounds.Phase == FusionRoundPhase.Choosing &&
+            playerController != null && !playerController.IsChoiceLocked;
+        if (!presentingLocalChoice)
+            playerController?.ApplyNetworkSelection(AimDirection, Charge);
+        PresentCosmetics();
         PresentRoundPhase();
         PlayerNickname nickname = GetComponent<PlayerNickname>();
         if (nickname != null && !string.IsNullOrWhiteSpace(NetworkNickname)) nickname.SetNickname(NetworkNickname);
@@ -174,14 +190,13 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
 
     private void ReadLocalChoice()
     {
-        if (!Object.HasStateAuthority || localInput == null) return;
-        if (localCamera == null) localCamera = Camera.main;
-        if (localCamera != null)
-        {
-            Vector3 direction = localCamera.transform.forward;
-            direction.y = 0f;
-            if (direction.sqrMagnitude > 0.001f) AimDirection = direction.normalized;
-        }
+        // On a dedicated server this object has State Authority, but it is not
+        // the local player. Reading its disabled prefab camera here overwrote
+        // every RPC choice with the spawn-facing direction on every tick.
+        if (!Object.HasStateAuthority || !HasLocalInput() || localInput == null) return;
+        if (playerController != null && playerController.IsChoiceLocked) return;
+        if (TryGetLocalAimDirection(out Vector3 direction))
+            AimDirection = direction;
 
         int addPresses = localInput.ConsumeAddChargePresses();
         int removePresses = localInput.ConsumeRemoveChargePresses();
@@ -189,6 +204,8 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
         Charge -= removePresses * 0.5f;
         playerController?.ApplyNetworkSelection(AimDirection, Charge);
         Charge = playerController != null ? playerController.CurrentCharge : Mathf.Max(0f, Charge);
+        if (localInput.ConsumeLockChoicePresses() > 0)
+            playerController?.LockChoice();
 
         // Apply the camera choice before previewing it. Previously the preview
         // used the direction from the preceding network tick, making the mesh
@@ -212,13 +229,10 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
             playerController?.ResetRound();
         }
 
-        if (localCamera == null) localCamera = Camera.main;
-        if (localCamera != null)
-        {
-            Vector3 direction = localCamera.transform.forward;
-            direction.y = 0f;
-            if (direction.sqrMagnitude > 0.001f) clientAimDirection = direction.normalized;
-        }
+        if (playerController != null && playerController.IsChoiceLocked) return;
+
+        if (TryGetLocalAimDirection(out Vector3 direction))
+            clientAimDirection = direction;
 
         int addPresses = localInput.ConsumeAddChargePresses();
         int removePresses = localInput.ConsumeRemoveChargePresses();
@@ -226,10 +240,13 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
         clientCharge -= removePresses * 0.5f;
         playerController?.ApplyNetworkSelection(clientAimDirection, clientCharge);
         clientCharge = playerController != null ? playerController.CurrentCharge : Mathf.Max(0f, clientCharge);
+        bool choiceLocked = localInput.ConsumeLockChoicePresses() > 0;
+        if (choiceLocked)
+            playerController?.LockChoice();
         playerController?.PreviewLocalAimRotation();
         if (clientCharge > 0f) playerController?.ShowIndicator(); else playerController?.HideIndicator();
 
-        bool chargeChanged = addPresses != 0 || removePresses != 0;
+        bool chargeChanged = addPresses != 0 || removePresses != 0 || choiceLocked;
         if (chargeChanged || Time.unscaledTime >= nextClientSubmitTime)
         {
             nextClientSubmitTime = Time.unscaledTime + 0.1f;
@@ -240,6 +257,25 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
     private bool HasLocalInput()
     {
         return Object != null && (Object.HasInputAuthority || (Runner != null && Runner.GameMode == GameMode.Shared && Object.HasStateAuthority));
+    }
+
+    private bool TryGetLocalAimDirection(out Vector3 direction)
+    {
+        if (localCameraLook == null)
+            localCameraLook = GetComponentInChildren<PlayerCameraLook>(true);
+
+        direction = localCameraLook != null
+            ? localCameraLook.AimForward
+            : localCamera != null ? localCamera.transform.forward : Vector3.zero;
+        if (localCamera == null && localCameraLook == null)
+            localCamera = Camera.main;
+        if (localCameraLook == null && localCamera != null)
+            direction = localCamera.transform.forward;
+
+        direction.y = 0f;
+        if (direction.sqrMagnitude <= 0.001f) return false;
+        direction.Normalize();
+        return true;
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
@@ -256,18 +292,69 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
 
     private void SubmitDedicatedIdentity()
     {
+        if (dedicatedIdentitySubmitted) return;
         if (!FusionDedicatedMatchContext.TryGet(out FusionDedicatedIdentity identity)) return;
-        RpcSubmitIdentity(identity.PlayerId, identity.Nickname, identity.AvatarId, identity.JoinToken);
+        PlayerCosmeticLoadout loadout = PlayerProfileService.Instance != null &&
+            PlayerProfileService.Instance.Current != null
+            ? PlayerProfileService.Instance.Current.cosmetics
+            : null;
+        dedicatedIdentitySubmitted = true;
+
+        // Fusion limits one RPC payload to 512 bytes. A join token plus five
+        // strings and cosmetic JSON exceeded that limit, so the server never
+        // received the player's identity. Keep the credential separate from
+        // the cosmetic presentation payload.
+        RpcSubmitIdentity(identity.PlayerId, identity.Nickname, identity.AvatarId,
+            identity.JoinToken);
+        RpcSubmitCosmetics(JsonUtility.ToJson(loadout ?? new PlayerCosmeticLoadout()));
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    private void RpcSubmitIdentity(string playerId, string nickname, string avatarId, string joinToken)
+    private void RpcSubmitIdentity(string playerId, string nickname, string avatarId,
+        string joinToken)
     {
         if (string.IsNullOrWhiteSpace(playerId) || string.IsNullOrWhiteSpace(joinToken)) return;
         NetworkPlayerId = playerId.Trim();
         NetworkNickname = string.IsNullOrWhiteSpace(nickname) ? "Capivara" : nickname.Trim();
         NetworkAvatarId = string.IsNullOrWhiteSpace(avatarId) ? "avatar1" : avatarId.Trim();
         serverJoinToken = joinToken;
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RpcSubmitCosmetics(string cosmeticsJson)
+    {
+        // Keep this bounded independently from the identity RPC. A normal
+        // loadout is far below 512 bytes; refusing an oversized payload is
+        // safer than silently corrupting the match packet.
+        if (!string.IsNullOrEmpty(cosmeticsJson) &&
+            System.Text.Encoding.UTF8.GetByteCount(cosmeticsJson) > 512)
+            return;
+
+        SerializedCosmetics = cosmeticsJson ?? string.Empty;
+    }
+
+    private void PresentCosmetics()
+    {
+        if (string.IsNullOrWhiteSpace(SerializedCosmetics) ||
+            SerializedCosmetics == presentedCosmetics)
+            return;
+
+        PlayerCosmeticLoadout loadout;
+        try
+        {
+            loadout = JsonUtility.FromJson<PlayerCosmeticLoadout>(
+                SerializedCosmetics);
+        }
+        catch (ArgumentException)
+        {
+            return;
+        }
+
+        if (loadout == null)
+            return;
+
+        presentedCosmetics = SerializedCosmetics;
+        CapybaraGameplayCosmetics.Apply(gameObject, loadout);
     }
 
     public void RegisterSurvivedRound()

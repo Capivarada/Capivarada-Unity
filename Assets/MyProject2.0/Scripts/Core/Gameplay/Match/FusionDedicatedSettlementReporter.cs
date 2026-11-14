@@ -14,10 +14,14 @@ using UnityEngine.Networking;
 public sealed class FusionDedicatedSettlementReporter : MonoBehaviour
 {
     [SerializeField] private FusionRoundController rounds;
+    [SerializeField] private FusionArenaMatchController arena;
     [SerializeField] private string backendBaseUrl = "https://capivarada-functions-dev-d9djf2f2dqe4b9hu.westus2-01.azurewebsites.net/api";
     [SerializeField, Min(5)] private int requestTimeoutSeconds = 20;
+    [SerializeField, Min(0)] private float shutdownDelayAfterSettlementSeconds = 2f;
 
     private bool submitted;
+    private bool startReported;
+    private bool shutdownScheduled;
     private NetworkRunner runner;
 
     private void Start()
@@ -31,6 +35,7 @@ public sealed class FusionDedicatedSettlementReporter : MonoBehaviour
         }
 
         if (rounds == null) rounds = FindFirstObjectByType<FusionRoundController>();
+        if (arena == null) arena = FindFirstObjectByType<FusionArenaMatchController>();
         runner = FindFirstObjectByType<NetworkRunner>();
         if (rounds == null || runner == null)
         {
@@ -39,11 +44,47 @@ public sealed class FusionDedicatedSettlementReporter : MonoBehaviour
             return;
         }
         rounds.MatchFinished += Submit;
+        if (arena != null) arena.MatchReady += ReportStarted;
     }
 
     private void OnDestroy()
     {
         if (rounds != null) rounds.MatchFinished -= Submit;
+        if (arena != null) arena.MatchReady -= ReportStarted;
+    }
+
+    private void ReportStarted()
+    {
+        if (startReported || runner == null || !runner.IsServer) return;
+        string secret = FirstConfiguredEnvironmentValue(
+            "PF_MPS_SECRET_CAPIVARADA-MATCH-SERVER-SECRET",
+            "PF_MPS_SECRET_CAPIVARADA_MATCH_SERVER_SECRET",
+            "CAPIVARADA_MATCH_SERVER_SECRET");
+        string matchId = runner.SessionInfo.Name;
+        if (string.IsNullOrWhiteSpace(secret) || string.IsNullOrWhiteSpace(matchId))
+        {
+            Debug.LogError("[FusionDedicatedSettlementReporter] Sem segredo ou MatchId; partida não foi fechada para novas entradas.", this);
+            return;
+        }
+
+        startReported = true;
+        StartCoroutine(PostStarted(matchId, secret));
+    }
+
+    private IEnumerator PostStarted(string matchId, string secret)
+    {
+        using UnityWebRequest request = new UnityWebRequest(backendBaseUrl.TrimEnd('/') + "/matches/" + UnityWebRequest.EscapeURL(matchId) + "/started", UnityWebRequest.kHttpVerbPOST)
+        {
+            timeout = Mathf.Max(5, requestTimeoutSeconds),
+            downloadHandler = new DownloadHandlerBuffer()
+        };
+        request.SetRequestHeader("X-Capivarada-Match-Secret", secret);
+        yield return request.SendWebRequest();
+        if (request.result != UnityWebRequest.Result.Success)
+        {
+            startReported = false;
+            Debug.LogError($"[FusionDedicatedSettlementReporter] Não foi possível fechar a partida para novas entradas ({request.responseCode}): {request.downloadHandler.text}", this);
+        }
     }
 
     private void Submit(IReadOnlyList<FusionMatchResult> results, int durationSeconds)
@@ -52,13 +93,17 @@ public sealed class FusionDedicatedSettlementReporter : MonoBehaviour
         // Locally we use the familiar variable name. In PlayFab MPS, a build
         // secret named CAPIVARADA-MATCH-SERVER-SECRET is exposed with the
         // PF_MPS_SECRET_ prefix, preserving the hyphens in its original name.
-        string secret = Environment.GetEnvironmentVariable("PF_MPS_SECRET_CAPIVARADA-MATCH-SERVER-SECRET");
-        if (string.IsNullOrWhiteSpace(secret))
-            secret = Environment.GetEnvironmentVariable("CAPIVARADA_MATCH_SERVER_SECRET");
+        string secret = FirstConfiguredEnvironmentValue(
+            // The name after PF_MPS_SECRET_ is the exact MPS secret name.
+            "PF_MPS_SECRET_CAPIVARADA-MATCH-SERVER-SECRET",
+            // Supports builds whose MPS secret was named with underscores.
+            "PF_MPS_SECRET_CAPIVARADA_MATCH_SERVER_SECRET",
+            "CAPIVARADA_MATCH_SERVER_SECRET");
         string matchId = runner.SessionInfo.Name;
         if (string.IsNullOrWhiteSpace(secret) || string.IsNullOrWhiteSpace(matchId))
         {
             Debug.LogError("[FusionDedicatedSettlementReporter] Sem segredo do MPS/local ou MatchId; progresso não será salvo.", this);
+            ScheduleShutdownAfterFailedSettlement();
             return;
         }
 
@@ -84,11 +129,47 @@ public sealed class FusionDedicatedSettlementReporter : MonoBehaviour
         if (request.result != UnityWebRequest.Result.Success)
         {
             Debug.LogError($"[FusionDedicatedSettlementReporter] Settlement falhou ({request.responseCode}): {request.downloadHandler.text}", this);
-            submitted = false;
+            // Do not retain an already-finished MPS allocation forever when a
+            // backend/secret outage occurs. The failure is visible in MPS logs
+            // and the process is replaced by configured standby capacity.
+            ScheduleShutdownAfterFailedSettlement();
             yield break;
         }
 
         Debug.Log($"[FusionDedicatedSettlementReporter] Progresso liquidado: {request.downloadHandler.text}", this);
+        // An Active MPS process cannot return to StandingBy. Exiting after the
+        // authoritative settlement lets MPS replace it with a fresh standby
+        // process instead of billing an idle, already-finished allocation.
+        yield return new WaitForSeconds(shutdownDelayAfterSettlementSeconds);
+        Debug.Log("[FusionDedicatedSettlementReporter] Partida concluída; encerrando processo dedicado.", this);
+        Application.Quit();
+    }
+
+    private void ScheduleShutdownAfterFailedSettlement()
+    {
+        if (shutdownScheduled) return;
+        shutdownScheduled = true;
+        StartCoroutine(ShutdownAfterFailedSettlement());
+    }
+
+    private IEnumerator ShutdownAfterFailedSettlement()
+    {
+        yield return new WaitForSeconds(shutdownDelayAfterSettlementSeconds);
+        Debug.LogError("[FusionDedicatedSettlementReporter] Encerrando processo após falha de settlement para liberar a alocação MPS.", this);
+        Application.Quit();
+    }
+
+    private static string FirstConfiguredEnvironmentValue(
+        params string[] variableNames)
+    {
+        foreach (string variableName in variableNames)
+        {
+            string value = Environment.GetEnvironmentVariable(variableName);
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+        }
+
+        return string.Empty;
     }
 
     [Serializable]
@@ -105,6 +186,13 @@ public sealed class FusionDedicatedSettlementReporter : MonoBehaviour
             if (results == null) return;
             foreach (FusionMatchResult result in results)
             {
+                // Bots participate in the arena result but never own a PlayFab
+                // entity or a join token. Sending several empty entity IDs made
+                // the backend reject the whole batch as duplicated players,
+                // including the legitimate human settlement.
+                if (result.IsBot)
+                    continue;
+
                 participants.Add(new SettlementParticipant
                 {
                     entityId = result.PlayerId,
