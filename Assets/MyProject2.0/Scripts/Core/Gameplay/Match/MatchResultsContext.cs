@@ -83,6 +83,41 @@ public static class MatchResultsContext
         return snapshot;
     }
 
+    /// <summary>Creates a partial result for a dead spectator leaving early.</summary>
+    public static void CaptureKnownFromNetwork()
+    {
+        PlayerProfileData profile = PlayerProfileService.Instance != null ? PlayerProfileService.Instance.Current : null;
+        string localPlayerId = profile != null ? profile.playerId : string.Empty;
+        List<Entry> entries = new();
+        foreach (FusionNetworkPlayer player in UnityEngine.Object.FindObjectsByType<FusionNetworkPlayer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (player == null || player.Placement <= 0) continue;
+            entries.Add(new Entry
+            {
+                PlayerId = player.NetworkPlayerId, Nickname = player.NetworkNickname, AvatarId = player.NetworkAvatarId,
+                Placement = player.Placement, Eliminations = player.Eliminations, RoundsSurvived = player.RoundsSurvived,
+                IsLocal = player.Object != null && player.Object.HasInputAuthority ||
+                    (!string.IsNullOrWhiteSpace(localPlayerId) && player.NetworkPlayerId == localPlayerId)
+            });
+        }
+        foreach (FusionNetworkBot bot in UnityEngine.Object.FindObjectsByType<FusionNetworkBot>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            if (bot != null && bot.Placement > 0)
+                entries.Add(new Entry { Nickname = bot.NetworkNickname, IsBot = true, Placement = bot.Placement });
+        entries.Sort((left, right) => left.Placement != right.Placement
+            ? left.Placement.CompareTo(right.Placement)
+            : string.Compare(left.Nickname, right.Nickname, StringComparison.OrdinalIgnoreCase));
+        Entry localEntry = entries.Find(entry => entry.IsLocal);
+        Pending = new Snapshot
+        {
+            Entries = entries,
+            PreviousLevel = Mathf.Max(1, profile != null ? profile.level : 1),
+            PreviousExperience = Mathf.Max(0, profile != null ? profile.experience : 0),
+            ExperienceToNext = Mathf.Max(1, profile != null ? profile.experienceToNext : 1500),
+            ExperienceEarned = localEntry != null ? ExperienceAward(localEntry) : 0,
+            ArenaPointsEarned = localEntry != null ? ArenaPointsAward(localEntry) : 0
+        };
+    }
+
     private static int ExperienceAward(Entry entry)
     {
         int placement = Mathf.Max(1, entry.Placement);

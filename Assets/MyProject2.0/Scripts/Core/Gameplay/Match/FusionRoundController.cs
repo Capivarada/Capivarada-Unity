@@ -86,7 +86,7 @@ public sealed class FusionRoundController : NetworkBehaviour
         FusionMatchResult result = player.BuildMatchResult();
         if (string.IsNullOrWhiteSpace(result.PlayerId) || departedResults.Exists(item => item.PlayerId == result.PlayerId)) return;
         result.IsEliminated = true;
-        result.Forfeited = true;
+        result.Forfeited = !player.IsEliminated;
         departedResults.Add(result);
     }
 
@@ -114,6 +114,7 @@ public sealed class FusionRoundController : NetworkBehaviour
         if (!Object.HasStateAuthority || match == null || Phase == FusionRoundPhase.Finished) return;
         if (!match.IsMatchReady) return;
         InitializeArenaScale();
+        PublishEliminationPlacements();
 
         if (Phase == FusionRoundPhase.Waiting)
         {
@@ -288,7 +289,7 @@ public sealed class FusionRoundController : NetworkBehaviour
             FusionMatchResult candidate = provisional[index];
             int next = index + 1;
             while (next < provisional.Count && provisional[next].IsEliminated == candidate.IsEliminated && provisional[next].RoundsSurvived == candidate.RoundsSurvived) next++;
-            int placement = rank;
+            int placement = candidate.Placement > 0 ? candidate.Placement : rank;
             for (int member = index; member < next; member++)
             {
                 FusionMatchResult source = provisional[member];
@@ -351,6 +352,17 @@ public sealed class FusionRoundController : NetworkBehaviour
             }).ToArray()
         };
         SerializedResults = JsonUtility.ToJson(payload);
+    }
+
+    private void PublishEliminationPlacements()
+    {
+        int placement = Mathf.Max(1, CountLivingParticipants() + 1);
+        foreach (FusionNetworkPlayer player in FindObjectsByType<FusionNetworkPlayer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            if (player != null && player.IsEliminated && player.Placement <= 0)
+                player.SetPlacement(placement);
+        foreach (FusionNetworkBot bot in FindObjectsByType<FusionNetworkBot>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            if (bot != null && bot.IsEliminated && bot.Placement <= 0)
+                bot.SetPlacement(placement);
     }
 
     [Serializable]

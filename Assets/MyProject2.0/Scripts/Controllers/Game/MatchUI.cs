@@ -353,6 +353,8 @@ public class MatchUI : MonoBehaviour
     private void ReturnToLobbyFromSpectator()
     {
         if (returningToLobby) return;
+        if (!IsPractice && humanEliminated)
+            MatchResultsContext.CaptureKnownFromNetwork();
         returningToLobby = true;
         LoadLobby();
     }

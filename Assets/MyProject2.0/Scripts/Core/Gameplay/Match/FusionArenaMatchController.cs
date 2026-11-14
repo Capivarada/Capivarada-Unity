@@ -13,6 +13,7 @@ public sealed class FusionArenaMatchController : NetworkBehaviour, IPlayerJoined
 {
     [SerializeField, Min(1)] private int requiredSlots = 8;
     [SerializeField, Min(0f)] private float waitForPlayersSeconds = 10f;
+    [SerializeField, Min(30f)] private float maxActiveWithoutHumansSeconds = 120f;
     [SerializeField] private bool fillVacantSlotsWithBots = true;
     [SerializeField] private PlayerConfig playerConfig;
     [SerializeField] private MatchConfig matchConfig;
@@ -22,6 +23,8 @@ public sealed class FusionArenaMatchController : NetworkBehaviour, IPlayerJoined
     [Networked] private int BotSlots { get; set; }
     private bool readyPublished;
     private bool networkSpawned;
+    private bool finishAfterDepartures;
+    private float activeWithoutHumansSince;
 
     public event Action<int, int> WaitingChanged;
     public event Action<int> BotsFilled;
@@ -51,14 +54,36 @@ public sealed class FusionArenaMatchController : NetworkBehaviour, IPlayerJoined
     public override void Spawned()
     {
         networkSpawned = true;
+        activeWithoutHumansSince = Runner != null ? (float)Runner.SimulationTime : 0f;
         PublishWaiting();
-        if (Object.HasStateAuthority && !StartTimer.IsRunning && !MatchStarted)
-            StartTimer = TickTimer.CreateFromSeconds(Runner, waitForPlayersSeconds);
+        StartCountdownWhenFirstHumanJoins();
     }
 
     public override void FixedUpdateNetwork()
     {
-        if (!Object.HasStateAuthority || MatchStarted) return;
+        if (!Object.HasStateAuthority) return;
+
+        // PlayerLeft callbacks are delivered to several scene behaviours. Let
+        // the player spawner record a departed result in the same tick before
+        // settlement closes the match after its final human disconnects.
+        if (MatchStarted)
+        {
+            if (finishAfterDepartures && CountHumans() == 0)
+                FindFirstObjectByType<FusionRoundController>()?.FinishWhenAbandoned();
+            return;
+        }
+
+        // A requested MPS server is Active even when the joining client never
+        // reaches Fusion. Do not bill that orphan allocation indefinitely.
+        if (Application.isBatchMode && CountHumans() == 0 && Runner != null &&
+            Runner.SimulationTime - activeWithoutHumansSince >= maxActiveWithoutHumansSeconds)
+        {
+            Debug.LogWarning("[FusionArenaMatchController] Nenhum humano entrou no tempo limite; encerrando servidor dedicado.");
+            Application.Quit();
+            return;
+        }
+
+        StartCountdownWhenFirstHumanJoins();
         if (CountHumans() >= requiredSlots || (StartTimer.IsRunning && StartTimer.Expired(Runner))) BeginMatch();
     }
 
@@ -66,10 +91,17 @@ public sealed class FusionArenaMatchController : NetworkBehaviour, IPlayerJoined
     public void PlayerJoined(PlayerRef player)
     {
         PublishWaiting();
+        StartCountdownWhenFirstHumanJoins();
         if (Object.HasStateAuthority && CountHumans() >= requiredSlots && !MatchStarted) BeginMatch();
     }
 
-    public void PlayerLeft(PlayerRef player) => PublishWaiting();
+    public void PlayerLeft(PlayerRef player)
+    {
+        PublishWaiting();
+        if (!Object.HasStateAuthority || !MatchStarted || CountHumans() > 0)
+            return;
+        finishAfterDepartures = true;
+    }
 
     private void BeginMatch()
     {
@@ -78,6 +110,15 @@ public sealed class FusionArenaMatchController : NetworkBehaviour, IPlayerJoined
         BotSlots = fillVacantSlotsWithBots ? Mathf.Max(0, requiredSlots - humans) : 0;
         MatchStarted = true;
         Debug.Log($"[FusionArenaMatchController] Match ready: {humans} humans, {BotSlots} bots.");
+    }
+
+    private void StartCountdownWhenFirstHumanJoins()
+    {
+        if (!Object.HasStateAuthority || MatchStarted || StartTimer.IsRunning)
+            return;
+
+        if (CountHumans() > 0)
+            StartTimer = TickTimer.CreateFromSeconds(Runner, waitForPlayersSeconds);
     }
 
     public override void Render()
