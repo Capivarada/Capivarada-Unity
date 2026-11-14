@@ -193,7 +193,7 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
         if (join.Status == TaskStatus.RanToCompletion && join.Result)
         {
             MatchParticipationContext.StartOnline(session);
-            return;
+            yield break;
         }
         ReportFailure("Não foi possível entrar na arena. Tente novamente.");
     }
