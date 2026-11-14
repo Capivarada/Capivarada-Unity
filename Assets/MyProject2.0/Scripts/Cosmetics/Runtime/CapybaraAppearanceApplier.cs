@@ -29,6 +29,12 @@ public sealed class CapybaraAppearanceApplier : MonoBehaviour
     [SerializeField] private HeadAccessoryApplier headAccessory;
 
     private readonly Dictionary<Renderer, MaterialPropertyBlock> blocks = new Dictionary<Renderer, MaterialPropertyBlock>();
+    private readonly Dictionary<Renderer, Color[]> sourceColors = new Dictionary<Renderer, Color[]>();
+    // Some imported shaders do not render per-material property blocks reliably.
+    // Keep one private material instance per renderer for the live wardrobe preview;
+    // the source palette remains cached separately, so repeated slider movement never
+    // uses a previously tinted material as its new base colour.
+    private readonly Dictionary<Renderer, Material[]> runtimeMaterials = new Dictionary<Renderer, Material[]>();
 
     public PlayerCosmeticLoadout AppliedLoadout { get; private set; } = new PlayerCosmeticLoadout();
 
@@ -48,16 +54,15 @@ public sealed class CapybaraAppearanceApplier : MonoBehaviour
                 item.MaterialIndex < 0 || item.MaterialIndex >= item.Renderer.sharedMaterials.Length)
                 continue;
 
-            Material material = item.Renderer.sharedMaterials[item.MaterialIndex];
-            if (material == null)
-                continue;
-
-            Color.RGBToHSV(ReadMaterialColor(material), out _, out _, out float sourceValue);
+            Color sourceColor = GetSourceColor(item);
+            Color.RGBToHSV(sourceColor, out _, out _, out float sourceValue);
             CapybaraColorSelection choice = AppliedLoadout.Get(slot);
             return Color.HSVToRGB(
                 Mathf.Repeat(choice.Hue, 1f),
                 Mathf.Clamp01(choice.Saturation),
-                Mathf.Max(.02f, sourceValue * choice.EffectiveBrightness));
+                AppliedLoadout.colorVersion >= 2
+                    ? choice.EffectiveBrightness
+                    : sourceValue);
         }
 
         return Color.white;
@@ -86,24 +91,14 @@ public sealed class CapybaraAppearanceApplier : MonoBehaviour
                 blocks.Add(item.Renderer, block);
             }
 
-            item.Renderer.GetPropertyBlock(block, item.MaterialIndex);
+            // Never read a previous property block here: doing so compounds a
+            // preview color over itself every time a slider moves.
+            block.Clear();
             if (material.HasProperty("_BaseColor")) block.SetColor("_BaseColor", color);
             else if (material.HasProperty("_Color")) block.SetColor("_Color", color);
             item.Renderer.SetPropertyBlock(block, item.MaterialIndex);
 
-            // Some imported model shaders do not render per-submesh property blocks
-            // consistently. Keep the isolated renderer material in sync so previews
-            // and instantiated players always show the selected colour.
-            Material[] runtimeMaterials = item.Renderer.materials;
-            if (item.MaterialIndex < runtimeMaterials.Length)
-            {
-                Material runtimeMaterial = runtimeMaterials[item.MaterialIndex];
-                if (runtimeMaterial != null)
-                {
-                    if (runtimeMaterial.HasProperty("_BaseColor")) runtimeMaterial.SetColor("_BaseColor", color);
-                    else if (runtimeMaterial.HasProperty("_Color")) runtimeMaterial.SetColor("_Color", color);
-                }
-            }
+            ApplyRuntimeMaterialColor(item, color);
         }
 
         if (catalog == null)
@@ -130,8 +125,8 @@ public sealed class CapybaraAppearanceApplier : MonoBehaviour
             if (material == null)
                 continue;
 
-            Color.RGBToHSV(ReadMaterialColor(material), out float hue, out float saturation, out _);
-            result.Set(item.Slot, new CapybaraColorSelection(hue, saturation));
+            Color.RGBToHSV(GetSourceColor(item), out float hue, out float saturation, out float value);
+            result.Set(item.Slot, new CapybaraColorSelection(hue, saturation, value));
         }
 
         return result;
@@ -197,6 +192,44 @@ public sealed class CapybaraAppearanceApplier : MonoBehaviour
         }
 
         return false;
+    }
+
+    private Color GetSourceColor(MaterialSlot slot)
+    {
+        if (!sourceColors.TryGetValue(slot.Renderer, out Color[] colors))
+        {
+            Material[] materials = slot.Renderer.sharedMaterials;
+            colors = new Color[materials.Length];
+            for (int index = 0; index < materials.Length; index++)
+                colors[index] = materials[index] != null ? ReadMaterialColor(materials[index]) : Color.white;
+            sourceColors.Add(slot.Renderer, colors);
+        }
+
+        return slot.MaterialIndex >= 0 && slot.MaterialIndex < colors.Length
+            ? colors[slot.MaterialIndex]
+            : Color.white;
+    }
+
+    private void ApplyRuntimeMaterialColor(MaterialSlot slot, Color color)
+    {
+        if (!runtimeMaterials.TryGetValue(slot.Renderer, out Material[] materials))
+        {
+            // Renderer.materials creates renderer-local instances once.  Do not call
+            // this on every slider event: that is what previously caused visual
+            // layering and leaked material instances in the wardrobe.
+            materials = slot.Renderer.materials;
+            runtimeMaterials.Add(slot.Renderer, materials);
+        }
+
+        if (slot.MaterialIndex < 0 || slot.MaterialIndex >= materials.Length)
+            return;
+
+        Material material = materials[slot.MaterialIndex];
+        if (material == null)
+            return;
+
+        if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
+        else if (material.HasProperty("_Color")) material.SetColor("_Color", color);
     }
 
     private static Color ReadMaterialColor(Material material)
