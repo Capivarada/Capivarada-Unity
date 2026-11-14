@@ -52,6 +52,7 @@ public sealed class FusionMatchUIBridge : MonoBehaviour
             case FusionRoundPhase.Finished:
                 matchUI.ShowIntermissionUI();
                 matchUI.ShowNetworkPhase("PARTIDA ENCERRADA");
+                MatchResultsContext.CaptureFromNetwork();
                 matchUI.HandleNetworkMatchFinished();
                 break;
         }

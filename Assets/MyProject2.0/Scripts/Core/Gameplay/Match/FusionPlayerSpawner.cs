@@ -22,6 +22,12 @@ public sealed class FusionPlayerSpawner : NetworkBehaviour, IPlayerJoined, IPlay
             return;
         }
 
+        // In GameMode.Client the dedicated server owns every NetworkPlayer.
+        // Trying to create a local duplicate produces FailedClientCantSpawn
+        // and can leave local presentation attached to the wrong object.
+        if (IsDedicatedClient())
+            return;
+
         // Scene callbacks can have happened before this scene object spawned.
         // Explicitly inspect the local player so joining an existing room works.
         SpawnLocalPlayerIfNeeded(Runner.LocalPlayer);
@@ -34,6 +40,8 @@ public sealed class FusionPlayerSpawner : NetworkBehaviour, IPlayerJoined, IPlay
             SpawnServerPlayerIfNeeded(player);
             return;
         }
+        if (IsDedicatedClient())
+            return;
         if (player == Runner.LocalPlayer) SpawnLocalPlayerIfNeeded(player);
     }
 
@@ -41,6 +49,8 @@ public sealed class FusionPlayerSpawner : NetworkBehaviour, IPlayerJoined, IPlay
     {
         if (!IsDedicatedServer() || !serverPlayers.TryGetValue(player, out NetworkObject spawned)) return;
         serverPlayers.Remove(player);
+        FindFirstObjectByType<FusionRoundController>()?.RecordDeparture(
+            spawned != null ? spawned.GetComponent<FusionNetworkPlayer>() : null);
         if (spawned != null) Runner.Despawn(spawned);
     }
 
@@ -68,6 +78,7 @@ public sealed class FusionPlayerSpawner : NetworkBehaviour, IPlayerJoined, IPlay
     }
 
     private bool IsDedicatedServer() => Runner != null && Runner.GameMode == GameMode.Server && Runner.IsServer;
+    private bool IsDedicatedClient() => Runner != null && Runner.GameMode == GameMode.Client;
 
     private Transform GetSpawnPoint(int index)
     {

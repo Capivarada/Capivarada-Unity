@@ -25,6 +25,7 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
     [Networked, Capacity(512)] private string SerializedCosmetics { get; set; }
     [Networked] public int Eliminations { get; private set; }
     [Networked] public int RoundsSurvived { get; private set; }
+    [Networked] public int Placement { get; private set; }
     [Networked] private int LastLaunchedRound { get; set; }
 
     private FusionRoundController rounds;
@@ -362,6 +363,13 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
         if (Object != null && Object.HasStateAuthority && !IsEliminated) RoundsSurvived++;
     }
 
+    /// <summary>Published once by the dedicated server when the arena ends.</summary>
+    public void SetPlacement(int placement)
+    {
+        if (Object != null && Object.HasStateAuthority)
+            Placement = Mathf.Max(0, placement);
+    }
+
     public void RegisterAttacker(NetworkObject attacker)
     {
         if (Object != null && Object.HasStateAuthority && attacker != null) lastAttacker = attacker;
@@ -387,7 +395,8 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
             Nickname = NetworkNickname,
             AvatarId = NetworkAvatarId,
             Eliminations = Eliminations,
-            RoundsSurvived = RoundsSurvived
+            RoundsSurvived = RoundsSurvived,
+            Placement = Placement
         };
     }
 

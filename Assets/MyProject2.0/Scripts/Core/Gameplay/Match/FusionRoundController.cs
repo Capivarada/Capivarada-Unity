@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Fusion;
 using UnityEngine;
 
@@ -31,6 +32,7 @@ public sealed class FusionRoundController : NetworkBehaviour
     [Networked] private Vector3 ArenaTargetScale { get; set; }
     [Networked] private Vector3 ArenaStartScale { get; set; }
     [Networked] private TickTimer ArenaShrinkTimer { get; set; }
+    [Networked, Capacity(2048)] private string SerializedResults { get; set; }
 
     private FusionRoundPhase displayedPhase;
     private int displayedRound;
@@ -40,6 +42,7 @@ public sealed class FusionRoundController : NetworkBehaviour
     private Vector3 renderedArenaScale;
     private readonly List<GameObject> livingParticipants = new();
     private readonly List<FusionMatchResult> results = new();
+    private readonly List<FusionMatchResult> departedResults = new();
     private float matchStartedAt;
     private bool matchClockStarted;
     public event Action<FusionRoundPhase, int> PhaseChanged;
@@ -52,6 +55,40 @@ public sealed class FusionRoundController : NetworkBehaviour
         ? match.MatchConfig.RevealDuration
         : 1.5f;
     public bool IsFinished => networkSpawned && Phase == FusionRoundPhase.Finished;
+    public IReadOnlyList<FusionPublishedResult> PublishedResults
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(SerializedResults)) return Array.Empty<FusionPublishedResult>();
+            try
+            {
+                PublishedResultsPayload payload = JsonUtility.FromJson<PublishedResultsPayload>(SerializedResults);
+                return payload != null && payload.entries != null ? payload.entries : Array.Empty<FusionPublishedResult>();
+            }
+            catch (ArgumentException) { return Array.Empty<FusionPublishedResult>(); }
+        }
+    }
+
+    /// <summary>Settles an authoritative match that lost every human player.</summary>
+    public void FinishWhenAbandoned()
+    {
+        if (!networkSpawned || !Object.HasStateAuthority ||
+            Phase == FusionRoundPhase.Finished)
+            return;
+
+        FinishMatch();
+    }
+
+    /// <summary>Retains a leaver for the final standings, never for rewards.</summary>
+    public void RecordDeparture(FusionNetworkPlayer player)
+    {
+        if (!networkSpawned || !Object.HasStateAuthority || player == null || Phase == FusionRoundPhase.Finished) return;
+        FusionMatchResult result = player.BuildMatchResult();
+        if (string.IsNullOrWhiteSpace(result.PlayerId) || departedResults.Exists(item => item.PlayerId == result.PlayerId)) return;
+        result.IsEliminated = true;
+        result.Forfeited = true;
+        departedResults.Add(result);
+    }
 
     public override void Spawned()
     {
@@ -234,12 +271,14 @@ public sealed class FusionRoundController : NetworkBehaviour
             if (bot == null) continue;
             provisional.Add(bot.BuildMatchResult());
         }
+        provisional.AddRange(departedResults);
 
         provisional.Sort((left, right) =>
         {
             bool leftAlive = !left.IsEliminated;
             bool rightAlive = !right.IsEliminated;
             if (leftAlive != rightAlive) return leftAlive ? -1 : 1;
+            if (left.Forfeited != right.Forfeited) return left.Forfeited ? 1 : -1;
             return right.RoundsSurvived.CompareTo(left.RoundsSurvived);
         });
 
@@ -264,12 +303,60 @@ public sealed class FusionRoundController : NetworkBehaviour
                     AvatarId = source.AvatarId,
                     Eliminations = source.Eliminations,
                     RoundsSurvived = source.RoundsSurvived,
-                    Placement = placement
+                    Placement = placement,
+                    Forfeited = source.Forfeited
                 });
             }
             rank += next - index;
             index = next;
         }
+
+        PublishPlacements();
+        PublishResultsSnapshot();
+    }
+
+    private void PublishPlacements()
+    {
+        foreach (FusionNetworkPlayer player in FindObjectsByType<FusionNetworkPlayer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (player == null) continue;
+            FusionMatchResult result = results.Find(item =>
+                !item.IsBot && item.PlayerRef == player.Object.InputAuthority);
+            player.SetPlacement(result != null ? result.Placement : 0);
+        }
+
+        foreach (FusionNetworkBot bot in FindObjectsByType<FusionNetworkBot>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (bot == null) continue;
+            FusionMatchResult result = results.Find(item => item.IsBot &&
+                string.Equals(item.Nickname, bot.NetworkNickname, StringComparison.Ordinal));
+            bot.SetPlacement(result != null ? result.Placement : 0);
+        }
+    }
+
+    private void PublishResultsSnapshot()
+    {
+        PublishedResultsPayload payload = new PublishedResultsPayload
+        {
+            entries = results.Select(result => new FusionPublishedResult
+            {
+                playerId = result.PlayerId,
+                nickname = result.Nickname,
+                avatarId = result.AvatarId,
+                isBot = result.IsBot,
+                forfeited = result.Forfeited,
+                placement = result.Placement,
+                eliminations = result.Eliminations,
+                roundsSurvived = result.RoundsSurvived
+            }).ToArray()
+        };
+        SerializedResults = JsonUtility.ToJson(payload);
+    }
+
+    [Serializable]
+    private sealed class PublishedResultsPayload
+    {
+        public FusionPublishedResult[] entries;
     }
 
     private void ApplyArenaPresentation()

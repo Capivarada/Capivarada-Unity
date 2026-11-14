@@ -17,6 +17,7 @@ public sealed class FusionNetworkBot : NetworkBehaviour
     [Networked] private int LaunchedRound { get; set; }
     [Networked] private NetworkBool Eliminated { get; set; }
     [Networked] private int RoundsSurvived { get; set; }
+    [Networked] public int Placement { get; private set; }
 
     private FusionRoundController rounds;
     private FusionArenaMatchController match;
@@ -34,6 +35,13 @@ public sealed class FusionNetworkBot : NetworkBehaviour
         if (Object != null && Object.HasStateAuthority && !Eliminated) RoundsSurvived++;
     }
 
+    /// <summary>Published once by the dedicated server when the arena ends.</summary>
+    public void SetPlacement(int placement)
+    {
+        if (Object != null && Object.HasStateAuthority)
+            Placement = Mathf.Max(0, placement);
+    }
+
     public FusionMatchResult BuildMatchResult()
     {
         return new FusionMatchResult
@@ -42,7 +50,8 @@ public sealed class FusionNetworkBot : NetworkBehaviour
             IsBot = true,
             IsEliminated = Eliminated,
             Nickname = NetworkNickname,
-            RoundsSurvived = RoundsSurvived
+            RoundsSurvived = RoundsSurvived,
+            Placement = Placement
         };
     }
 

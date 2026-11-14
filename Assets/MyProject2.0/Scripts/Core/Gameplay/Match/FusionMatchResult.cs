@@ -18,6 +18,7 @@ public sealed class FusionMatchResult
     public int Eliminations { get; set; }
     public int RoundsSurvived { get; set; }
     public int Placement { get; set; }
+    public bool Forfeited { get; set; }
 
-    public bool CanPersist => !IsBot && !string.IsNullOrWhiteSpace(PlayerId) && !string.IsNullOrWhiteSpace(JoinToken);
+    public bool CanPersist => !IsBot && !Forfeited && !string.IsNullOrWhiteSpace(PlayerId) && !string.IsNullOrWhiteSpace(JoinToken);
 }
