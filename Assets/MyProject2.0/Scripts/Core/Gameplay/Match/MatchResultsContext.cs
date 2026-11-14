@@ -10,24 +10,24 @@ public static class MatchResultsContext
 {
     public sealed class Entry
     {
-        public string PlayerId { get; init; } = string.Empty;
-        public string Nickname { get; init; } = "Capivara";
-        public string AvatarId { get; init; } = "avatar1";
-        public bool IsBot { get; init; }
-        public bool IsLocal { get; init; }
-        public int Placement { get; init; }
-        public int Eliminations { get; init; }
-        public int RoundsSurvived { get; init; }
+        public string PlayerId { get; set; } = string.Empty;
+        public string Nickname { get; set; } = "Capivara";
+        public string AvatarId { get; set; } = "avatar1";
+        public bool IsBot { get; set; }
+        public bool IsLocal { get; set; }
+        public int Placement { get; set; }
+        public int Eliminations { get; set; }
+        public int RoundsSurvived { get; set; }
     }
 
     public sealed class Snapshot
     {
-        public IReadOnlyList<Entry> Entries { get; init; } = Array.Empty<Entry>();
-        public int PreviousLevel { get; init; } = 1;
-        public int PreviousExperience { get; init; }
-        public int ExperienceToNext { get; init; } = 1500;
-        public int ExperienceEarned { get; init; }
-        public int ArenaPointsEarned { get; init; }
+        public IReadOnlyList<Entry> Entries { get; set; } = Array.Empty<Entry>();
+        public int PreviousLevel { get; set; } = 1;
+        public int PreviousExperience { get; set; }
+        public int ExperienceToNext { get; set; } = 1500;
+        public int ExperienceEarned { get; set; }
+        public int ArenaPointsEarned { get; set; }
     }
 
     public static Snapshot Pending { get; private set; }
