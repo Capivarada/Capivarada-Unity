@@ -26,8 +26,7 @@ public static class MatchResultsContext
         public int PreviousLevel { get; set; } = 1;
         public int PreviousExperience { get; set; }
         public int ExperienceToNext { get; set; } = 1500;
-        public int ExperienceEarned { get; set; }
-        public int ArenaPointsEarned { get; set; }
+        public int PreviousArenaPoints { get; set; }
     }
 
     public static Snapshot Pending { get; private set; }
@@ -71,8 +70,7 @@ public static class MatchResultsContext
             PreviousLevel = Mathf.Max(1, profile != null ? profile.level : 1),
             PreviousExperience = Mathf.Max(0, profile != null ? profile.experience : 0),
             ExperienceToNext = Mathf.Max(1, profile != null ? profile.experienceToNext : 1500),
-            ExperienceEarned = localEntry != null ? ExperienceAward(localEntry) : 0,
-            ArenaPointsEarned = localEntry != null ? ArenaPointsAward(localEntry) : 0
+            PreviousArenaPoints = EconomyV2Service.Instance != null ? EconomyV2Service.Instance.Points : 0
         };
     }
 
@@ -113,19 +111,8 @@ public static class MatchResultsContext
             PreviousLevel = Mathf.Max(1, profile != null ? profile.level : 1),
             PreviousExperience = Mathf.Max(0, profile != null ? profile.experience : 0),
             ExperienceToNext = Mathf.Max(1, profile != null ? profile.experienceToNext : 1500),
-            ExperienceEarned = localEntry != null ? ExperienceAward(localEntry) : 0,
-            ArenaPointsEarned = localEntry != null ? ArenaPointsAward(localEntry) : 0
+            PreviousArenaPoints = EconomyV2Service.Instance != null ? EconomyV2Service.Instance.Points : 0
         };
     }
 
-    private static int ExperienceAward(Entry entry)
-    {
-        int placement = Mathf.Max(1, entry.Placement);
-        int placementAward = placement == 1 ? 400 : placement == 2 ? 300 : placement == 3 ? 200 : 100;
-        return placementAward + Mathf.Max(0, entry.Eliminations) * 50 +
-            Mathf.Max(0, entry.RoundsSurvived) * 20;
-    }
-
-    private static int ArenaPointsAward(Entry entry) => 20 +
-        Mathf.Max(0, entry.Eliminations) * 10 + (entry.Placement == 1 ? 80 : 0);
 }

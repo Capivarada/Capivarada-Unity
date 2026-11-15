@@ -11,6 +11,7 @@ public sealed class MatchResultsLobbyController : MonoBehaviour
     [Tooltip("Painéis de menu que devem sumir enquanto o resultado estiver aberto.")]
     [SerializeField] private GameObject[] hideWhileResultsOpen;
     [SerializeField] private PlayerProfileService profile;
+    [SerializeField] private EconomyV2Service economy;
     [SerializeField] private TMP_Text experienceEarnedText;
     [SerializeField] private TMP_Text arenaPointsEarnedText;
     [SerializeField] private TMP_Text placementBadgeText;
@@ -60,21 +61,28 @@ public sealed class MatchResultsLobbyController : MonoBehaviour
                 : string.Empty;
         if (nicknameBadgeText != null)
             nicknameBadgeText.text = localEntry != null ? localEntry.Nickname : string.Empty;
-        if (experienceEarnedText != null) experienceEarnedText.text = $"+{snapshot.ExperienceEarned} XP";
-        if (arenaPointsEarnedText != null) arenaPointsEarnedText.text = $"+{snapshot.ArenaPointsEarned}";
+        if (experienceEarnedText != null) experienceEarnedText.text = "Sincronizando XP...";
+        if (arenaPointsEarnedText != null) arenaPointsEarnedText.text = "Sincronizando PA...";
         ApplyProgress(snapshot.PreviousLevel, snapshot.PreviousExperience, snapshot.ExperienceToNext);
+        if (economy == null) economy = ServiceHub.Instance != null ? ServiceHub.Instance.EconomyV2 : EconomyV2Service.Instance;
+        if (economy != null)
+        {
+            economy.InventoryChanged += OnInventoryChanged;
+            economy.RefreshInventory();
+        }
         if (profile != null)
         {
             profile.Changed += OnProfileChanged;
             profile.Load();
         }
-        else StartAnimation(snapshot.PreviousLevel, snapshot.PreviousExperience, snapshot.ExperienceToNext, snapshot.ExperienceEarned);
+        else PresentActualExperience(null);
     }
 
     private void OnDisable()
     {
         SetCoveredMenusVisible(true);
         if (profile != null) profile.Changed -= OnProfileChanged;
+        if (economy != null) economy.InventoryChanged -= OnInventoryChanged;
         if (animation != null) StopCoroutine(animation);
         animation = null;
     }
@@ -92,10 +100,32 @@ public sealed class MatchResultsLobbyController : MonoBehaviour
     {
         if (snapshot == null || current == null) return;
         profile.Changed -= OnProfileChanged;
-        int earned = Mathf.Max(0, ToTotalExperience(current.level, current.experience, current.experienceToNext) -
+        PresentActualExperience(current);
+    }
+
+    private void PresentActualExperience(PlayerProfileData current)
+    {
+        if (current == null)
+        {
+            if (experienceEarnedText != null) experienceEarnedText.text = "+0 XP";
+            ApplyProgress(snapshot.PreviousLevel, snapshot.PreviousExperience, snapshot.ExperienceToNext);
+            return;
+        }
+
+        int required = Mathf.Max(1, current.experienceToNext);
+        int currentTotal = ToTotalExperience(current.level, current.experience, required);
+        int earned = Mathf.Max(0, currentTotal -
             ToTotalExperience(snapshot.PreviousLevel, snapshot.PreviousExperience, snapshot.ExperienceToNext));
-        if (earned <= 0) earned = snapshot.ExperienceEarned;
-        StartAnimation(snapshot.PreviousLevel, snapshot.PreviousExperience, snapshot.ExperienceToNext, earned);
+        int previousTotal = Mathf.Max(0, currentTotal - earned);
+        if (experienceEarnedText != null) experienceEarnedText.text = $"+{earned} XP";
+        StartAnimation(previousTotal / required + 1, previousTotal % required, required, earned);
+    }
+
+    private void OnInventoryChanged(System.Collections.Generic.IReadOnlyList<PlayFab.EconomyModels.InventoryItem> _, int currentPoints)
+    {
+        if (snapshot == null) return;
+        int earned = Mathf.Max(0, currentPoints - snapshot.PreviousArenaPoints);
+        if (arenaPointsEarnedText != null) arenaPointsEarnedText.text = $"+{earned}";
     }
 
     private void StartAnimation(int level, int experience, int toNext, int earned)
