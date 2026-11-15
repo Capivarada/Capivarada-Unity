@@ -11,6 +11,9 @@ public class PlayerProfileData
     public string playerId, nickname, email, avatarId, createdAtUtc;
     public PlayerCosmeticLoadout cosmetics = new();
     public int level = 1, experience, experienceToNext = 1500, matches, eliminations, wins;
+    // Histórico é somente uma projeção de interface em memória. Ele não faz parte
+    // dos quatro registros persistidos do perfil no PlayFab.
+    public List<MatchHistoryData> recentMatches = new();
     public long AccountAgeSeconds
     {
         get
