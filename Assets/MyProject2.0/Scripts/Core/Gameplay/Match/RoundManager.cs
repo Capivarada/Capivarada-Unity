@@ -263,10 +263,11 @@ public class RoundManager : MonoBehaviour
             if (controller == null)
                 continue;
 
-            // The human's mesh had a private rotation during Choosing. Reset
-            // it before rotating the public root, preventing double yaw.
+            // Match the online presentation: rotate only the capybara visual
+            // root. Rotating the player root also rotates its camera target in
+            // Practice, which feels like the camera was forcibly moved.
             controller.ClearLocalAimPreview();
-            controller.BeginRevealRotation(matchConfig.RevealDuration);
+            controller.BeginRevealPresentation(matchConfig.RevealDuration, true);
         }
     }
 

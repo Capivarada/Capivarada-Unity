@@ -9,7 +9,8 @@ using UnityEngine.UI;
 public sealed class WardrobeCosmeticsController : MonoBehaviour
 {
     private const int ColorSpectrumResolution = 256;
-    private const float MinimumBrightness = .1f;
+    private const float MinimumBrightness = 0f;
+    private const float MaximumBrightness = 1f;
 
     [SerializeField] private PlayerProfileService profile;
     [SerializeField] private CosmeticCatalog catalog;
@@ -63,6 +64,9 @@ public sealed class WardrobeCosmeticsController : MonoBehaviour
 
     private void OnDisable()
     {
+        // Closing the wardrobe is a cancel operation unless SaveAll completed.
+        // This also gives the Back button an inspector-safe method below.
+        DiscardUnsavedChanges();
         if (profile != null) profile.Changed -= OnProfileChanged;
         if (inventory != null) inventory.Changed -= OnInventoryChanged;
         foreach (SliderSpectrum spectrum in colorSpectra) spectrum.Disable();
@@ -110,6 +114,17 @@ public sealed class WardrobeCosmeticsController : MonoBehaviour
         RebuildChoiceCards();
     }
 
+    /// <summary>Inspector-safe Back/Cancel callback: restores only persisted cosmetics.</summary>
+    public void DiscardUnsavedChanges()
+    {
+        if (profile == null) return;
+        PlayerCosmeticLoadout saved = CapybaraGameplayCosmetics.ResolveLoadout(profile.Current.cosmetics);
+        workingLoadout = saved != null ? saved.Copy() : CreateMaterialDefaults();
+        BindControls(workingLoadout);
+        RefreshSpectra();
+        ApplyWorkingPreview();
+    }
+
     private void OnProfileChanged(PlayerProfileData _) => RefreshFromSavedLoadout();
     private void OnInventoryChanged() => RebuildChoiceCards();
     private void OnCosmeticsSaved() => RefreshFromSavedLoadout();
@@ -119,6 +134,8 @@ public sealed class WardrobeCosmeticsController : MonoBehaviour
         if (profile == null) return;
         PlayerCosmeticLoadout saved = CapybaraGameplayCosmetics.ResolveLoadout(profile.Current.cosmetics);
         workingLoadout = saved != null ? saved.Copy() : CreateMaterialDefaults();
+        if (workingLoadout.colorVersion < 2)
+            workingLoadout = UpgradeLegacyBrightness(workingLoadout);
         BindControls(workingLoadout);
         RefreshSpectra();
         ApplyWorkingPreview();
@@ -149,6 +166,17 @@ public sealed class WardrobeCosmeticsController : MonoBehaviour
     private PlayerCosmeticLoadout CreateMaterialDefaults()
     {
         return preview != null ? preview.CreateDefaultLoadoutFromMaterials() : new PlayerCosmeticLoadout();
+    }
+
+    private PlayerCosmeticLoadout UpgradeLegacyBrightness(PlayerCosmeticLoadout legacy)
+    {
+        PlayerCosmeticLoadout defaults = CreateMaterialDefaults();
+        legacy.body.Brightness = defaults.body.Brightness;
+        legacy.snout.Brightness = defaults.snout.Brightness;
+        legacy.ears.Brightness = defaults.ears.Brightness;
+        legacy.hooves.Brightness = defaults.hooves.Brightness;
+        legacy.colorVersion = 2;
+        return legacy;
     }
 
     private void ConfigureColorSpectra()
@@ -290,7 +318,7 @@ public sealed class WardrobeCosmeticsController : MonoBehaviour
         if (brightness != null)
         {
             brightness.minValue = MinimumBrightness;
-            brightness.maxValue = 1f;
+            brightness.maxValue = MaximumBrightness;
             brightness.SetValueWithoutNotify(value.EffectiveBrightness);
         }
     }
@@ -366,7 +394,7 @@ public sealed class WardrobeCosmeticsController : MonoBehaviour
                 {
                     SpectrumType.Hue => Color.HSVToRGB(position, 1f, 1f),
                     SpectrumType.Saturation => Color.HSVToRGB(hue, position, 1f),
-                    _ => Color.HSVToRGB(hue, saturation, position)
+                    _ => Color.Lerp(Color.black, Color.white, position)
                 };
             }
             texture.SetPixels(pixels);

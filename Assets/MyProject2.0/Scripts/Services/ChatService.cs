@@ -34,7 +34,7 @@ public sealed class ChatService : MonoBehaviour
 
     public Scope SelectedScope { get; private set; } = Scope.Global;
     public string GlobalChannelName => globalChannelName;
-    public bool HasPartyChannel => party != null && party.IsInParty && !string.IsNullOrWhiteSpace(voice != null ? voice.PartyChannel : null);
+    public bool HasPartyChannel => party != null && party.HasOtherMember && !string.IsNullOrWhiteSpace(voice != null ? voice.PartyChannel : null);
     public IReadOnlyList<Message> GlobalMessages => globalMessages;
     public IReadOnlyList<Message> PartyMessages => partyMessages;
     public IReadOnlyList<Message> SelectedMessages => SelectedScope == Scope.Party ? PartyMessages : GlobalMessages;
@@ -79,7 +79,8 @@ public sealed class ChatService : MonoBehaviour
     {
         if (!CanUseChat()) return;
         if (voice == null) { Report("VivoxVoiceChannelService não foi configurado em Services."); return; }
-        voice.JoinGlobalChat(globalChannelName);
+        if (HasPartyChannel) SelectParty();
+        else voice.JoinGlobalChat(globalChannelName);
     }
 
     public void SelectGlobal()
@@ -124,8 +125,8 @@ public sealed class ChatService : MonoBehaviour
 
     private void OnPartyChanged()
     {
-        if (party == null || party.IsInParty) { Changed?.Invoke(); return; }
-        if (SelectedScope == Scope.Party) SelectedScope = Scope.Global;
+        if (!HasPartyChannel) SelectedScope = Scope.Global;
+        InitializeChat();
         Changed?.Invoke();
     }
 

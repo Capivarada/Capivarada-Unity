@@ -81,7 +81,10 @@ public sealed class SettingsService : MonoBehaviour
         float multiplier = effects == 0 ? .55f : effects == 1 ? .78f : 1f;
         QualitySettings.lodBias = baseLodBias * multiplier;
         QualitySettings.shadowDistance = baseShadowDistance * multiplier;
-        QualitySettings.skinWeights = effects == 0 ? SkinWeights.OneBone : SkinWeights.FourBones;
+        // Reducing skin weights deforms some of the imported capybara meshes.
+        // Keep the original skinning fidelity and lower only the effect settings
+        // that do not change the model's silhouette.
+        QualitySettings.skinWeights = SkinWeights.FourBones;
     }
 
     public void ApplyFrameRate(int target, bool useVSync)

@@ -35,9 +35,7 @@ public sealed class FusionBotSpawner : NetworkBehaviour
         if (spawnedBots >= match.CurrentBotSlots) return;
 
         int botIndex = spawnedBots++;
-        // Human players own slots [0..humanCount-1]. Bots are appended after
-        // those slots, so they can never spawn on a connected player.
-        Transform point = GetSpawnPoint(match.CurrentHumanSlots + botIndex);
+        Transform point = GetFreeSpawnPoint(botIndex);
         Vector3 position = point != null ? point.position : Vector3.zero;
         Quaternion rotation = point != null ? point.rotation : Quaternion.identity;
         Runner.Spawn(botPrefab, position, rotation, null, (runner, bot) =>
@@ -51,5 +49,31 @@ public sealed class FusionBotSpawner : NetworkBehaviour
     {
         if (spawnPoints == null || spawnPoints.Length == 0) return null;
         return spawnPoints[Mathf.Abs(index) % spawnPoints.Length];
+    }
+
+    private Transform GetFreeSpawnPoint(int botIndex)
+    {
+        if (spawnPoints == null || spawnPoints.Length == 0) return null;
+
+        // PlayerRef values are not contiguous (the first remote client is
+        // commonly Player:2), therefore CurrentHumanSlots is not a spawn-slot
+        // index. Pick the first point not occupied by an existing human/bot.
+        const float minimumSeparation = 1.5f;
+        float squaredSeparation = minimumSeparation * minimumSeparation;
+        for (int offset = 0; offset < spawnPoints.Length; offset++)
+        {
+            Transform candidate = GetSpawnPoint(botIndex + offset);
+            if (candidate == null) continue;
+            bool occupied = false;
+            foreach (FusionNetworkPlayer player in FindObjectsByType<FusionNetworkPlayer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+                if ((player.transform.position - candidate.position).sqrMagnitude < squaredSeparation) { occupied = true; break; }
+            if (!occupied)
+                foreach (FusionNetworkBot bot in FindObjectsByType<FusionNetworkBot>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+                    if ((bot.transform.position - candidate.position).sqrMagnitude < squaredSeparation) { occupied = true; break; }
+            if (!occupied) return candidate;
+        }
+
+        Debug.LogWarning("[FusionBotSpawner] Todos os pontos de spawn estão ocupados; usando o próximo ponto disponível.", this);
+        return GetSpawnPoint(botIndex);
     }
 }

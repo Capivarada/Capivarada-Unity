@@ -17,5 +17,7 @@ MonoBehaviour:
   nextRoundCountdown: 3
   revealDuration: 2
   maxRounds: 10
+  shrinkPerRound: 2.5
+  deathHeight: 2.81
   stopVelocityThreshold: 0.15
   stopCheckDelay: 0.75

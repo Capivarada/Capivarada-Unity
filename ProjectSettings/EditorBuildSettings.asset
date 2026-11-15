@@ -5,9 +5,18 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
+  - enabled: 0
+    path: Assets/MyProject2.0/Scenes/DedicatedServerBootstrap_Scene.unity
+    guid: 6157291cfe4f2a5478fb296913eab907
+  - enabled: 1
+    path: Assets/MyProject2.0/Scenes/Boot_Scene.unity
+    guid: dfd448891967f9142a7859192217040d
   - enabled: 1
     path: Assets/MyProject2.0/Scenes/Loading_Scene.unity
     guid: 1f4a0008ec58dd74a9e5a35f11889de5
+  - enabled: 1
+    path: Assets/MyProject2.0/Scenes/NoConnection_Scene.unity
+    guid: b81d1ddf409930e4897b911091b4fd7c
   - enabled: 1
     path: Assets/MyProject2.0/Scenes/Auth_Scene.unity
     guid: 40aeb6a001937a146860e55e79094153
@@ -15,8 +24,11 @@ EditorBuildSettings:
     path: Assets/MyProject2.0/Scenes/Lobby_Scene.unity
     guid: 73eef0dbd02a73342ab52b91b65345c9
   - enabled: 1
-    path: Assets/MyProject2.0/Scenes/Game_Scene.unity
+    path: Assets/MyProject2.0/Scenes/Training_Scene.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/MyProject2.0/Scenes/Game_Scene.unity
+    guid: 324f0453dd0e12d48a1e254070abea33
   m_configObjects:
     com.unity.input.settings: {fileID: 11400000, guid: 79a6762fea6d54bfdb797e8cc26f48cc, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: c6aa3451cc702513fa2fbe743a790fbe, type: 3}

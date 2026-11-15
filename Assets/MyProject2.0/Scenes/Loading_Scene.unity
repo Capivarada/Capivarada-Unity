@@ -888,6 +888,7 @@ GameObject:
   - component: {fileID: 1272202596}
   - component: {fileID: 1272202598}
   - component: {fileID: 1272202597}
+  - component: {fileID: 1272202599}
   m_Layer: 0
   m_Name: Background
   m_TagString: Untagged
@@ -954,6 +955,23 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1272202595}
   m_CullTransparentMesh: 1
+--- !u!114 &1272202599
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1272202595}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81b0235c5f262fe4bbb9c46404cc83d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BuildAndServerLabelController
+  gameVersionLabels:
+  - {fileID: 1884240876}
+  serverLabels: []
+  serverPrefix: "BR \xB7 Rio de Janeiro"
+  health: {fileID: 0}
 --- !u!1 &1574798911
 GameObject:
   m_ObjectHideFlags: 0
@@ -1078,6 +1096,7 @@ MonoBehaviour:
   progressText: {fileID: 1614396136}
   nextScene: Auth_Scene
   loadOnStart: 1
+  readinessTimeoutSeconds: 30
 --- !u!1 &1595432438
 GameObject:
   m_ObjectHideFlags: 0
@@ -1264,224 +1283,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1614396132}
   m_CullTransparentMesh: 1
---- !u!1 &1835320683
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1835320685}
-  - component: {fileID: 1835320691}
-  - component: {fileID: 1835320686}
-  - component: {fileID: 1835320690}
-  - component: {fileID: 1835320689}
-  - component: {fileID: 1835320688}
-  - component: {fileID: 1835320687}
-  - component: {fileID: 1835320693}
-  - component: {fileID: 1835320692}
-  - component: {fileID: 1835320697}
-  - component: {fileID: 1835320696}
-  - component: {fileID: 1835320695}
-  - component: {fileID: 1835320694}
-  m_Layer: 0
-  m_Name: Services
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1835320685
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1835320683}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1835320686
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1835320683}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d6e3c0bbbc8ad5c4c8797a389a2b5f53, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Capivarada.Services.EconomyService
-  authentication: {fileID: 1835320691}
---- !u!114 &1835320687
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1835320683}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a06a5d434d22a59dba9b276b668782cb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::VolumeManager
-  masterVolume: 1
-  musicVolume: 1
-  sfxVolume: 1
-  audioMixer: {fileID: 24100000, guid: 698b5c5ff29cd76478debe10634587c3, type: 2}
---- !u!114 &1835320688
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1835320683}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d1379505a2217c8ef93bd788813be4eb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AudioManager
-  backgroundMusic: {fileID: 0}
-  musicVolume: 0.6
-  clickClip: {fileID: 0}
-  sfxVolume: 1
---- !u!114 &1835320689
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1835320683}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a1cccac6dab360a42bcab7a0a5f896b6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LeaderboardService
---- !u!114 &1835320690
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1835320683}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5c57b114bddcd8342a422996537c0aea, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerProfileService
-  authentication: {fileID: 1835320691}
-  backend: {fileID: 1835320697}
---- !u!114 &1835320691
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1835320683}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 78d62a5a7c5f6b54cab00c3ae4b4dc4e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayFabAuthManager
-  googleWebClientId: 
---- !u!114 &1835320692
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1835320683}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c3fe243d0744c6842bd1016947878520, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ServiceHub
-  authentication: {fileID: 1835320691}
-  profile: {fileID: 1835320690}
-  economy: {fileID: 1835320686}
-  leaderboard: {fileID: 1835320689}
-  settings: {fileID: 1835320693}
-  backend: {fileID: 1835320697}
-  economyV2: {fileID: 1835320696}
-  leaderboardV2: {fileID: 1835320695}
-  friends: {fileID: 1835320694}
---- !u!114 &1835320693
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1835320683}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1d8d7ba98bf98bf45b7634ddcf4dfc7e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SettingsService
---- !u!114 &1835320694
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1835320683}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e0691de1ac44fd4489bd7255b0f4dc72, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FriendsService
-  backend: {fileID: 1835320697}
---- !u!114 &1835320695
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1835320683}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 804a511836a850649a8d43db2331031e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LeaderboardV2Service
-  backend: {fileID: 1835320697}
-  matchesLeaderboard: RankingMatches
-  eliminationsLeaderboard: RankingEliminations
-  winsLeaderboard: RankingWins
-  levelLeaderboard: RankingLevel
---- !u!114 &1835320696
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1835320683}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b41dda0dcfd27fd488bcf4e91dbb7938, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EconomyV2Service
-  backend: {fileID: 1835320697}
-  storeId: 
---- !u!114 &1835320697
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1835320683}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8d5a200a44d4cbd45adc8052be4cf5fd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CapivaradaBackendService
-  baseUrl: https://capivarada-functions-dev-d9djf2f2dqe4b9hu.westus2-01.azurewebsites.net/api
-  requestTimeoutSeconds: 20
 --- !u!1 &1884240874
 GameObject:
   m_ObjectHideFlags: 0
@@ -1788,4 +1589,3 @@ SceneRoots:
   m_Roots:
   - {fileID: 1574798915}
   - {fileID: 592778878}
-  - {fileID: 1835320685}

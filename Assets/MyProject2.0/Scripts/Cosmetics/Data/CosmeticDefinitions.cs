@@ -10,7 +10,7 @@ public struct CapybaraColorSelection
 {
     [Range(0f, 1f)] public float Hue;
     [Range(0f, 1f)] public float Saturation;
-    [Range(0.1f, 1f)] public float Brightness;
+    [Range(0f, 1f)] public float Brightness;
 
     public CapybaraColorSelection(float hue, float saturation, float brightness = 1f)
     {
@@ -19,13 +19,15 @@ public struct CapybaraColorSelection
         Brightness = brightness;
     }
 
-    /// <summary>Older saved loadouts have no brightness field and deserialize it as zero.</summary>
-    public float EffectiveBrightness => Brightness <= 0f ? 1f : Mathf.Clamp(Brightness, .1f, 1f);
+    public float EffectiveBrightness => Mathf.Clamp01(Brightness);
 }
 
 [Serializable]
 public sealed class PlayerCosmeticLoadout
 {
+    // Version 2 stores brightness as HSV value (black through white). Older
+    // loadouts retain their authored FBX value when displayed.
+    public int colorVersion = 2;
     public CapybaraColorSelection body = new(.075f, .55f);
     public CapybaraColorSelection snout = new(.06f, .25f);
     public CapybaraColorSelection ears = new(.075f, .45f);
@@ -54,6 +56,7 @@ public sealed class PlayerCosmeticLoadout
 
     public PlayerCosmeticLoadout Copy() => new()
     {
+        colorVersion = colorVersion,
         body = body,
         snout = snout,
         ears = ears,

@@ -26,6 +26,7 @@ public sealed class PartyService : MonoBehaviour
     public IReadOnlyList<Invitation> Incoming => incoming;
     public IReadOnlyList<Invitation> Outgoing => outgoing;
     public bool IsInParty => CurrentParty != null && !string.IsNullOrWhiteSpace(CurrentParty.partyId);
+    public bool HasOtherMember => CurrentParty?.members != null && CurrentParty.members.Length > 1;
     public bool IsLeader => IsInParty && string.Equals(CurrentParty.leaderPlayerId, LocalPlayerId, StringComparison.Ordinal);
     /// <summary>Every party member may invite their own friends while a vacancy exists.</summary>
     public bool CanInvite => !IsInParty || (CurrentParty.members != null && CurrentParty.members.Length < PartyStoreMaximumMembers);
@@ -50,7 +51,7 @@ public sealed class PartyService : MonoBehaviour
 
     private readonly List<Invitation> incoming = new();
     private readonly List<Invitation> outgoing = new();
-    private string activeVoicePartyId;
+    private string activeVoicePartyKey;
     private bool refreshInFlight;
     private const int PartyStoreMaximumMembers = 8;
 
@@ -146,12 +147,15 @@ public sealed class PartyService : MonoBehaviour
 
     private async void UpdateVoiceChannel()
     {
-        string partyId = CurrentParty != null ? CurrentParty.partyId : string.Empty;
-        if (string.Equals(activeVoicePartyId, partyId, StringComparison.Ordinal)) return;
-        activeVoicePartyId = partyId;
+        string partyId = HasOtherMember ? CurrentParty.partyId : string.Empty;
+        if (string.Equals(activeVoicePartyKey, partyId, StringComparison.Ordinal)) return;
+        activeVoicePartyKey = partyId;
         if (voice == null) return;
         if (string.IsNullOrWhiteSpace(partyId)) await voice.LeavePartyAsync();
         else await voice.JoinPartyAsync(partyId);
+        // ChatService uses this event to switch Global/Grupo only after the
+        // channel is actually available.
+        Changed?.Invoke();
     }
 
     private bool CanUseParty()

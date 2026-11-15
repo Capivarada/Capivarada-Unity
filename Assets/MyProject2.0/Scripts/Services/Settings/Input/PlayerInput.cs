@@ -6,6 +6,7 @@ public class PlayerInput : MonoBehaviour
     private PlayerInputActions inputActions;
     private int pendingAddChargePresses;
     private int pendingRemoveChargePresses;
+    private int pendingLockChoicePresses;
 
     public Vector2 Look => inputActions.Player.Look.ReadValue<Vector2>();
 
@@ -34,10 +35,18 @@ public class PlayerInput : MonoBehaviour
         return presses;
     }
 
+    public int ConsumeLockChoicePresses()
+    {
+        int presses = pendingLockChoicePresses;
+        pendingLockChoicePresses = 0;
+        return presses;
+    }
+
     public void ClearPendingChargePresses()
     {
         pendingAddChargePresses = 0;
         pendingRemoveChargePresses = 0;
+        pendingLockChoicePresses = 0;
     }
 
     private void Awake()
@@ -58,6 +67,7 @@ public class PlayerInput : MonoBehaviour
         if (inputActions == null) return;
         if (inputActions.Player.AddCharge.WasPressedThisFrame()) pendingAddChargePresses++;
         if (inputActions.Player.RemoveCharge.WasPressedThisFrame()) pendingRemoveChargePresses++;
+        if (Keyboard.current != null && Keyboard.current.wKey.wasPressedThisFrame) pendingLockChoicePresses++;
     }
 
     private void OnDisable()

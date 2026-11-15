@@ -14,6 +14,8 @@ public sealed class ChatController : MonoBehaviour
     [SerializeField] private OtherProfileController otherProfile;
     [SerializeField] private TMP_InputField messageInput;
     [SerializeField] private Button sendButton;
+    [SerializeField] private Button partyTabButton;
+    [SerializeField] private TMP_Text contextualTabText;
     [SerializeField] private Transform messagesContent;
     [SerializeField] private ChatMessagePrefabController messagePrefab;
     [SerializeField] private GameObject emptyState;
@@ -54,7 +56,16 @@ public sealed class ChatController : MonoBehaviour
 
     public void SelectParty()
     {
-        chatService?.SelectParty();
+        SelectContextual();
+        Rebuild();
+    }
+
+    /// <summary>Single chat tab: Global alone, Grupo when a second member joins.</summary>
+    public void SelectContextual()
+    {
+        if (chatService == null) return;
+        if (chatService.HasPartyChannel) chatService.SelectParty();
+        else chatService.SelectGlobal();
         Rebuild();
     }
 
@@ -80,7 +91,13 @@ public sealed class ChatController : MonoBehaviour
             count++;
         }
         if (emptyState != null) emptyState.SetActive(count == 0);
-        if (sendButton != null) sendButton.interactable = chatService.SelectedScope != ChatService.Scope.Party || chatService.HasPartyChannel;
+        if (contextualTabText == null && partyTabButton != null)
+            contextualTabText = partyTabButton.GetComponentInChildren<TMP_Text>(true);
+        if (contextualTabText != null)
+            contextualTabText.text = chatService.HasPartyChannel ? "Grupo" : "Global";
+        if (partyTabButton != null)
+            partyTabButton.interactable = true;
+        if (sendButton != null) sendButton.interactable = true;
     }
 
     private void Report(string message)

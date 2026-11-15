@@ -39,6 +39,7 @@ public struct FusionDedicatedIdentity
     public string JoinToken;
     public string Address;
     public ushort Port;
+    public string PhotonRegion;
 
     public bool IsValid => !string.IsNullOrWhiteSpace(MatchId) &&
                            !string.IsNullOrWhiteSpace(PlayerId) &&

@@ -18,7 +18,9 @@ public sealed class SettingsController : MonoBehaviour
         if (settings == null) settings = ServiceHub.Instance != null ? ServiceHub.Instance.Settings : SettingsService.Instance;
         if (authentication == null) authentication = ServiceHub.Instance != null ? ServiceHub.Instance.Authentication : PlayFabAuthManager.Instance;
         foreach (Slider slider in new[] { master, music, sfx, voice, brightness, horizontal, vertical }) if (slider != null) slider.onValueChanged.AddListener(_ => RefreshLabels());
+        foreach (Slider slider in new[] { master, music, sfx, voice }) if (slider != null) slider.onValueChanged.AddListener(_ => PreviewAudio());
         if (brightness != null) brightness.onValueChanged.AddListener(value => settings?.ApplyBrightness(value));
+        if (muteAll != null) muteAll.onValueChanged.AddListener(_ => PreviewAudio());
     }
 
     private void OnEnable() => Load();
@@ -27,6 +29,18 @@ public sealed class SettingsController : MonoBehaviour
     {
         if (settings == null) return;
         settings.Set(SettingsService.Master, Value(master)); settings.Set(SettingsService.Music, Value(music)); settings.Set(SettingsService.Sfx, Value(sfx)); settings.Set(SettingsService.Voice, Value(voice)); settings.SetBool(SettingsService.MuteAll, muteAll != null && muteAll.isOn); settings.ApplyAudio(); settings.Save();
+    }
+
+    /// <summary>Applies the audio controls immediately; persistence remains explicit through SaveAudio.</summary>
+    private void PreviewAudio()
+    {
+        if (settings == null) return;
+        settings.Set(SettingsService.Master, Value(master));
+        settings.Set(SettingsService.Music, Value(music));
+        settings.Set(SettingsService.Sfx, Value(sfx));
+        settings.Set(SettingsService.Voice, Value(voice));
+        settings.SetBool(SettingsService.MuteAll, muteAll != null && muteAll.isOn);
+        settings.ApplyAudio();
     }
     public void SaveScreen()
     {

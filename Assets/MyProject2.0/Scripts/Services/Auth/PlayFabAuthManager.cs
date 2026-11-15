@@ -24,6 +24,11 @@ public class PlayFabAuthManager : MonoBehaviour
     public string Email => registeredEmail;
     
     private string registeredEmail;
+    [Header("Account status")]
+    [SerializeField, Min(30f)] private float accountStatusPollSeconds = 300f;
+    [SerializeField] private string authScene = "Auth_Scene";
+    private float nextAccountStatusCheck;
+    private bool checkingAccountStatus;
     [Header("Google Web Login")]
     [SerializeField] private string googleWebClientId;
     public string GoogleWebClientId => googleWebClientId;
@@ -45,6 +50,15 @@ public class PlayFabAuthManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         RemoveLegacyCredentials();
+    }
+
+    private void Update()
+    {
+        if (!IsLoggedIn || IsGuest || checkingAccountStatus ||
+            Time.unscaledTime < nextAccountStatusCheck)
+            return;
+
+        CheckAccountStatus(null);
     }
     
     private void SetAuthProgress(float progress)
@@ -98,7 +112,7 @@ public class PlayFabAuthManager : MonoBehaviour
             $"[PlayFab] Entrando como visitante: {Nickname}"
         );
 
-        OnLoginSuccess?.Invoke();
+        NotifyLoginSuccess();
     }
 
     // =====================================================
@@ -170,7 +184,7 @@ public class PlayFabAuthManager : MonoBehaviour
 
             Nickname = account.AccountInfo?.TitleInfo?.DisplayName;
             if (string.IsNullOrWhiteSpace(Nickname)) CompleteProfileInfos();
-            else OnLoginSuccess?.Invoke();
+            else NotifyLoginSuccess();
         }, OnPlayFabError);
     }
 
@@ -273,7 +287,7 @@ public class PlayFabAuthManager : MonoBehaviour
                     "[PlayFab] Contact Email configurado com sucesso."
                 );
 
-                OnLoginSuccess?.Invoke();
+                NotifyLoginSuccess();
             },
             error =>
             {
@@ -431,7 +445,7 @@ public class PlayFabAuthManager : MonoBehaviour
                     $"[PlayFab] Nickname carregado: {Nickname}"
                 );
 
-                OnLoginSuccess?.Invoke();
+                NotifyLoginSuccess();
             },
             OnError
         );
@@ -516,6 +530,82 @@ public class PlayFabAuthManager : MonoBehaviour
     // =====================================================
     // ERROS
     // =====================================================
+
+    /// <summary>Centralizes the post-login notification so every provider follows the same policy.</summary>
+    private void NotifyLoginSuccess()
+    {
+        CheckAccountStatus(CompleteLogin);
+    }
+
+    private void CheckAccountStatus(Action whenAllowed)
+    {
+        if (!IsLoggedIn || IsGuest)
+        {
+            whenAllowed?.Invoke();
+            return;
+        }
+
+        CapivaradaBackendService backend = CapivaradaBackendService.Instance;
+        if (backend == null)
+        {
+            whenAllowed?.Invoke();
+            return;
+        }
+
+        checkingAccountStatus = true;
+        backend.Get<AccountStatusResponse>("account/status", status =>
+        {
+            checkingAccountStatus = false;
+            nextAccountStatusCheck = Time.unscaledTime + accountStatusPollSeconds;
+            if (status.blocked)
+            {
+                ForceAccountLogout();
+                return;
+            }
+            whenAllowed?.Invoke();
+        }, message =>
+        {
+            checkingAccountStatus = false;
+            nextAccountStatusCheck = Time.unscaledTime + accountStatusPollSeconds;
+            // A deleted title account no longer authenticates its old ticket.
+            if (message.StartsWith("[401]", StringComparison.Ordinal))
+            {
+                ForceAccountLogout();
+                return;
+            }
+            Debug.LogWarning("[PlayFab] Não foi possível verificar o estado da conta: " + message);
+            whenAllowed?.Invoke();
+        });
+    }
+
+    private void CompleteLogin()
+    {
+        if (IsLoggedIn && !IsGuest && CapivaradaBackendService.Instance != null)
+            CapivaradaBackendService.Instance.Post<CapivaradaBackendService.EmptyResponse, CapivaradaBackendService.EmptyResponse>(
+                "account/login-notification", new CapivaradaBackendService.EmptyResponse(),
+                _ => { }, message => Debug.LogWarning("[PlayFab] Não foi possível enviar o aviso de login: " + message));
+
+        OnLoginSuccess?.Invoke();
+    }
+
+    private void ForceAccountLogout()
+    {
+        Debug.Log("[PlayFab] A conta está em exclusão ou já foi excluída. Encerrando sessão local.");
+        PlayFabClientAPI.ForgetAllCredentials();
+        IsLoggedIn = false;
+        IsGuest = false;
+        IsOnline = false;
+        PlayFabId = null;
+        Nickname = null;
+        registeredEmail = null;
+        SceneManager.LoadScene(authScene);
+    }
+
+    [Serializable]
+    private struct AccountStatusResponse
+    {
+        public bool blocked;
+    }
 
     private void OnPlayFabError(
         PlayFabError error

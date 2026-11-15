@@ -50,7 +50,7 @@ AudioMixerController:
   m_UpdateMode: 0
   m_ExposedParameters:
   - guid: 96ce2414c41b06048967df9dd8feb4e7
-    name: GroupVolume
+    name: VoiceVolume
   - guid: 27161fdaf45cc924b9883e12a5a7880a
     name: MasterVolume
   - guid: 9f381ec28b588884599dc72c2451d6d7
@@ -133,7 +133,7 @@ AudioMixerGroupController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Group
+  m_Name: Voice
   m_AudioMixer: {fileID: 24100000}
   m_GroupID: e016f7a9a1e4d7d44925d22fccaba20d
   m_Children: []

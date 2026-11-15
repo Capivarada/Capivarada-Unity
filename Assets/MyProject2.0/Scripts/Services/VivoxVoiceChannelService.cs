@@ -17,6 +17,7 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
     private string matchChannel;
     private string globalChatChannel;
     private bool initialized;
+    private Task<bool> initializationTask;
     public event Action<string> Failed;
     public event Action<VivoxMessage> ChannelMessageReceived;
 
@@ -31,11 +32,24 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    public async void InitializeForCurrentSession() => await InitializeForCurrentSessionAsync();
+    public void InitializeForCurrentSession() => _ = InitializeForCurrentSessionAsync();
 
-    public async Task<bool> InitializeForCurrentSessionAsync()
+    public Task<bool> InitializeForCurrentSessionAsync()
     {
-        if (initialized && VivoxService.Instance.IsLoggedIn) return true;
+        if (initialized && VivoxService.Instance.IsLoggedIn)
+            return Task.FromResult(true);
+        // Chat, party and voice can request initialization during the same
+        // frame. Vivox rejects concurrent login attempts, particularly in
+        // WebGL, so all callers share one in-flight initialization.
+        if (initializationTask != null)
+            return initializationTask;
+
+        initializationTask = InitializeForCurrentSessionInternalAsync();
+        return initializationTask;
+    }
+
+    private async Task<bool> InitializeForCurrentSessionInternalAsync()
+    {
         try
         {
             await UnityServices.InitializeAsync();
@@ -61,9 +75,13 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
             Failed?.Invoke($"Vivox indisponível: {exception.Message}");
             return false;
         }
+        finally
+        {
+            initializationTask = null;
+        }
     }
 
-    public async void JoinParty(string partyId) => await JoinPartyAsync(partyId);
+    public void JoinParty(string partyId) => _ = JoinPartyAsync(partyId);
     public async Task JoinPartyAsync(string partyId)
     {
         if (!await InitializeForCurrentSessionAsync() || string.IsNullOrWhiteSpace(partyId)) return;
@@ -72,8 +90,15 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
         try
         {
             await LeaveMatchAsync();
+            // Group chat replaces Global as soon as a second party member is present.
+            await LeaveGlobalChatAsync();
             await LeavePartyAsync();
-            await VivoxService.Instance.JoinGroupChannelAsync(requestedChannel, ChatCapability.TextAndAudio);
+            await VivoxService.Instance.JoinGroupChannelAsync(requestedChannel,
+#if UNITY_WEBGL && !UNITY_EDITOR
+                ChatCapability.TextOnly);
+#else
+                ChatCapability.TextAndAudio);
+#endif
             partyChannel = requestedChannel;
         }
         catch (Exception exception)
@@ -83,7 +108,7 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
         }
     }
 
-    public async void JoinGlobalChat(string channelName) => await JoinGlobalChatAsync(channelName);
+    public void JoinGlobalChat(string channelName) => _ = JoinGlobalChatAsync(channelName);
     public async Task JoinGlobalChatAsync(string channelName)
     {
         if (!await InitializeForCurrentSessionAsync() || string.IsNullOrWhiteSpace(channelName)) return;
@@ -93,6 +118,9 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
         if (string.Equals(globalChatChannel, requestedChannel, StringComparison.Ordinal)) return;
         try
         {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            await LeavePartyAsync();
+#endif
             await LeaveGlobalChatAsync();
             await VivoxService.Instance.JoinGroupChannelAsync(requestedChannel, ChatCapability.TextOnly);
             globalChatChannel = requestedChannel;
@@ -104,22 +132,12 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
         }
     }
 
-    public async void JoinMatch(string matchId) => await JoinMatchAsync(matchId);
-    public async Task JoinMatchAsync(string matchId)
+    public void JoinMatch(string matchId) => _ = JoinMatchAsync(matchId);
+    public Task JoinMatchAsync(string matchId)
     {
-        if (!await InitializeForCurrentSessionAsync() || string.IsNullOrWhiteSpace(matchId)) return;
-        string requestedChannel = BuildChannelName("match", matchId);
-        try
-        {
-            await LeavePartyAsync();
-            await VivoxService.Instance.JoinPositionalChannelAsync(requestedChannel, ChatCapability.AudioOnly, new Channel3DProperties(Mathf.RoundToInt(audibleDistance), Mathf.RoundToInt(conversationalDistance), 1f, AudioFadeModel.InverseByDistance));
-            matchChannel = requestedChannel;
-        }
-        catch (Exception exception)
-        {
-            matchChannel = null;
-            Failed?.Invoke($"Não foi possível entrar no canal da partida: {exception.Message}");
-        }
+        // Voice/text belongs to the party and must survive the arena transition.
+        // There is intentionally no independent match/proximity channel.
+        return Task.CompletedTask;
     }
 
     public async Task LeavePartyAsync()
