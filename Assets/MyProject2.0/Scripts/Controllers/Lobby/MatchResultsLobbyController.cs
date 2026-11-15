@@ -7,6 +7,9 @@ using UnityEngine.UI;
 public sealed class MatchResultsLobbyController : MonoBehaviour
 {
     [SerializeField] private GameObject root;
+    [SerializeField] private PanelNavigatorController panels;
+    [Tooltip("Painéis de menu que devem sumir enquanto o resultado estiver aberto.")]
+    [SerializeField] private GameObject[] hideWhileResultsOpen;
     [SerializeField] private PlayerProfileService profile;
     [SerializeField] private TMP_Text experienceEarnedText;
     [SerializeField] private TMP_Text arenaPointsEarnedText;
@@ -41,6 +44,10 @@ public sealed class MatchResultsLobbyController : MonoBehaviour
             return;
         }
 
+        if (panels == null) panels = FindFirstObjectByType<PanelNavigatorController>();
+        panels?.HideAll();
+        SetCoveredMenusVisible(false);
+
         BuildRows();
         MatchResultsContext.Entry localEntry = FindLocalEntry();
         if (placementBadgeText != null)
@@ -66,12 +73,20 @@ public sealed class MatchResultsLobbyController : MonoBehaviour
 
     private void OnDisable()
     {
+        SetCoveredMenusVisible(true);
         if (profile != null) profile.Changed -= OnProfileChanged;
         if (animation != null) StopCoroutine(animation);
         animation = null;
     }
 
     public void Close() => root.SetActive(false);
+
+    private void SetCoveredMenusVisible(bool visible)
+    {
+        if (hideWhileResultsOpen == null) return;
+        foreach (GameObject menu in hideWhileResultsOpen)
+            if (menu != null && menu != root) menu.SetActive(visible);
+    }
 
     private void OnProfileChanged(PlayerProfileData current)
     {

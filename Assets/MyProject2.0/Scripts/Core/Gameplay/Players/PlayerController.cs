@@ -41,6 +41,25 @@ public class PlayerController : MonoBehaviour
         if (!hasLaunched) choiceLocked = true;
     }
 
+    /// <summary>
+    /// W is a local convenience lock, not a one-way confirmation.  A second
+    /// press reopens the choice while the choosing phase is still active.
+    /// </summary>
+    public void ToggleChoiceLock()
+    {
+        if (!hasLaunched) choiceLocked = !choiceLocked;
+    }
+
+    /// <summary>
+    /// Clients do not apply the authoritative impulse themselves.  They still
+    /// need to enter moving presentation so the mesh follows replicated
+    /// rigidbody velocity instead of being overwritten by camera preview.
+    /// </summary>
+    public void BeginNetworkMovementPresentation()
+    {
+        if (!hasLaunched) hasLaunched = true;
+    }
+
     public PlayerConfig Configuration => ResolveConfiguration();
 
     public void SetConfiguration(PlayerConfig configuration)

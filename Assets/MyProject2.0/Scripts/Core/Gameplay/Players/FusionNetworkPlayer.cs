@@ -195,6 +195,8 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
         // the local player. Reading its disabled prefab camera here overwrote
         // every RPC choice with the spawn-facing direction on every tick.
         if (!Object.HasStateAuthority || !HasLocalInput() || localInput == null) return;
+        if (localInput.ConsumeLockChoicePresses() > 0)
+            playerController?.ToggleChoiceLock();
         if (playerController != null && playerController.IsChoiceLocked) return;
         if (TryGetLocalAimDirection(out Vector3 direction))
             AimDirection = direction;
@@ -205,9 +207,6 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
         Charge -= removePresses * 0.5f;
         playerController?.ApplyNetworkSelection(AimDirection, Charge);
         Charge = playerController != null ? playerController.CurrentCharge : Mathf.Max(0f, Charge);
-        if (localInput.ConsumeLockChoicePresses() > 0)
-            playerController?.LockChoice();
-
         // Apply the camera choice before previewing it. Previously the preview
         // used the direction from the preceding network tick, making the mesh
         // turn while its arrow looked fixed or one step behind.
@@ -230,6 +229,9 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
             playerController?.ResetRound();
         }
 
+        bool lockToggled = localInput.ConsumeLockChoicePresses() > 0;
+        if (lockToggled)
+            playerController?.ToggleChoiceLock();
         if (playerController != null && playerController.IsChoiceLocked) return;
 
         if (TryGetLocalAimDirection(out Vector3 direction))
@@ -241,13 +243,10 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
         clientCharge -= removePresses * 0.5f;
         playerController?.ApplyNetworkSelection(clientAimDirection, clientCharge);
         clientCharge = playerController != null ? playerController.CurrentCharge : Mathf.Max(0f, clientCharge);
-        bool choiceLocked = localInput.ConsumeLockChoicePresses() > 0;
-        if (choiceLocked)
-            playerController?.LockChoice();
         playerController?.PreviewLocalAimRotation();
         if (clientCharge > 0f) playerController?.ShowIndicator(); else playerController?.HideIndicator();
 
-        bool chargeChanged = addPresses != 0 || removePresses != 0 || choiceLocked;
+        bool chargeChanged = addPresses != 0 || removePresses != 0 || lockToggled;
         if (chargeChanged || Time.unscaledTime >= nextClientSubmitTime)
         {
             nextClientSubmitTime = Time.unscaledTime + 0.1f;
@@ -419,6 +418,10 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
                 playerController.ClearLocalAimPreview();
                 playerController.ShowIndicator();
                 playerController.BeginRevealPresentation(rounds.RevealDuration, Object.HasStateAuthority);
+                break;
+            case FusionRoundPhase.Moving:
+                playerController.BeginNetworkMovementPresentation();
+                playerController.HideIndicator();
                 break;
             default:
                 playerController.ClearLocalAimPreview();

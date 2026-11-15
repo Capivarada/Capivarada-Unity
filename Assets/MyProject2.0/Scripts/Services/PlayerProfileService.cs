@@ -7,10 +7,9 @@ using UnityEngine;
 [Serializable]
 public class PlayerProfileData
 {
-    public string playerId, nickname, email, avatarId, equippedSkinId, createdAtUtc;
+    public string playerId, nickname, email, avatarId, createdAtUtc;
     public PlayerCosmeticLoadout cosmetics = new();
     public int level = 1, experience, experienceToNext = 1500, matches, eliminations, wins;
-    public float playTimeSeconds;
     public List<MatchHistoryData> recentMatches = new();
 }
 
@@ -29,12 +28,12 @@ public class PlayerProfileService : MonoBehaviour
     public void Load()
     {
         if (authentication == null || !authentication.IsLoggedIn) { Publish(); return; }
-        PlayFabClientAPI.GetUserData(new GetUserDataRequest { Keys = new List<string> { "profile" } }, result => { if (result.Data != null && result.Data.TryGetValue("profile", out UserDataRecord data)) Current = JsonUtility.FromJson<PlayerProfileData>(data.Value) ?? Current; Current.playerId = authentication.PlayFabId; if (string.IsNullOrWhiteSpace(Current.nickname)) Current.nickname = authentication.Nickname; LoadAccountCreation(() => { SyncNicknameIndex(); LoadReadOnly(Current, () => LoadV2Progression(Publish)); }); }, error => Report(error.ErrorMessage));
+        PlayFabClientAPI.GetUserData(new GetUserDataRequest { Keys = new List<string> { "profile" } }, result => { if (result.Data != null && result.Data.TryGetValue("profile", out UserDataRecord data)) Current = JsonUtility.FromJson<PlayerProfileData>(data.Value) ?? Current; Current.playerId = authentication.PlayFabId; if (string.IsNullOrWhiteSpace(Current.nickname)) Current.nickname = authentication.Nickname; LoadAccountCreation(() => { SyncNicknameIndex(); LoadReadOnly(Current, () => LoadV2Progression(() => SyncLeaderboardPresentation(Publish))); }); }, error => Report(error.ErrorMessage));
     }
-    public void Save(string nickname, string avatarId, string equippedSkinId, Action done = null)
+    public void Save(string nickname, string avatarId, string _, Action done = null)
     {
         if (authentication == null || !authentication.IsLoggedIn || authentication.IsGuest) { Report("Faça login para salvar o perfil."); return; }
-        Current.playerId = authentication.PlayFabId; Current.nickname = string.IsNullOrWhiteSpace(nickname) ? Current.nickname : nickname.Trim(); Current.avatarId = avatarId ?? Current.avatarId; Current.equippedSkinId = equippedSkinId ?? Current.equippedSkinId; authentication.ChangeNickname(Current.nickname);
+        Current.playerId = authentication.PlayFabId; Current.nickname = string.IsNullOrWhiteSpace(nickname) ? Current.nickname : nickname.Trim(); Current.avatarId = avatarId ?? Current.avatarId; authentication.ChangeNickname(Current.nickname);
         PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest { Data = new Dictionary<string, string> { ["profile"] = JsonUtility.ToJson(Current) }, Permission = UserDataPermission.Public }, _ =>
         {
             SyncNicknameIndex();
@@ -63,14 +62,12 @@ public class PlayerProfileService : MonoBehaviour
                 playerId = result.playerId,
                 nickname = result.nickname,
                 avatarId = result.avatarId,
-                equippedSkinId = result.equippedSkinId,
                 level = Mathf.Max(1, result.level),
                 experience = result.experience,
                 experienceToNext = result.experienceToNext > 0 ? result.experienceToNext : 1500,
                 matches = result.matches,
                 eliminations = result.eliminations,
-                wins = result.wins,
-                playTimeSeconds = result.playTimeSeconds
+                wins = result.wins
             };
             LoadPublicCosmetics(playerId, profile, done);
         }, error => Report("Perfil público: " + error));
@@ -113,18 +110,13 @@ public class PlayerProfileService : MonoBehaviour
     }
     private void LoadReadOnly(PlayerProfileData profile, Action done, string playerId = null)
     {
-        PlayFabClientAPI.GetUserReadOnlyData(new GetUserDataRequest { PlayFabId = playerId }, result => { if (result.Data != null) { profile.level = ReadInt(result.Data, "Level", profile.level); profile.experience = ReadInt(result.Data, "CurrentXP", profile.experience); profile.experienceToNext = 1500; profile.playTimeSeconds = ReadInt(result.Data, "PlayTimeSeconds", (int)profile.playTimeSeconds); } LoadStatistics(profile, done, playerId); }, _ => LoadStatistics(profile, done, playerId));
-    }
-    private void LoadStatistics(PlayerProfileData profile, Action done, string playerId)
-    {
-        if (!string.IsNullOrEmpty(playerId) && (authentication == null || playerId != authentication.PlayFabId)) { done?.Invoke(); return; }
-        PlayFabClientAPI.GetPlayerStatistics(new GetPlayerStatisticsRequest(), result => { foreach (StatisticValue stat in result.Statistics) { if (stat.StatisticName == "Matches") profile.matches = stat.Value; else if (stat.StatisticName == "Eliminations") profile.eliminations = stat.Value; else if (stat.StatisticName == "Wins") profile.wins = stat.Value; else if (stat.StatisticName == "Level") profile.level = stat.Value; else if (stat.StatisticName == "PlayTimeSeconds") profile.playTimeSeconds = stat.Value; } done?.Invoke(); }, _ => done?.Invoke());
+        PlayFabClientAPI.GetUserReadOnlyData(new GetUserDataRequest { PlayFabId = playerId }, result => { if (result.Data != null) { profile.level = ReadInt(result.Data, "Level", profile.level); profile.experience = ReadInt(result.Data, "CurrentXp", ReadInt(result.Data, "CurrentXP", profile.experience)); profile.experienceToNext = 1500; } done?.Invoke(); }, _ => done?.Invoke());
     }
     [Serializable]
     private class ProgressionResponse
     {
         public int matches, eliminations, wins, level;
-        public int experience, experienceToNext, totalExperience, playTimeSeconds;
+        public int experience, experienceToNext, totalExperience;
     }
     private void LoadV2Progression(Action done)
     {
@@ -139,7 +131,6 @@ public class PlayerProfileService : MonoBehaviour
                 Current.level = Mathf.Max(1, result.level);
                 Current.experience = Mathf.Max(0, result.experience);
                 Current.experienceToNext = result.experienceToNext > 0 ? result.experienceToNext : 1500;
-                Current.playTimeSeconds = Mathf.Max(0, result.playTimeSeconds);
             }
             done?.Invoke();
         }, _ => done?.Invoke());
@@ -166,6 +157,6 @@ public class PlayerProfileService : MonoBehaviour
             _ => done?.Invoke());
     }
     private static int ReadInt(Dictionary<string, UserDataRecord> data, string key, int fallback) => data.TryGetValue(key, out UserDataRecord value) && int.TryParse(value.Value, out int parsed) ? parsed : fallback;
-    [Serializable] private class PublicProfileResponse { public string playerId, nickname, avatarId, equippedSkinId; public int level, experience, experienceToNext, matches, eliminations, wins; public float playTimeSeconds; }
+    [Serializable] private class PublicProfileResponse { public string playerId, nickname, avatarId; public int level, experience, experienceToNext, matches, eliminations, wins; }
     private void Publish() => Changed?.Invoke(Current); private void Report(string message) { Failed?.Invoke(message); Debug.LogWarning(message, this); }
 }

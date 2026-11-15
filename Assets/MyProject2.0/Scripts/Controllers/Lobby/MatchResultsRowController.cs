@@ -17,7 +17,7 @@ public sealed class MatchResultsRowController : MonoBehaviour
         if (entry == null) return;
         if (placementText != null) placementText.text = $"#{entry.Placement}";
         if (nicknameText != null) nicknameText.text = entry.Nickname;
-        if (eliminationsText != null) eliminationsText.text = $"{entry.Eliminations} eliminações";
+        if (eliminationsText != null) eliminationsText.text = entry.Eliminations.ToString();
         AvatarDefinition avatar = avatarCatalog != null
             ? avatarCatalog.Find(entry.AvatarId) ?? avatarCatalog.Default
             : null;

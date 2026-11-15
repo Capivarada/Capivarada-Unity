@@ -46,8 +46,14 @@ public class HumanPlayerController : MonoBehaviour
         if (!CanChoose())
             return;
 
-        HandleAim();
-        HandleCharge();
+        if (playerInput.ConsumeLockChoicePresses() > 0)
+            playerController.ToggleChoiceLock();
+
+        if (!playerController.IsChoiceLocked)
+        {
+            HandleAim();
+            HandleCharge();
+        }
     }
 
     private bool CanChoose()

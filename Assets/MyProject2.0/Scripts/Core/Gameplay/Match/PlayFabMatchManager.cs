@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using PlayFab;
-using PlayFab.ClientModels;
-using PlayFab.Json;
 
 public class PlayFabMatchManager : MonoBehaviour
 {
@@ -95,200 +92,22 @@ public class PlayFabMatchManager : MonoBehaviour
         if (string.IsNullOrEmpty(activeMatchId)) return;
         MatchEvent next = pendingEvents.Peek();
         processingMatch = true;
-        string functionName = next.Type == MatchEventType.Start ? "StartMatchTracking" :
-            next.Type == MatchEventType.Finish ? "ProcessMatchResult" : "RecordMatchEvent";
-        object parameters = next.Type == MatchEventType.Start ? new { matchId = activeMatchId } :
-            next.Type == MatchEventType.Finish ? new { matchId = activeMatchId, placement = next.Placement, won = next.Won, durationSeconds = Mathf.Clamp(next.DurationSeconds, 0, 14400) } :
-            new { matchId = activeMatchId, type = next.Type == MatchEventType.Kill ? "kill" : "round" };
-        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest
-        {
-            FunctionName = functionName,
-            FunctionParameter = parameters,
-            GeneratePlayStreamEvent = true
-        }, result => OnEventSuccess(next, result), OnCloudScriptError);
-    }
 
-    private void OnEventSuccess(MatchEvent completed, ExecuteCloudScriptResult response)
-    {
-        try
-        {
-            pendingEvents.Dequeue();
-            processingMatch = false;
-            if (completed.Type == MatchEventType.Finish)
-            {
-                LastMatchResult = ParseFunctionResult(response.FunctionResult);
-                activeMatchId = null;
-                OnMatchProcessed?.Invoke(LastMatchResult);
-            }
-            ProcessNextEvent();
-        }
-        catch (Exception e)
-        {
-            processingMatch = false;
-
-            Debug.LogError(
-                "[PlayFabMatchManager] " +
-                "Erro ao interpretar resultado do CloudScript: " +
-                e
-            );
-
-            OnMatchProcessError?.Invoke(
-                "Resultado recebido, mas não foi possível interpretá-lo."
-            );
-        }
-    }
-
-    private MatchProcessResult ParseFunctionResult(object functionResult)
-    {
-        if (functionResult == null)
-            throw new Exception("FunctionResult é NULL.");
-
-        if (functionResult is not JsonObject data)
-        {
-            throw new Exception(
-                $"FunctionResult inválido. Tipo recebido: {functionResult.GetType()}"
-            );
-        }
-
-        var result = new MatchProcessResult();
-
-        // =====================================================
-        // RESULTADO BÁSICO
-        // =====================================================
-
-        result.Success = GetBool(data, "success");
-        result.Won = GetBool(data, "won");
-        result.Placement = GetInt(data, "placement");
-
-
-        // =====================================================
-        // XP
-        // =====================================================
-
-        JsonObject xp = GetObject(data, "xp");
-
-result.PlacementXP = GetInt(xp, "placement");
-result.KillsXP = GetInt(xp, "kills");
-result.RoundsXP = GetInt(xp, "rounds");
-
-result.XPEarned = GetInt(xp, "earned");
-
-result.PreviousXP = GetInt(xp, "previous");
-result.TotalXP = GetInt(xp, "total");
-
-result.XPRequired = GetInt(xp, "required");
-
-
-        // =====================================================
-        // LEVEL
-        // =====================================================
-
-        JsonObject level = GetObject(data, "level");
-
-        result.PreviousLevel = GetInt(level, "previous");
-        result.CurrentLevel = GetInt(level, "current");
-
-// =====================================================
-// DADOS DA PARTIDA
-// =====================================================
-
-JsonObject match = GetObject(data, "match");
-
-result.Kills = GetInt(match, "kills");
-result.RoundsSurvived = GetInt(match, "roundsSurvived");
-
-
-// =====================================================
-// MOEDAS
-// =====================================================
-
-JsonObject coins = GetObject(data, "coins");
-
-result.MatchCoins = GetInt(coins, "match");
-result.VictoryBonusCoins = GetInt(coins, "victoryBonus");
-result.LevelUpCoins = GetInt(coins, "levelUp");
-result.TotalCoinsEarned = GetInt(coins, "total");
-result.PointsBalance = GetInt(coins, "points");
-
-        // =====================================================
-        // ESTATÍSTICAS
-        // =====================================================
-
-        JsonObject statistics = GetObject(data, "statistics");
-
-        result.Matches = GetInt(statistics, "matches");
-        result.Eliminations = GetInt(statistics, "eliminations");
-        result.Wins = GetInt(statistics, "wins");
-        result.PlayTimeSeconds = GetInt(statistics, "playTimeSeconds");
-
-
-        return result;
-    }
-
-
-    private JsonObject GetObject(
-        JsonObject data,
-        string key)
-    {
-        if (!data.TryGetValue(key, out object value))
-        {
-            throw new Exception(
-                $"Campo '{key}' não encontrado."
-            );
-        }
-
-        if (value is JsonObject jsonObject)
-            return jsonObject;
-
-        throw new Exception(
-            $"Campo '{key}' não é um JsonObject."
-        );
-    }
-
-
-    private int GetInt(
-        JsonObject data,
-        string key)
-    {
-        if (!data.TryGetValue(key, out object value) ||
-            value == null)
-        {
-            return 0;
-        }
-
-        return Convert.ToInt32(value);
-    }
-
-
-    private bool GetBool(
-        JsonObject data,
-        string key)
-    {
-        if (!data.TryGetValue(key, out object value) ||
-            value == null)
-        {
-            return false;
-        }
-
-        return Convert.ToBoolean(value);
-    }
-
-
-    private void OnCloudScriptError(
-        PlayFabError error)
-    {
+        // Results are settled by Fusion MPS through Azure /matches/settle.
+        // This legacy component remains only so existing scenes keep their
+        // serialized reference while they migrate; it must never send a
+        // client-authoritative CloudScript event.
+        pendingEvents.Dequeue();
         processingMatch = false;
-
-        string message =
-            error.GenerateErrorReport();
-
-        Debug.LogError(
-            "[PlayFabMatchManager] " +
-            message
-        );
-
-        OnMatchProcessError?.Invoke(message);
+        if (next.Type == MatchEventType.Finish)
+        {
+            LastMatchResult = null;
+            activeMatchId = null;
+            OnMatchProcessed?.Invoke(null);
+        }
+        ProcessNextEvent();
     }
+
 
     private enum MatchEventType { Start, Kill, Round, Finish }
     private readonly struct MatchEvent
@@ -367,5 +186,4 @@ public class MatchProcessResult
     public int Matches;
     public int Eliminations;
     public int Wins;
-    public int PlayTimeSeconds;
 }
