@@ -62,7 +62,7 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
         // Non-leaders never create or cancel a ticket. They only discover the
         // leader's party ticket and receive their own signed connection proof.
         if (IsSearching || observeRoutine != null || connecting || matchmaking == null ||
-            party == null || !party.IsInParty || Time.unscaledTime < nextPassiveObserveAt ||
+            party == null || !party.HasOtherMember || Time.unscaledTime < nextPassiveObserveAt ||
             Time.unscaledTime < suppressObserveUntil)
             return;
 
