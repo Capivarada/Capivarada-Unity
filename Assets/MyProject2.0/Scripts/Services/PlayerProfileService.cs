@@ -58,7 +58,7 @@ public class PlayerProfileService : MonoBehaviour
             MergeRecords(result.Data, Current);
             Current.playerId = authentication.PlayFabId;
             if (string.IsNullOrWhiteSpace(Current.nickname)) Current.nickname = authentication.Nickname;
-            LoadAccountCreation(() => { SyncNicknameIndex(); SyncLeaderboardPresentation(Publish); });
+            LoadAccountCreation(() => MigrateLegacyIfNeeded(result.Data, () => { SyncNicknameIndex(); SyncLeaderboardPresentation(Publish); }));
         }, error => Report(error.ErrorMessage));
     }
 
@@ -120,6 +120,27 @@ public class PlayerProfileService : MonoBehaviour
         {
             Data = new Dictionary<string, string> { [key] = value }, Permission = UserDataPermission.Public
         }, _ => done?.Invoke(), error => Report(error.ErrorMessage));
+    }
+
+    private void MigrateLegacyIfNeeded(Dictionary<string, UserDataRecord> data, Action done)
+    {
+        if (data != null && data.ContainsKey(CosmeticsKey) && data.ContainsKey(ProgressionKey) && data.ContainsKey(StatisticsKey)) { done?.Invoke(); return; }
+        PlayerIdentityRecord identity = new()
+        {
+            playerId = Current.playerId, nickname = Current.nickname, email = Current.email,
+            avatarId = Current.avatarId, createdAtUtc = Current.createdAtUtc
+        };
+        PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest
+        {
+            Permission = UserDataPermission.Public,
+            Data = new Dictionary<string, string>
+            {
+                [ProfileKey] = JsonUtility.ToJson(identity),
+                [CosmeticsKey] = JsonUtility.ToJson(Current.cosmetics ?? new PlayerCosmeticLoadout()),
+                [ProgressionKey] = JsonUtility.ToJson(new PlayerProgressionRecord { level = Current.level, experience = Current.experience }),
+                [StatisticsKey] = JsonUtility.ToJson(new PlayerStatisticsRecord { matches = Current.matches, wins = Current.wins, eliminations = Current.eliminations })
+            }
+        }, _ => done?.Invoke(), error => { Report("Migração do perfil: " + error.ErrorMessage); done?.Invoke(); });
     }
 
     private static void MergeRecords(Dictionary<string, UserDataRecord> data, PlayerProfileData target)
