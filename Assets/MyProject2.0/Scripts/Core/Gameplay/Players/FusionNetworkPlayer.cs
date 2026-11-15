@@ -374,12 +374,16 @@ public sealed class FusionNetworkPlayer : NetworkBehaviour
         if (Object != null && Object.HasStateAuthority && attacker != null) lastAttacker = attacker;
     }
 
+    public void AwardElimination()
+    {
+        if (Object != null && Object.HasStateAuthority && !IsEliminated) Eliminations++;
+    }
+
     private void AwardEliminationToLastAttacker()
     {
         if (lastAttacker == null || lastAttacker == Object) return;
         FusionNetworkPlayer attacker = lastAttacker.GetComponent<FusionNetworkPlayer>();
-        if (attacker != null && attacker.Object != null && attacker.Object.HasStateAuthority && !attacker.IsEliminated)
-            attacker.Eliminations++;
+        attacker?.AwardElimination();
     }
 
     public FusionMatchResult BuildMatchResult()

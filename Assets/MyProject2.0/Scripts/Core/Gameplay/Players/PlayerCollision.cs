@@ -244,9 +244,13 @@ public class PlayerCollision : MonoBehaviour
         NetworkObject other = otherPlayer.GetComponent<NetworkObject>();
         if (self == null || other == null) return;
 
-        if (speedA > 0f)
-            otherPlayer.GetComponent<FusionNetworkPlayer>()?.RegisterAttacker(self);
-        if (speedB < 0f)
-            GetComponent<FusionNetworkPlayer>()?.RegisterAttacker(other);
+        if (speedA > 0f) RegisterFusionAttackerOn(otherPlayer.gameObject, self);
+        if (speedB < 0f) RegisterFusionAttackerOn(gameObject, other);
+    }
+
+    private static void RegisterFusionAttackerOn(GameObject target, NetworkObject attacker)
+    {
+        target.GetComponent<FusionNetworkPlayer>()?.RegisterAttacker(attacker);
+        target.GetComponent<FusionNetworkBot>()?.RegisterAttacker(attacker);
     }
 }

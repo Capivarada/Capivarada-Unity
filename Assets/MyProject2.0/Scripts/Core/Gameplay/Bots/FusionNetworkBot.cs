@@ -25,6 +25,8 @@ public sealed class FusionNetworkBot : NetworkBehaviour
     private int presentedRound = -1;
     private bool wasEliminated;
     private int appliedCosmeticSeed = int.MinValue;
+    // Server-only attribution, matching FusionNetworkPlayer's lastAttacker.
+    private NetworkObject lastAttacker;
 
     public bool IsEliminated => Eliminated;
 
@@ -80,6 +82,7 @@ public sealed class FusionNetworkBot : NetworkBehaviour
         {
             Eliminated = true;
             body.isKinematic = true;
+            AwardEliminationToLastAttacker();
             return;
         }
 
@@ -104,6 +107,18 @@ public sealed class FusionNetworkBot : NetworkBehaviour
     {
         if (velocityChange <= 0f) return;
         RpcApplyCollisionResponse(direction, velocityChange);
+    }
+
+    public void RegisterAttacker(NetworkObject attacker)
+    {
+        if (Object != null && Object.HasStateAuthority && attacker != null) lastAttacker = attacker;
+    }
+
+    private void AwardEliminationToLastAttacker()
+    {
+        if (lastAttacker == null || lastAttacker == Object) return;
+        FusionNetworkPlayer human = lastAttacker.GetComponent<FusionNetworkPlayer>();
+        human?.AwardElimination();
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
