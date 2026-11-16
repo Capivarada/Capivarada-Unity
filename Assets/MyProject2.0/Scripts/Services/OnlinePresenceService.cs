@@ -12,16 +12,12 @@ public sealed class OnlinePresenceService : MonoBehaviour
     private CapivaradaBackendService backend;
     private Coroutine heartbeat;
     private float warmingStartedAt = -1f;
+    private bool firstArenaWarmup;
     private string lastDebugSnapshot;
     public bool IsReady { get; private set; }
     public string Status { get; private set; } = "idle";
     public float WarmupProgress => IsReady ? .75f : warmingStartedAt < 0f ? 0f : Mathf.Clamp01((Time.realtimeSinceStartup - warmingStartedAt) / estimatedWarmupSeconds) * .75f;
-    public bool IsFirstArenaWarmup =>
-        !IsReady && Status == "warming" &&
-        lastCapacity.onlinePlayers == 1 &&
-        lastCapacity.standingByServers == 0 &&
-        lastCapacity.proppingServers == 0 &&
-        lastCapacity.activeServers == 0;
+    public bool IsFirstArenaWarmup => !IsReady && firstArenaWarmup;
 
     private void Start()
     {
@@ -47,6 +43,7 @@ public sealed class OnlinePresenceService : MonoBehaviour
         if (authentication == null || !authentication.IsLoggedIn || authentication.IsGuest) { IsReady = true; Status = "guest"; return; }
         IsReady = false;
         warmingStartedAt = -1f;
+        firstArenaWarmup = false;
         if (heartbeat != null) StopCoroutine(heartbeat);
         heartbeat = StartCoroutine(HeartbeatLoop());
     }
@@ -74,6 +71,9 @@ public sealed class OnlinePresenceService : MonoBehaviour
                 IsReady = response.ready;
                 Status = string.IsNullOrWhiteSpace(response.status) ? (IsReady ? "ready" : "warming") : response.status;
                 lastCapacity = response;
+                if (!IsReady && Status == "warming" && response.onlinePlayers == 1 &&
+                    response.standingByServers == 0 && response.proppingServers == 0 && response.activeServers == 0)
+                    firstArenaWarmup = true;
                 if (!IsReady && warmingStartedAt < 0f) warmingStartedAt = Time.realtimeSinceStartup;
                 LogCapacity(response);
                 completed = true;
@@ -95,8 +95,6 @@ public sealed class OnlinePresenceService : MonoBehaviour
         if (IsReady) return "Arena pronta. Carregando lobby...";
         if (Status == "warming")
         {
-            if (IsFirstArenaWarmup)
-                return "Primeiro a pisar na Arena! Ativando servidores...";
             if (lastCapacity.proppingServers > 0) return "Preparando arena...";
             if (lastCapacity.activeServers > 0 && lastCapacity.standingByServers == 0) return "Partida em andamento. Preparando a próxima arena...";
             return "Preparando arena...";
