@@ -346,7 +346,10 @@ public sealed class FusionDedicatedServerBootstrap : MonoBehaviour
             if (player != PlayerRef.None)
                 return true;
         }
-        return false;
+        // Fusion can briefly report an empty ActivePlayers list while the
+        // client is changing to the network scene. A spawned player object is
+        // definitive evidence that this is no longer an orphan allocation.
+        return FindFirstObjectByType<FusionNetworkPlayer>() != null;
     }
 
     private static string ToPhotonRegion(string playFabRegion)

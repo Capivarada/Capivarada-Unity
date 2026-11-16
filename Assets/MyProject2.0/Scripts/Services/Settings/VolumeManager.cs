@@ -64,9 +64,11 @@ public class VolumeManager : MonoBehaviour
     void ApplyVolumes()
     {
         if (audioMixer == null) return;
-        audioMixer.SetFloat("Master", LinearToDb(masterVolume));
-        audioMixer.SetFloat("Music", LinearToDb(musicVolume));
-        audioMixer.SetFloat("SFX", LinearToDb(sfxVolume));
+        // These are the exposed parameter names in Audio/Mixer.mixer; group
+        // names (Master/Music/SFX) are not valid mixer parameters.
+        audioMixer.SetFloat("MasterVolume", LinearToDb(masterVolume));
+        audioMixer.SetFloat("MusicVolume", LinearToDb(musicVolume));
+        audioMixer.SetFloat("SFXVolume", LinearToDb(sfxVolume));
     }
 
     float LinearToDb(float linear)

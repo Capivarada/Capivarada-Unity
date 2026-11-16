@@ -152,7 +152,10 @@ public class ArenaBounds : MonoBehaviour
             if (body != null)
             {
                 body.position = clamped;
-                body.linearVelocity = new Vector3(0f, body.linearVelocity.y, 0f);
+                // Eliminated network bodies are intentionally kinematic. Unity
+                // warns every Render frame when their velocity is assigned.
+                if (!body.isKinematic)
+                    body.linearVelocity = new Vector3(0f, body.linearVelocity.y, 0f);
             }
             else
             {

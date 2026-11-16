@@ -442,6 +442,8 @@ public class MatchUI : MonoBehaviour
 
     private void LoadLobby()
     {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
         if (Application.CanStreamedLevelBeLoaded(lobbySceneName))
         {
             SceneManager.LoadScene(lobbySceneName);
