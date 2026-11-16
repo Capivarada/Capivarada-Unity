@@ -8,6 +8,7 @@ public sealed class LoadingController : MonoBehaviour
 {
     [SerializeField] private TMP_Text versionText;
     [SerializeField] private Slider progressSlider;
+    [SerializeField] private TMP_Text statusText;
     [SerializeField] private TMP_Text progressText;
     [SerializeField] private string nextScene = "Auth_Scene";
     [SerializeField] private bool loadOnStart = true;
@@ -24,17 +25,24 @@ public sealed class LoadingController : MonoBehaviour
     private IEnumerator Load()
     {
         string loadingSceneName = gameObject.scene.name;
+        bool waitedForArena = false;
         OnlinePresenceService presence = ServiceHub.Instance != null ? ServiceHub.Instance.Presence : null;
         PlayFabAuthManager authentication = ServiceHub.Instance != null ? ServiceHub.Instance.Authentication : PlayFabAuthManager.Instance;
         if (string.Equals(nextScene, lobbyScene, System.StringComparison.Ordinal) &&
             presence != null && authentication != null && authentication.IsLoggedIn && !authentication.IsGuest)
         {
-            yield return presence.WaitUntilReady(message => SetMessage(message), message =>
+            waitedForArena = true;
+            yield return presence.WaitUntilReady((message, progress) =>
+            {
+                SetMessage(message);
+                SetProgress(progress);
+            }, message =>
             {
                 Debug.LogWarning("[Loading] " + message, this);
                 SetMessage(message);
             });
         }
+        float loadBaseProgress = waitedForArena ? .75f : 0f;
         AsyncOperation operation = SceneManager.LoadSceneAsync(nextScene, LoadSceneMode.Additive);
         if (operation == null)
         {
@@ -44,7 +52,8 @@ public sealed class LoadingController : MonoBehaviour
 
         while (!operation.isDone)
         {
-            SetProgress(Mathf.Clamp01(operation.progress / .9f) * .8f);
+            SetProgress(loadBaseProgress + Mathf.Clamp01(operation.progress / .9f) * (1f - loadBaseProgress));
+            SetMessage("Carregando o lobby...");
             yield return null;
         }
 
@@ -62,7 +71,8 @@ public sealed class LoadingController : MonoBehaviour
         float deadline = Time.realtimeSinceStartup + readinessTimeoutSeconds;
         while (readiness != null && !readiness.IsReady && Time.realtimeSinceStartup < deadline)
         {
-            SetProgress(.8f + Mathf.PingPong(Time.realtimeSinceStartup * .5f, .15f));
+            SetProgress(Mathf.Max(loadBaseProgress, .85f + Mathf.PingPong(Time.realtimeSinceStartup * .5f, .1f)));
+            SetMessage("Sincronizando dados do lobby...");
             yield return null;
         }
         if (readiness != null && !readiness.IsReady)
@@ -73,6 +83,6 @@ public sealed class LoadingController : MonoBehaviour
         yield return null;
         SceneManager.UnloadSceneAsync(loadingSceneName);
     }
-    private void SetProgress(float value) { if (progressSlider != null) progressSlider.value = value; if (progressText != null) progressText.text = $"{value * 100f:0}%"; }
-    private void SetMessage(string message) { if (progressText != null) progressText.text = message; }
+    private void SetProgress(float value) { if (progressSlider != null) progressSlider.value = value; if (progressText != null) progressText.text = $"{Mathf.Clamp01(value) * 100f:0}%"; }
+    private void SetMessage(string message) { if (statusText != null) statusText.text = message; }
 }

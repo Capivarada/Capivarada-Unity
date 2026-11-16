@@ -10,9 +10,11 @@ public sealed class OnlinePresenceService : MonoBehaviour
     private PlayFabAuthManager authentication;
     private CapivaradaBackendService backend;
     private Coroutine heartbeat;
-    private bool requesting;
+    private float warmingStartedAt = -1f;
+    private string lastDebugSnapshot;
     public bool IsReady { get; private set; }
     public string Status { get; private set; } = "idle";
+    public float WarmupProgress => IsReady ? .75f : warmingStartedAt < 0f ? 0f : Mathf.Clamp01((Time.realtimeSinceStartup - warmingStartedAt) / 120f) * .75f;
 
     private void Start()
     {
@@ -37,18 +39,19 @@ public sealed class OnlinePresenceService : MonoBehaviour
         ResolveServices();
         if (authentication == null || !authentication.IsLoggedIn || authentication.IsGuest) { IsReady = true; Status = "guest"; return; }
         IsReady = false;
+        warmingStartedAt = -1f;
         if (heartbeat != null) StopCoroutine(heartbeat);
         heartbeat = StartCoroutine(HeartbeatLoop());
     }
 
-    public IEnumerator WaitUntilReady(Action<string> update, Action<string> failed = null)
+    public IEnumerator WaitUntilReady(Action<string, float> update, Action<string> failed = null)
     {
         ResolveServices();
         if (authentication == null || authentication.IsGuest) yield break;
         if (heartbeat == null) HandleLogin();
         while (!IsReady)
         {
-            update?.Invoke(Status == "warming" ? "Preparando arena..." : "Verificando arena...");
+            update?.Invoke(LoadingMessage(), WarmupProgress);
             if (backend == null) { failed?.Invoke("Serviço de arena indisponível."); yield break; }
             yield return new WaitForSecondsRealtime(Mathf.Max(2f, retrySeconds));
         }
@@ -59,20 +62,20 @@ public sealed class OnlinePresenceService : MonoBehaviour
         while (authentication != null && authentication.IsLoggedIn && !authentication.IsGuest)
         {
             bool completed = false;
-            requesting = true;
             backend.Post<CapivaradaBackendService.EmptyResponse, CapacityResponse>("presence/heartbeat", new CapivaradaBackendService.EmptyResponse(), response =>
             {
                 IsReady = response.ready;
                 Status = string.IsNullOrWhiteSpace(response.status) ? (IsReady ? "ready" : "warming") : response.status;
+                lastCapacity = response;
+                if (!IsReady && warmingStartedAt < 0f) warmingStartedAt = Time.realtimeSinceStartup;
+                LogCapacity(response);
                 completed = true;
-                requesting = false;
             }, error =>
             {
                 IsReady = false;
                 Status = "unavailable";
                 Debug.LogWarning("[Presença] Não foi possível atualizar a arena: " + error, this);
                 completed = true;
-                requesting = false;
             });
             while (!completed) yield return null;
             yield return new WaitForSecondsRealtime(IsReady ? heartbeatSeconds : retrySeconds);
@@ -80,5 +83,37 @@ public sealed class OnlinePresenceService : MonoBehaviour
         heartbeat = null;
     }
 
-    [Serializable] private struct CapacityResponse { public bool ready; public string status; public int retryAfterSeconds; }
+    private string LoadingMessage()
+    {
+        if (IsReady) return "Arena pronta. Carregando lobby...";
+        if (Status == "warming")
+        {
+            if (lastCapacity.onlinePlayers == 1 && lastCapacity.standingByServers == 0 && lastCapacity.proppingServers == 0 && lastCapacity.activeServers == 0)
+                return "Primeiro a pisar na Arena! Ativando servidores...";
+            if (lastCapacity.proppingServers > 0) return "Erguendo a arena no EastUS...";
+            if (lastCapacity.activeServers > 0 && lastCapacity.standingByServers == 0) return "Partida em andamento. Preparando a próxima arena...";
+            return "Preparando arena...";
+        }
+        return Status == "unconfigured" ? "Arena ainda não foi configurada." : "Verificando disponibilidade da arena...";
+    }
+
+    private CapacityResponse lastCapacity;
+    private void LogCapacity(CapacityResponse response)
+    {
+        string snapshot = $"status={Status}; ready={response.ready}; online={response.onlinePlayers}; propping={response.proppingServers}; active={response.activeServers}; standby={response.standingByServers}";
+        if (snapshot == lastDebugSnapshot) return;
+        lastDebugSnapshot = snapshot;
+        Debug.Log("[Presença] MPS " + snapshot, this);
+    }
+
+    [Serializable] private struct CapacityResponse
+    {
+        public bool ready;
+        public string status;
+        public int retryAfterSeconds;
+        public int onlinePlayers;
+        public int standingByServers;
+        public int proppingServers;
+        public int activeServers;
+    }
 }

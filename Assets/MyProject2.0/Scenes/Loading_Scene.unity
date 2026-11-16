@@ -1093,6 +1093,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LoadingController
   versionText: {fileID: 1884240876}
   progressSlider: {fileID: 1056070916}
+  statusText: {fileID: 221213186}
   progressText: {fileID: 1614396136}
   nextScene: Auth_Scene
   loadOnStart: 1
