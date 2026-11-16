@@ -12,6 +12,8 @@ public sealed class LoadingController : MonoBehaviour
     [SerializeField] private string nextScene = "Auth_Scene";
     [SerializeField] private bool loadOnStart = true;
     [SerializeField, Min(1f)] private float readinessTimeoutSeconds = 30f;
+    [Header("Online arena warmup")]
+    [SerializeField] private string lobbyScene = "Lobby_Scene";
     private void Start()
     {
         if (versionText != null) versionText.text = $"{Application.productName} • v{Application.version}";
@@ -22,6 +24,17 @@ public sealed class LoadingController : MonoBehaviour
     private IEnumerator Load()
     {
         string loadingSceneName = gameObject.scene.name;
+        OnlinePresenceService presence = ServiceHub.Instance != null ? ServiceHub.Instance.Presence : null;
+        PlayFabAuthManager authentication = ServiceHub.Instance != null ? ServiceHub.Instance.Authentication : PlayFabAuthManager.Instance;
+        if (string.Equals(nextScene, lobbyScene, System.StringComparison.Ordinal) &&
+            presence != null && authentication != null && authentication.IsLoggedIn && !authentication.IsGuest)
+        {
+            yield return presence.WaitUntilReady(message => SetMessage(message), message =>
+            {
+                Debug.LogWarning("[Loading] " + message, this);
+                SetMessage(message);
+            });
+        }
         AsyncOperation operation = SceneManager.LoadSceneAsync(nextScene, LoadSceneMode.Additive);
         if (operation == null)
         {
@@ -61,4 +74,5 @@ public sealed class LoadingController : MonoBehaviour
         SceneManager.UnloadSceneAsync(loadingSceneName);
     }
     private void SetProgress(float value) { if (progressSlider != null) progressSlider.value = value; if (progressText != null) progressText.text = $"{value * 100f:0}%"; }
+    private void SetMessage(string message) { if (progressText != null) progressText.text = message; }
 }

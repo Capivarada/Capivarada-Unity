@@ -19,6 +19,7 @@ public sealed class ServiceHub : MonoBehaviour
     [Header("Session and availability")]
     [SerializeField] private SessionAccessService session;
     [SerializeField] private BackendHealthService health;
+    [SerializeField] private OnlinePresenceService presence;
     [Header("Realtime")]
     [SerializeField] private FusionSessionService fusion;
     [SerializeField] private FusionMatchJoinTokenService fusionJoinTokens;
@@ -37,6 +38,7 @@ public sealed class ServiceHub : MonoBehaviour
     public ChatService Chat => chat;
     public SessionAccessService Session => session;
     public BackendHealthService Health => health;
+    public OnlinePresenceService Presence => presence;
     public FusionSessionService Fusion => fusion;
     public FusionMatchJoinTokenService FusionJoinTokens => fusionJoinTokens;
     public FusionMatchmakingService Matchmaking => matchmaking;
@@ -58,6 +60,8 @@ public sealed class ServiceHub : MonoBehaviour
         if (chat == null) chat = GetComponent<ChatService>();
         if (session == null) session = GetComponent<SessionAccessService>();
         if (health == null) health = GetComponent<BackendHealthService>();
+        if (presence == null) presence = GetComponent<OnlinePresenceService>();
+        if (presence == null) presence = gameObject.AddComponent<OnlinePresenceService>();
         if (fusion == null) fusion = GetComponent<FusionSessionService>();
         if (fusionJoinTokens == null) fusionJoinTokens = GetComponent<FusionMatchJoinTokenService>();
         if (matchmaking == null) matchmaking = GetComponent<FusionMatchmakingService>();
