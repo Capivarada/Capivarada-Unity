@@ -24,6 +24,7 @@ public sealed class FusionArenaMatchController : NetworkBehaviour, IPlayerJoined
     private bool readyPublished;
     private bool networkSpawned;
     private bool finishAfterDepartures;
+    private bool humanJoined;
     private float activeWithoutHumansSince;
 
     public event Action<int, int> WaitingChanged;
@@ -75,7 +76,8 @@ public sealed class FusionArenaMatchController : NetworkBehaviour, IPlayerJoined
 
         // A requested MPS server is Active even when the joining client never
         // reaches Fusion. Do not bill that orphan allocation indefinitely.
-        if (Application.isBatchMode && CountHumans() == 0 && Runner != null &&
+        if (Application.isBatchMode && !humanJoined && CountHumans() == 0 &&
+            FindFirstObjectByType<FusionNetworkPlayer>() == null && Runner != null &&
             Runner.SimulationTime - activeWithoutHumansSince >= maxActiveWithoutHumansSeconds)
         {
             Debug.LogWarning("[FusionArenaMatchController] Nenhum humano entrou no tempo limite; encerrando servidor dedicado.");
@@ -90,6 +92,11 @@ public sealed class FusionArenaMatchController : NetworkBehaviour, IPlayerJoined
     // Fusion 2.1 invokes these exact interface names (without the On prefix).
     public void PlayerJoined(PlayerRef player)
     {
+        // The player-joined callback is authoritative proof that this MPS
+        // allocation served a real connection. Never apply the orphan-server
+        // timeout afterwards, even while Fusion is transitioning scenes.
+        if (Object.HasStateAuthority)
+            humanJoined = true;
         PublishWaiting();
         StartCountdownWhenFirstHumanJoins();
         if (Object.HasStateAuthority && CountHumans() >= requiredSlots && !MatchStarted) BeginMatch();

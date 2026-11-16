@@ -24,8 +24,6 @@ public class PlayerController : MonoBehaviour
     private Quaternion visualRootBaseLocalRotation;
     private bool hasVisualPreview;
     private bool choiceLocked;
-    private bool movementAnimationActive;
-    private const float MovementAnimationStopSpeed = 0.08f;
 
     public event Action<float> OnChargeChanged;
 
@@ -314,10 +312,9 @@ public class PlayerController : MonoBehaviour
         UpdateIndicator();
     }
 
-    /// <summary>Stops movement states whenever the capybara is not moving.</summary>
+    /// <summary>Stops movement states when the replicated round leaves Moving.</summary>
     public void StopMovementAnimation()
     {
-        movementAnimationActive = false;
         if (animator == null) return;
         animator.SetBool("Walk", false);
         animator.SetBool("Run", false);
@@ -332,7 +329,6 @@ public class PlayerController : MonoBehaviour
         if (charge <= 2f) animator.SetBool("Walk", true);
         else if (charge <= 4f) animator.SetBool("Run", true);
         else animator.SetBool("Trot", true);
-        movementAnimationActive = true;
     }
 
     public void HideIndicator()
@@ -478,17 +474,8 @@ public class PlayerController : MonoBehaviour
 
         velocity.y = 0f;
 
-        if (
-            velocity.sqrMagnitude <=
-            MovementAnimationStopSpeed * MovementAnimationStopSpeed
-        )
-        {
-            if (movementAnimationActive) StopMovementAnimation();
+        if (velocity.sqrMagnitude <= 0.001f)
             return;
-        }
-
-        if (!movementAnimationActive)
-            SetMovementAnimation(currentCharge);
 
         // The network root is owned by NetworkTransform/NetworkRigidbody. A
         // transform write here competes with snapshot interpolation and makes

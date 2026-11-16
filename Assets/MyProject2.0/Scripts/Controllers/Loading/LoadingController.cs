@@ -15,8 +15,12 @@ public sealed class LoadingController : MonoBehaviour
     [SerializeField, Min(1f)] private float readinessTimeoutSeconds = 30f;
     [Header("Online arena warmup")]
     [SerializeField] private string lobbyScene = "Lobby_Scene";
+    [Tooltip("Aviso extra exibido somente para quem disparou o aquecimento inicial da arena.")]
+    [SerializeField] private GameObject firstArenaWarmupNotice;
+
     private void Start()
     {
+        SetFirstArenaWarmupNotice(false);
         if (versionText != null) versionText.text = $"{Application.productName} • v{Application.version}";
         nextScene = SceneLoadRequest.Consume(nextScene);
         if (loadOnStart) StartCoroutine(Load());
@@ -36,11 +40,13 @@ public sealed class LoadingController : MonoBehaviour
             {
                 SetMessage(message);
                 SetProgress(progress);
+                SetFirstArenaWarmupNotice(presence.IsFirstArenaWarmup);
             }, message =>
             {
                 Debug.LogWarning("[Loading] " + message, this);
                 SetMessage(message);
             });
+            SetFirstArenaWarmupNotice(false);
         }
         float loadBaseProgress = waitedForArena ? .75f : 0f;
         AsyncOperation operation = SceneManager.LoadSceneAsync(nextScene, LoadSceneMode.Additive);
@@ -85,4 +91,5 @@ public sealed class LoadingController : MonoBehaviour
     }
     private void SetProgress(float value) { if (progressSlider != null) progressSlider.value = value; if (progressText != null) progressText.text = $"{Mathf.Clamp01(value) * 100f:0}%"; }
     private void SetMessage(string message) { if (statusText != null) statusText.text = message; }
+    private void SetFirstArenaWarmupNotice(bool visible) { if (firstArenaWarmupNotice != null) firstArenaWarmupNotice.SetActive(visible); }
 }

@@ -18,8 +18,6 @@ public sealed class FusionDedicatedServerBootstrap : MonoBehaviour
     [SerializeField] private string gameScenePath =
         "Assets/MyProject2.0/Scenes/Game_Scene.unity";
     [SerializeField, Min(1)] private int maximumPlayers = 8;
-    [SerializeField, Min(30f)] private float activeWithoutPlayersTimeoutSeconds = 120f;
-
     [Header("Network")]
     [SerializeField, Min(1)] private ushort fallbackGamePort = 30000;
 
@@ -302,12 +300,6 @@ public sealed class FusionDedicatedServerBootstrap : MonoBehaviour
                 SceneRef.FromPath(gameScenePath),
                 LoadSceneMode.Single);
 
-            // MPS marks the process Active as soon as it is allocated. If the
-            // client times out before joining Fusion, exit rather than holding
-            // that allocated server for hours; MPS replaces it with standby.
-            if (Application.isBatchMode)
-                StartCoroutine(ShutdownIfNoClientJoins());
-
             Debug.Log(
                 "[Dedicated] Cena da partida solicitada.");
         }
@@ -326,30 +318,6 @@ public sealed class FusionDedicatedServerBootstrap : MonoBehaviour
         {
             starting = false;
         }
-    }
-
-    private IEnumerator ShutdownIfNoClientJoins()
-    {
-        yield return new WaitForSeconds(activeWithoutPlayersTimeoutSeconds);
-        if (activeRunner == null || !activeRunner.IsRunning || HasConnectedClient())
-            yield break;
-
-        Debug.LogWarning("[Dedicated] Nenhum cliente entrou no tempo limite; encerrando alocação MPS.");
-        Application.Quit();
-    }
-
-    private bool HasConnectedClient()
-    {
-        if (activeRunner == null) return false;
-        foreach (PlayerRef player in activeRunner.ActivePlayers)
-        {
-            if (player != PlayerRef.None)
-                return true;
-        }
-        // Fusion can briefly report an empty ActivePlayers list while the
-        // client is changing to the network scene. A spawned player object is
-        // definitive evidence that this is no longer an orphan allocation.
-        return FindFirstObjectByType<FusionNetworkPlayer>() != null;
     }
 
     private static string ToPhotonRegion(string playFabRegion)

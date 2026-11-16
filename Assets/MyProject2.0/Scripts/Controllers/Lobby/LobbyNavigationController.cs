@@ -34,6 +34,12 @@ public sealed class LobbyNavigationController : MonoBehaviour
 
     private void Awake()
     {
+        // The gameplay input object locks the cursor on enable. Always restore
+        // normal menu input when this scene becomes active, including a return
+        // caused by a server disconnect rather than the results button.
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         if (session == null)
             session = ServiceHub.Instance != null
                 ? ServiceHub.Instance.Session

@@ -7,6 +7,7 @@ public sealed class OnlinePresenceService : MonoBehaviour
 {
     [SerializeField, Min(10f)] private float heartbeatSeconds = 30f;
     [SerializeField, Min(2f)] private float retrySeconds = 5f;
+    [SerializeField, Min(60f)] private float estimatedWarmupSeconds = 420f;
     private PlayFabAuthManager authentication;
     private CapivaradaBackendService backend;
     private Coroutine heartbeat;
@@ -14,7 +15,13 @@ public sealed class OnlinePresenceService : MonoBehaviour
     private string lastDebugSnapshot;
     public bool IsReady { get; private set; }
     public string Status { get; private set; } = "idle";
-    public float WarmupProgress => IsReady ? .75f : warmingStartedAt < 0f ? 0f : Mathf.Clamp01((Time.realtimeSinceStartup - warmingStartedAt) / 120f) * .75f;
+    public float WarmupProgress => IsReady ? .75f : warmingStartedAt < 0f ? 0f : Mathf.Clamp01((Time.realtimeSinceStartup - warmingStartedAt) / estimatedWarmupSeconds) * .75f;
+    public bool IsFirstArenaWarmup =>
+        !IsReady && Status == "warming" &&
+        lastCapacity.onlinePlayers == 1 &&
+        lastCapacity.standingByServers == 0 &&
+        lastCapacity.proppingServers == 0 &&
+        lastCapacity.activeServers == 0;
 
     private void Start()
     {
@@ -88,7 +95,7 @@ public sealed class OnlinePresenceService : MonoBehaviour
         if (IsReady) return "Arena pronta. Carregando lobby...";
         if (Status == "warming")
         {
-            if (lastCapacity.onlinePlayers == 1 && lastCapacity.standingByServers == 0 && lastCapacity.proppingServers == 0 && lastCapacity.activeServers == 0)
+            if (IsFirstArenaWarmup)
                 return "Primeiro a pisar na Arena! Ativando servidores...";
             if (lastCapacity.proppingServers > 0) return "Preparando arena...";
             if (lastCapacity.activeServers > 0 && lastCapacity.standingByServers == 0) return "Partida em andamento. Preparando a próxima arena...";
