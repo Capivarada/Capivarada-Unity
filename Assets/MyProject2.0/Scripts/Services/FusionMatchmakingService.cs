@@ -9,6 +9,7 @@ public sealed class FusionMatchmakingService : MonoBehaviour
         public string state;
         public string error;
         public int remainingSeconds;
+        public int pollAfterSeconds;
         public string matchId;
         public string address;
         public int port;

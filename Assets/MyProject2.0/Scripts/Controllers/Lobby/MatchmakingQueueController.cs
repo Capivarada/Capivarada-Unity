@@ -25,7 +25,7 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
     [SerializeField] private TMP_Text groupPlayButtonText;
     [SerializeField] private string idleText = "JOGAR";
     [SerializeField] private string cancelText = "Cancelar pareamento?";
-    [SerializeField, Min(0.25f)] private float pollIntervalSeconds = 0.75f;
+    [SerializeField, Min(1f)] private float pollIntervalSeconds = 5f;
     [SerializeField, Min(1f)] private float passiveObserveIntervalSeconds = 2f;
 
     private Coroutine searchRoutine;
@@ -34,6 +34,8 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
     private bool connecting;
     private float nextPassiveObserveAt;
     private float suppressObserveUntil;
+    private float displayedTicketDeadline;
+    private float nextButtonRefreshAt;
 
     public bool IsSearching => searchRoutine != null;
 
@@ -56,6 +58,12 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
 
     private void Update()
     {
+        if (IsSearching && Time.unscaledTime >= nextButtonRefreshAt)
+        {
+            nextButtonRefreshAt = Time.unscaledTime + 1f;
+            RefreshButton(DisplayedRemainingSeconds());
+        }
+
         // Non-leaders never create or cancel a ticket. They only discover the
         // leader's party ticket and receive their own signed connection proof.
         if (IsSearching || observeRoutine != null || connecting || matchmaking == null ||
@@ -181,8 +189,12 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
                 yield break;
             }
 
-            RefreshButton(status != null ? status.remainingSeconds : 0);
-            yield return new WaitForSecondsRealtime(pollIntervalSeconds);
+            RememberTicketCountdown(status);
+            RefreshButton(DisplayedRemainingSeconds());
+            float wait = status != null && status.pollAfterSeconds > 0
+                ? status.pollAfterSeconds
+                : Mathf.Max(5f, pollIntervalSeconds);
+            yield return new WaitForSecondsRealtime(wait);
 
             received = false;
             error = null;
@@ -190,9 +202,11 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
             while (!received) yield return null;
             if (!string.IsNullOrWhiteSpace(error))
             {
-                ReportFailure(error);
-                searchRoutine = null;
-                yield break;
+                // A server-directed throttle is returned as a normal status,
+                // but retain this guard for an older API deployment.
+                Debug.LogWarning("[Matchmaking] Consulta temporariamente indisponível: " + error, this);
+                yield return new WaitForSecondsRealtime(Mathf.Max(5f, pollIntervalSeconds));
+                continue;
             }
 
             if (status != null && string.Equals(status.state, "idle", StringComparison.OrdinalIgnoreCase))
@@ -239,6 +253,17 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
         SetText(groupPlayButtonText, text);
     }
 
+    private void RememberTicketCountdown(FusionMatchmakingService.Status status)
+    {
+        if (status == null) return;
+        displayedTicketDeadline = Time.unscaledTime + Mathf.Max(0, status.remainingSeconds);
+        nextButtonRefreshAt = 0f;
+    }
+
+    private int DisplayedRemainingSeconds() => displayedTicketDeadline <= 0f
+        ? 0
+        : Mathf.Max(0, Mathf.CeilToInt(displayedTicketDeadline - Time.unscaledTime));
+
     private static void SetText(TMP_Text label, string value)
     {
         if (label != null) label.text = value;
@@ -248,6 +273,7 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
     {
         Debug.LogWarning("[Matchmaking] " + reason, this);
         connecting = false;
+        displayedTicketDeadline = 0f;
         RefreshButton(0);
     }
 }
