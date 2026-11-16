@@ -35,6 +35,9 @@ public class PlayerProfileService : MonoBehaviour
     private const string CosmeticsKey = "cosmetics";
     private const string ProgressionKey = "progression";
     private const string StatisticsKey = "statistics";
+    // A visitante nunca recebe Player Data no PlayFab. A aparência dela é uma
+    // preferência deste dispositivo, separada dos quatro registros da conta.
+    private const string GuestCosmeticsPreferenceKey = "Capivarada.Guest.Cosmetics";
 
     public static PlayerProfileService Instance { get; private set; }
     [SerializeField] private PlayFabAuthManager authentication;
@@ -52,6 +55,13 @@ public class PlayerProfileService : MonoBehaviour
 
     public void Load()
     {
+        if (authentication != null && authentication.IsGuest)
+        {
+            LoadGuestCosmetics();
+            Publish();
+            return;
+        }
+
         if (authentication == null || !authentication.IsLoggedIn) { Publish(); return; }
         PlayFabClientAPI.GetUserData(new GetUserDataRequest
         {
@@ -86,6 +96,16 @@ public class PlayerProfileService : MonoBehaviour
 
     public void SaveCosmetics(PlayerCosmeticLoadout cosmetics, Action done = null)
     {
+        if (authentication != null && authentication.IsGuest)
+        {
+            Current.cosmetics = cosmetics ?? new PlayerCosmeticLoadout();
+            PlayerPrefs.SetString(GuestCosmeticsPreferenceKey, JsonUtility.ToJson(Current.cosmetics));
+            PlayerPrefs.Save();
+            Publish();
+            done?.Invoke();
+            return;
+        }
+
         if (!CanSave()) return;
         Current.cosmetics = cosmetics ?? new PlayerCosmeticLoadout();
         UpdatePublic(CosmeticsKey, JsonUtility.ToJson(Current.cosmetics), () => { Publish(); done?.Invoke(); });
@@ -115,6 +135,21 @@ public class PlayerProfileService : MonoBehaviour
         if (authentication != null && authentication.IsLoggedIn && !authentication.IsGuest) return true;
         Report("Faça login para salvar o perfil.");
         return false;
+    }
+
+    private void LoadGuestCosmetics()
+    {
+        Current = new PlayerProfileData
+        {
+            nickname = string.IsNullOrWhiteSpace(authentication.Nickname) ? "Visitante" : authentication.Nickname,
+            cosmetics = new PlayerCosmeticLoadout()
+        };
+
+        if (!PlayerPrefs.HasKey(GuestCosmeticsPreferenceKey)) return;
+
+        PlayerCosmeticLoadout saved = JsonUtility.FromJson<PlayerCosmeticLoadout>(
+            PlayerPrefs.GetString(GuestCosmeticsPreferenceKey));
+        if (saved != null) Current.cosmetics = saved;
     }
 
     private void UpdatePublic(string key, string value, Action done)

@@ -15,9 +15,6 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
     [SerializeField] private SessionAccessService session;
     [SerializeField] private PartyService party;
     [Header("Play buttons")]
-    [Tooltip("Botão Jogar visível para convidado online. Ele pede login antes de criar um ticket.")]
-    [SerializeField] private Button guestOnlinePlayButton;
-    [SerializeField] private TMP_Text guestOnlinePlayButtonText;
     [Tooltip("Botão Jogar do menu de conta autenticada.")]
     [SerializeField] private Button authenticatedOnlinePlayButton;
     [SerializeField] private TMP_Text authenticatedOnlinePlayButtonText;
@@ -62,6 +59,7 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
         // Non-leaders never create or cancel a ticket. They only discover the
         // leader's party ticket and receive their own signed connection proof.
         if (IsSearching || observeRoutine != null || connecting || matchmaking == null ||
+            session == null || !session.IsAuthenticated ||
             party == null || !party.HasOtherMember || Time.unscaledTime < nextPassiveObserveAt ||
             Time.unscaledTime < suppressObserveUntil)
             return;
@@ -75,12 +73,9 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
 
     public void PlayFromGuestOnline()
     {
-        if (session == null || session.Mode != SessionAccessMode.AuthenticatedOnline)
-        {
-            ReportFailure("Crie uma conta ou entre para jogar partidas online.");
-            return;
-        }
-        StartMatchmaking();
+        // Kept as a harmless Inspector-compatible entry point for any old button.
+        // Visitors can browse the public ranking, but never create a ticket.
+        ReportFailure("Partidas online são exclusivas para contas autenticadas.");
     }
 
     public void PlayFromAuthenticatedOnline() => StartMatchmaking();
@@ -95,9 +90,9 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
             Cancel();
             return;
         }
-        if (session == null || !session.IsOnline || matchmaking == null)
+        if (session == null || !session.IsAuthenticated || matchmaking == null)
         {
-            Debug.LogWarning("[Matchmaking] Serviços de sessão indisponíveis.", this);
+            ReportFailure("Partidas online são exclusivas para contas autenticadas.");
             return;
         }
         if (party == null || !party.CanStart)
@@ -240,7 +235,6 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
         else
             text = idleText;
 
-        SetText(guestOnlinePlayButtonText, text);
         SetText(authenticatedOnlinePlayButtonText, text);
         SetText(groupPlayButtonText, text);
     }

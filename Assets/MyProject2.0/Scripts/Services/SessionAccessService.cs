@@ -24,7 +24,8 @@ public sealed class SessionAccessService : MonoBehaviour
     public bool CanPersist => IsAuthenticated;
     public bool CanUseSocial => IsAuthenticated;
     public bool CanUseEconomy => IsAuthenticated;
-    public bool CanUsePersonalization => IsAuthenticated || Mode == SessionAccessMode.GuestOffline;
+    // A aparência de visitante é mantida localmente, tanto com conexão quanto offline.
+    public bool CanUsePersonalization => true;
     public bool CanUseSelfLeaderboardRow => IsAuthenticated;
     public event Action<SessionAccessMode> Changed;
 

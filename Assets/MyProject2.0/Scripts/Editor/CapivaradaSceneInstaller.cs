@@ -93,7 +93,9 @@ public static class CapivaradaSceneInstaller
         }
 
         GameObject authenticated = source;
-        GameObject guestOnline = CopyLobbyVariant(source, "LobbyUI_GuestOnline", new[] { "ShopUI", "WardrobeUI", "ProfileUI", "FriendsUI", "FriendsPanel" });
+        // Online visitors may use the local wardrobe and browse the public ranking,
+        // but cannot access account/social/economy or online matchmaking features.
+        GameObject guestOnline = CopyLobbyVariant(source, "LobbyUI_GuestOnline", new[] { "ShopUI", "ProfileUI", "FriendsUI", "FriendsPanel" });
         GameObject guestOffline = CopyLobbyVariant(source, "LobbyUI_GuestOffline", new[] { "ShopUI", "LeaderboardUI", "ProfileUI", "OtherProfileUI", "FriendsUI", "FriendsPanel", "CreditsUI" });
         GameObject coordinator = Find("LobbyPresentation") ?? new GameObject("LobbyPresentation");
         LobbyPresentationController presentation = FindOrAdd<LobbyPresentationController>(coordinator);
