@@ -245,7 +245,9 @@ public sealed class MatchmakingQueueController : MonoBehaviour, IPointerEnterHan
         if (connecting)
             text = "Entrando na arena...";
         else if (IsSearching)
-            text = pointerOver ? cancelText : $"Procurando partida ({Mathf.Max(0, remainingSeconds)}s)";
+            text = pointerOver ? cancelText : remainingSeconds > 0
+                ? $"Procurando partida ({remainingSeconds}s)"
+                : "Atualizando pareamento...";
         else
             text = idleText;
 
