@@ -90,7 +90,7 @@ public sealed class OnlinePresenceService : MonoBehaviour
         {
             if (lastCapacity.onlinePlayers == 1 && lastCapacity.standingByServers == 0 && lastCapacity.proppingServers == 0 && lastCapacity.activeServers == 0)
                 return "Primeiro a pisar na Arena! Ativando servidores...";
-            if (lastCapacity.proppingServers > 0) return "Erguendo a arena no EastUS...";
+            if (lastCapacity.proppingServers > 0) return "Preparando arena...";
             if (lastCapacity.activeServers > 0 && lastCapacity.standingByServers == 0) return "Partida em andamento. Preparando a próxima arena...";
             return "Preparando arena...";
         }
