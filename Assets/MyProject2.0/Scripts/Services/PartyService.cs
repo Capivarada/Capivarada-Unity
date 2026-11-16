@@ -145,7 +145,9 @@ public sealed class PartyService : MonoBehaviour
         Changed?.Invoke();
     }
 
-    private async void UpdateVoiceChannel()
+    private void UpdateVoiceChannel() => _ = UpdateVoiceChannelAsync();
+
+    private async System.Threading.Tasks.Task UpdateVoiceChannelAsync()
     {
         string partyId = HasOtherMember ? CurrentParty.partyId : string.Empty;
         if (string.Equals(activeVoicePartyKey, partyId, StringComparison.Ordinal)) return;

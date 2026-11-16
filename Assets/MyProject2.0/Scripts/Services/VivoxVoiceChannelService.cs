@@ -14,15 +14,17 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
     [SerializeField] private float audibleDistance = 25f;
     [SerializeField] private float conversationalDistance = 7f;
     private string partyChannel;
-    private string matchChannel;
-    private string globalChatChannel;
+    private string requestedPartyChannel;
     private bool initialized;
+    private bool initializationFailed;
+    private bool vivoxEventsSubscribed;
     private Task<bool> initializationTask;
     public event Action<string> Failed;
     public event Action<VivoxMessage> ChannelMessageReceived;
+    /// <summary>Raised only after Vivox confirms the party channel was joined or left.</summary>
+    public event Action PartyChannelChanged;
 
     public string PartyChannel => partyChannel;
-    public string GlobalChatChannel => globalChatChannel;
 
     private void Awake()
     {
@@ -36,8 +38,15 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
 
     public Task<bool> InitializeForCurrentSessionAsync()
     {
+#if UNITY_SERVER
+        // MPS is authoritative gameplay only. It must never load a Vivox native
+        // library or attempt a UGS/Vivox login.
+        return Task.FromResult(false);
+#else
         if (initialized && VivoxService.Instance.IsLoggedIn)
             return Task.FromResult(true);
+        if (initializationFailed || VivoxService.Instance.InitializationState == VivoxInitializationState.Failed)
+            return Task.FromResult(false);
         // Chat, party and voice can request initialization during the same
         // frame. Vivox rejects concurrent login attempts, particularly in
         // WebGL, so all callers share one in-flight initialization.
@@ -46,6 +55,7 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
 
         initializationTask = InitializeForCurrentSessionInternalAsync();
         return initializationTask;
+#endif
     }
 
     private async Task<bool> InitializeForCurrentSessionInternalAsync()
@@ -59,19 +69,21 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
             {
                 await AuthenticationService.Instance.SignInAnonymouslyAsync();
             }
-            await VivoxService.Instance.InitializeAsync();
+            if (VivoxService.Instance.InitializationState == VivoxInitializationState.Uninitialized)
+                await VivoxService.Instance.InitializeAsync();
+
+            SubscribeToVivoxEvents();
             string nickname = authentication != null && !string.IsNullOrWhiteSpace(authentication.Nickname) ? authentication.Nickname : "Capivara";
             // When Unity Authentication is active, Vivox owns the immutable player ID.
             // The display name is presentation only; profile clicks resolve through PlayFab IDs
             // supplied by the UI/service layer where available.
             await VivoxService.Instance.LoginAsync(new LoginOptions { DisplayName = nickname });
-            VivoxService.Instance.ChannelMessageReceived -= ForwardChannelMessage;
-            VivoxService.Instance.ChannelMessageReceived += ForwardChannelMessage;
             initialized = true;
             return true;
         }
         catch (Exception exception)
         {
+            initializationFailed = true;
             Failed?.Invoke($"Vivox indisponível: {exception.Message}");
             return false;
         }
@@ -86,49 +98,24 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
     {
         if (!await InitializeForCurrentSessionAsync() || string.IsNullOrWhiteSpace(partyId)) return;
         string requestedChannel = BuildChannelName("party", partyId);
-        if (string.Equals(partyChannel, requestedChannel, StringComparison.Ordinal)) return;
+        if (string.Equals(partyChannel, requestedChannel, StringComparison.Ordinal) ||
+            string.Equals(requestedPartyChannel, requestedChannel, StringComparison.Ordinal)) return;
         try
         {
-            await LeaveMatchAsync();
-            // Group chat replaces Global as soon as a second party member is present.
-            await LeaveGlobalChatAsync();
             await LeavePartyAsync();
+            requestedPartyChannel = requestedChannel;
             await VivoxService.Instance.JoinGroupChannelAsync(requestedChannel,
 #if UNITY_WEBGL && !UNITY_EDITOR
                 ChatCapability.TextOnly);
 #else
                 ChatCapability.TextAndAudio);
 #endif
-            partyChannel = requestedChannel;
         }
         catch (Exception exception)
         {
+            requestedPartyChannel = null;
             partyChannel = null;
             Failed?.Invoke($"Não foi possível entrar no canal do grupo: {exception.Message}");
-        }
-    }
-
-    public void JoinGlobalChat(string channelName) => _ = JoinGlobalChatAsync(channelName);
-    public async Task JoinGlobalChatAsync(string channelName)
-    {
-        if (!await InitializeForCurrentSessionAsync() || string.IsNullOrWhiteSpace(channelName)) return;
-        // Keep the global identifier stable because ChatService uses the same
-        // configured value to route received messages into its global feed.
-        string requestedChannel = BuildChannelName(string.Empty, channelName);
-        if (string.Equals(globalChatChannel, requestedChannel, StringComparison.Ordinal)) return;
-        try
-        {
-#if UNITY_WEBGL && !UNITY_EDITOR
-            await LeavePartyAsync();
-#endif
-            await LeaveGlobalChatAsync();
-            await VivoxService.Instance.JoinGroupChannelAsync(requestedChannel, ChatCapability.TextOnly);
-            globalChatChannel = requestedChannel;
-        }
-        catch (Exception exception)
-        {
-            globalChatChannel = null;
-            Failed?.Invoke($"Não foi possível entrar no chat global: {exception.Message}");
         }
     }
 
@@ -142,20 +129,12 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
 
     public async Task LeavePartyAsync()
     {
-        if (VivoxService.Instance.IsLoggedIn && !string.IsNullOrWhiteSpace(partyChannel)) await VivoxService.Instance.LeaveChannelAsync(partyChannel);
+        requestedPartyChannel = null;
+        if (VivoxService.Instance.IsLoggedIn && !string.IsNullOrWhiteSpace(partyChannel))
+            await VivoxService.Instance.LeaveChannelAsync(partyChannel);
+        bool changed = !string.IsNullOrWhiteSpace(partyChannel);
         partyChannel = null;
-    }
-
-    public async Task LeaveMatchAsync()
-    {
-        if (VivoxService.Instance.IsLoggedIn && !string.IsNullOrWhiteSpace(matchChannel)) await VivoxService.Instance.LeaveChannelAsync(matchChannel);
-        matchChannel = null;
-    }
-
-    public async Task LeaveGlobalChatAsync()
-    {
-        if (VivoxService.Instance.IsLoggedIn && !string.IsNullOrWhiteSpace(globalChatChannel)) await VivoxService.Instance.LeaveChannelAsync(globalChatChannel);
-        globalChatChannel = null;
+        if (changed) PartyChannelChanged?.Invoke();
     }
 
     /// <summary>Sends text with optional title-controlled metadata for UI identity mapping.</summary>
@@ -175,6 +154,30 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
 
     private void ForwardChannelMessage(VivoxMessage message) => ChannelMessageReceived?.Invoke(message);
 
+    private void SubscribeToVivoxEvents()
+    {
+        if (vivoxEventsSubscribed) return;
+        VivoxService.Instance.ChannelMessageReceived += ForwardChannelMessage;
+        VivoxService.Instance.ChannelJoined += OnChannelJoined;
+        VivoxService.Instance.ChannelLeft += OnChannelLeft;
+        vivoxEventsSubscribed = true;
+    }
+
+    private void OnChannelJoined(string channelName)
+    {
+        if (!string.Equals(channelName, requestedPartyChannel, StringComparison.Ordinal)) return;
+        requestedPartyChannel = null;
+        partyChannel = channelName;
+        PartyChannelChanged?.Invoke();
+    }
+
+    private void OnChannelLeft(string channelName)
+    {
+        if (!string.Equals(channelName, partyChannel, StringComparison.Ordinal)) return;
+        partyChannel = null;
+        PartyChannelChanged?.Invoke();
+    }
+
     private static string BuildChannelName(string prefix, string value)
     {
         const int maximumLength = 160;
@@ -192,6 +195,9 @@ public sealed class VivoxVoiceChannelService : MonoBehaviour
     private void OnDestroy()
     {
         if (Instance == this) Instance = null;
-        if (initialized && VivoxService.Instance != null) VivoxService.Instance.ChannelMessageReceived -= ForwardChannelMessage;
+        if (!vivoxEventsSubscribed || VivoxService.Instance == null) return;
+        VivoxService.Instance.ChannelMessageReceived -= ForwardChannelMessage;
+        VivoxService.Instance.ChannelJoined -= OnChannelJoined;
+        VivoxService.Instance.ChannelLeft -= OnChannelLeft;
     }
 }

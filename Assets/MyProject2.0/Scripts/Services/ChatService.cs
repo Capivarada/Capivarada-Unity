@@ -9,7 +9,6 @@ using UnityEngine;
 /// </summary>
 public sealed class ChatService : MonoBehaviour
 {
-    public enum Scope { Global, Party }
 
     [Serializable]
     public sealed class Message
@@ -29,19 +28,14 @@ public sealed class ChatService : MonoBehaviour
     [SerializeField] private PartyService party;
     [SerializeField] private SessionAccessService session;
     [SerializeField] private PlayerProfileService profile;
-    [SerializeField] private string globalChannelName = "global-br";
     [SerializeField, Min(10)] private int maximumMessagesPerChannel = 100;
 
-    public Scope SelectedScope { get; private set; } = Scope.Global;
-    public string GlobalChannelName => globalChannelName;
     public bool HasPartyChannel => party != null && party.HasOtherMember && !string.IsNullOrWhiteSpace(voice != null ? voice.PartyChannel : null);
-    public IReadOnlyList<Message> GlobalMessages => globalMessages;
     public IReadOnlyList<Message> PartyMessages => partyMessages;
-    public IReadOnlyList<Message> SelectedMessages => SelectedScope == Scope.Party ? PartyMessages : GlobalMessages;
+    public IReadOnlyList<Message> SelectedMessages => PartyMessages;
     public event Action Changed;
     public event Action<string> Failed;
 
-    private readonly List<Message> globalMessages = new();
     private readonly List<Message> partyMessages = new();
 
     private void Awake()
@@ -61,6 +55,7 @@ public sealed class ChatService : MonoBehaviour
         {
             voice.ChannelMessageReceived += Receive;
             voice.Failed += Report;
+            voice.PartyChannelChanged += OnPartyChanged;
         }
         if (party != null) party.Changed += OnPartyChanged;
     }
@@ -71,6 +66,7 @@ public sealed class ChatService : MonoBehaviour
         {
             voice.ChannelMessageReceived -= Receive;
             voice.Failed -= Report;
+            voice.PartyChannelChanged -= OnPartyChanged;
         }
         if (party != null) party.Changed -= OnPartyChanged;
     }
@@ -78,26 +74,18 @@ public sealed class ChatService : MonoBehaviour
     public void InitializeChat()
     {
         if (!CanUseChat()) return;
-        if (voice == null) { Report("VivoxVoiceChannelService não foi configurado em Services."); return; }
-        if (HasPartyChannel) SelectParty();
-        else voice.JoinGlobalChat(globalChannelName);
-    }
-
-    public void SelectGlobal()
-    {
-        SelectedScope = Scope.Global;
-        InitializeChat();
+        // There is no global channel. Vivox is initialized only after the
+        // party service confirms a group with at least two members.
         Changed?.Invoke();
     }
 
     public void SelectParty()
     {
-        if (!CanUseChat() || party == null || !party.IsInParty)
+        if (!CanUseChat() || party == null || !party.HasOtherMember)
         {
-            Report("Entre em um grupo para usar o chat do grupo.");
+            Report("O chat fica disponível quando houver outra pessoa no grupo.");
             return;
         }
-        SelectedScope = Scope.Party;
         Changed?.Invoke();
     }
 
@@ -107,7 +95,7 @@ public sealed class ChatService : MonoBehaviour
         if (string.IsNullOrWhiteSpace(text)) return;
         if (voice == null) { Report("VivoxVoiceChannelService não foi configurado em Services."); return; }
 
-        string channel = SelectedScope == Scope.Party ? voice.PartyChannel : globalChannelName;
+        string channel = voice.PartyChannel;
         if (string.IsNullOrWhiteSpace(channel))
         {
             Report("Canal de chat indisponível.");
@@ -125,8 +113,6 @@ public sealed class ChatService : MonoBehaviour
 
     private void OnPartyChanged()
     {
-        if (!HasPartyChannel) SelectedScope = Scope.Global;
-        InitializeChat();
         Changed?.Invoke();
     }
 
@@ -134,8 +120,7 @@ public sealed class ChatService : MonoBehaviour
     {
         if (vivoxMessage == null || string.IsNullOrWhiteSpace(vivoxMessage.ChannelName)) return;
         List<Message> destination;
-        if (string.Equals(vivoxMessage.ChannelName, globalChannelName, StringComparison.Ordinal)) destination = globalMessages;
-        else if (voice != null && string.Equals(vivoxMessage.ChannelName, voice.PartyChannel, StringComparison.Ordinal)) destination = partyMessages;
+        if (voice != null && string.Equals(vivoxMessage.ChannelName, voice.PartyChannel, StringComparison.Ordinal)) destination = partyMessages;
         else return;
 
         MessageMetadata metadata = ParseMetadata(vivoxMessage.Metadata);
