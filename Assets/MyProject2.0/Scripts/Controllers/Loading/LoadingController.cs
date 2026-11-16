@@ -1,6 +1,7 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -49,6 +50,7 @@ public sealed class LoadingController : MonoBehaviour
             SetFirstArenaWarmupNotice(false);
         }
         float loadBaseProgress = waitedForArena ? .75f : 0f;
+        DisableLoadingEventSystem();
         AsyncOperation operation = SceneManager.LoadSceneAsync(nextScene, LoadSceneMode.Additive);
         if (operation == null)
         {
@@ -92,4 +94,17 @@ public sealed class LoadingController : MonoBehaviour
     private void SetProgress(float value) { if (progressSlider != null) progressSlider.value = value; if (progressText != null) progressText.text = $"{Mathf.Clamp01(value) * 100f:0}%"; }
     private void SetMessage(string message) { if (statusText != null) statusText.text = message; }
     private void SetFirstArenaWarmupNotice(bool visible) { if (firstArenaWarmupNotice != null) firstArenaWarmupNotice.SetActive(visible); }
+
+    private void DisableLoadingEventSystem()
+    {
+        foreach (GameObject root in gameObject.scene.GetRootGameObjects())
+        {
+            EventSystem eventSystem = root.GetComponentInChildren<EventSystem>(true);
+            if (eventSystem != null)
+            {
+                eventSystem.enabled = false;
+                return;
+            }
+        }
+    }
 }
