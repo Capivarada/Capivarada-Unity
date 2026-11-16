@@ -24,6 +24,7 @@ public sealed class FusionDedicatedSettlementReporter : MonoBehaviour
     private bool submitted;
     private bool startReported;
     private bool shutdownScheduled;
+    private bool bound;
     private NetworkRunner runner;
 
     private void Start()
@@ -36,17 +37,34 @@ public sealed class FusionDedicatedSettlementReporter : MonoBehaviour
             return;
         }
 
-        if (rounds == null) rounds = FindFirstObjectByType<FusionRoundController>();
-        if (arena == null) arena = FindFirstObjectByType<FusionArenaMatchController>();
-        runner = FindFirstObjectByType<NetworkRunner>();
-        if (rounds == null || runner == null)
+        StartCoroutine(BindAfterGameSceneLoads());
+    }
+
+    private IEnumerator BindAfterGameSceneLoads()
+    {
+        // The dedicated bootstrap starts in Boot_Scene, while rounds exist in
+        // Game_Scene. Do not permanently disable settlement during that short
+        // scene transition.
+        for (int frame = 0; frame < 900 && !bound; frame++)
         {
-            Debug.LogError("[FusionDedicatedSettlementReporter] Configure FusionRoundController e NetworkRunner no servidor.", this);
-            enabled = false;
-            return;
+            if (rounds == null) rounds = FindFirstObjectByType<FusionRoundController>();
+            if (arena == null) arena = FindFirstObjectByType<FusionArenaMatchController>();
+            if (runner == null) runner = FindFirstObjectByType<NetworkRunner>();
+            if (rounds != null && runner != null)
+            {
+                bound = true;
+                rounds.MatchFinished += Submit;
+                if (arena != null)
+                {
+                    arena.MatchReady += ReportStarted;
+                    if (arena.IsMatchReady) ReportStarted();
+                }
+                Debug.Log("[FusionDedicatedSettlementReporter] Settlement ligado ao servidor dedicado.", this);
+                yield break;
+            }
+            yield return null;
         }
-        rounds.MatchFinished += Submit;
-        if (arena != null) arena.MatchReady += ReportStarted;
+        Debug.LogError("[FusionDedicatedSettlementReporter] FusionRoundController ou NetworkRunner não apareceu após carregar Game_Scene; settlement indisponível.", this);
     }
 
     private void OnDestroy()
@@ -110,6 +128,7 @@ public sealed class FusionDedicatedSettlementReporter : MonoBehaviour
         }
 
         SettlementPayload payload = new SettlementPayload(matchId, durationSeconds, results);
+        Debug.Log($"[FusionDedicatedSettlementReporter] Enviando settlement: MatchId={matchId}, humanos={payload.participants.Count}, duração={durationSeconds}s.", this);
         submitted = true;
         StartCoroutine(PostWithRetries(payload, secret));
     }

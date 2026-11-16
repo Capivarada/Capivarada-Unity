@@ -57,7 +57,12 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void BeginNetworkMovementPresentation()
     {
-        if (!hasLaunched) hasLaunched = true;
+        if (hasLaunched) return;
+        // On a dedicated server the authoritative Launch runs headless. Each
+        // client still needs to enter the same animator state when the
+        // replicated Moving phase begins.
+        SetMovementAnimation(currentCharge);
+        hasLaunched = true;
     }
 
     public PlayerConfig Configuration => ResolveConfiguration();
