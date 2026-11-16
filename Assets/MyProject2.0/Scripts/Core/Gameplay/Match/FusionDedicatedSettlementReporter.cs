@@ -18,6 +18,8 @@ public sealed class FusionDedicatedSettlementReporter : MonoBehaviour
     [SerializeField] private string backendBaseUrl = "https://capivarada-functions-dev-d9djf2f2dqe4b9hu.westus2-01.azurewebsites.net/api";
     [SerializeField, Min(5)] private int requestTimeoutSeconds = 20;
     [SerializeField, Min(0)] private float shutdownDelayAfterSettlementSeconds = 2f;
+    [SerializeField, Min(1)] private int settlementAttempts = 3;
+    [SerializeField, Min(.5f)] private float settlementRetryDelaySeconds = 2f;
 
     private bool submitted;
     private bool startReported;
@@ -109,40 +111,45 @@ public sealed class FusionDedicatedSettlementReporter : MonoBehaviour
 
         SettlementPayload payload = new SettlementPayload(matchId, durationSeconds, results);
         submitted = true;
-        StartCoroutine(Post(payload, secret));
+        StartCoroutine(PostWithRetries(payload, secret));
     }
 
-    private IEnumerator Post(SettlementPayload payload, string secret)
+    private IEnumerator PostWithRetries(SettlementPayload payload, string secret)
     {
-        string json = JsonUtility.ToJson(payload);
-        using UnityWebRequest request = new UnityWebRequest(backendBaseUrl.TrimEnd('/') + "/matches/settle", UnityWebRequest.kHttpVerbPOST)
+        int attempts = Mathf.Max(1, settlementAttempts);
+        for (int attempt = 1; attempt <= attempts; attempt++)
         {
-            timeout = Mathf.Max(5, requestTimeoutSeconds),
-            uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json)),
-            downloadHandler = new DownloadHandlerBuffer()
-        };
-        request.SetRequestHeader("Content-Type", "application/json; charset=utf-8");
-        request.SetRequestHeader("Accept", "application/json");
-        request.SetRequestHeader("X-Capivarada-Match-Secret", secret);
-        yield return request.SendWebRequest();
+            string json = JsonUtility.ToJson(payload);
+            using UnityWebRequest request = new UnityWebRequest(backendBaseUrl.TrimEnd('/') + "/matches/settle", UnityWebRequest.kHttpVerbPOST)
+            {
+                timeout = Mathf.Max(5, requestTimeoutSeconds),
+                uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json)),
+                downloadHandler = new DownloadHandlerBuffer()
+            };
+            request.SetRequestHeader("Content-Type", "application/json; charset=utf-8");
+            request.SetRequestHeader("Accept", "application/json");
+            request.SetRequestHeader("X-Capivarada-Match-Secret", secret);
+            yield return request.SendWebRequest();
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log($"[FusionDedicatedSettlementReporter] Progresso liquidado: {request.downloadHandler.text}", this);
+                // An Active MPS process cannot return to StandingBy. Exiting after the
+                // authoritative settlement lets MPS replace it with a fresh standby
+                // process instead of billing an idle, already-finished allocation.
+                yield return new WaitForSeconds(shutdownDelayAfterSettlementSeconds);
+                Debug.Log("[FusionDedicatedSettlementReporter] Partida concluída; encerrando processo dedicado.", this);
+                Application.Quit();
+                yield break;
+            }
 
-        if (request.result != UnityWebRequest.Result.Success)
-        {
-            Debug.LogError($"[FusionDedicatedSettlementReporter] Settlement falhou ({request.responseCode}): {request.downloadHandler.text}", this);
-            // Do not retain an already-finished MPS allocation forever when a
-            // backend/secret outage occurs. The failure is visible in MPS logs
-            // and the process is replaced by configured standby capacity.
-            ScheduleShutdownAfterFailedSettlement();
-            yield break;
+            Debug.LogWarning($"[FusionDedicatedSettlementReporter] Settlement tentativa {attempt}/{attempts} falhou ({request.responseCode}): {request.downloadHandler.text}", this);
+            if (attempt < attempts)
+                yield return new WaitForSeconds(settlementRetryDelaySeconds);
         }
-
-        Debug.Log($"[FusionDedicatedSettlementReporter] Progresso liquidado: {request.downloadHandler.text}", this);
-        // An Active MPS process cannot return to StandingBy. Exiting after the
-        // authoritative settlement lets MPS replace it with a fresh standby
-        // process instead of billing an idle, already-finished allocation.
-        yield return new WaitForSeconds(shutdownDelayAfterSettlementSeconds);
-        Debug.Log("[FusionDedicatedSettlementReporter] Partida concluída; encerrando processo dedicado.", this);
-        Application.Quit();
+        // Do not retain an already-finished MPS allocation forever when a
+        // backend/secret outage persists. Settlement is idempotent per player,
+        // so an MPS retry never duplicates rewards.
+        ScheduleShutdownAfterFailedSettlement();
     }
 
     private void ScheduleShutdownAfterFailedSettlement()
